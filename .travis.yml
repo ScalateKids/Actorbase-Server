@@ -1,0 +1,15 @@
+notifications:
+    email:
+        recipients:
+            - munaro.michael@gmail.com
+        on_success:
+                never
+        on_failure:
+                change
+
+language: scala
+jdk: openjdk7
+
+scala:
+    - 2.11.8
+
