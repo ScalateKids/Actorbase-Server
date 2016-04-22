@@ -55,7 +55,7 @@ object Main {
 class Main extends Actor with ActorLogging {
   import Main._
 
-  /**
+/**
   * Insert description here
   *
   * @param
