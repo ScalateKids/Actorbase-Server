@@ -21,63 +21,37 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+// TEMPORARY BRIDGE BETWEEN MAIN AND STOREKEEPER
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
-import com.actorbase.actorsystem.storefinder.messages.CreateSk
-import spray.can.Http
-import spray.httpx.SprayJsonSupport._
-import spray.routing._
-import akka.pattern.ask
-import akka.util.Timeout
+package com.actorbase.actorsystem.storefinder
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import akka.actor.Actor
+import akka.actor.ActorLogging
+import akka.actor.Props
 
-import com.actorbase.actorsystem.main.Main.Response
-import com.actorbase.actorsystem.main.Main.Testsk
+import com.actorbase.actorsystem.storefinder.messages._
+import com.actorbase.actorsystem.storekeeper.Storekeeper
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-class RestClientActor(main: ActorRef) extends Actor with  HttpServiceBase with ActorLogging {
-  val route: Route = {
-    path("actorbase" / "\\S+".r) { resource =>
-      get {
-        complete {
-          log.info(s"Request for $resource")
-          main.ask(resource)(5 seconds).mapTo[Response]
-        }
-      }
-    }
-    //test route for sf and sk
-    path("testStorefinder".r){ resource =>
-      get {
-        complete {
-          log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsk)(5 seconds).mapTo[Response]
-        }
-      }
+object Storefinder {
+  def props() : Props = Props(new Storefinder())
+}
+
+class Storefinder extends Actor with ActorLogging{
+
+  def receive = {
+    case CreateSk => {
+      val sk = context.actorOf(Storekeeper.props())
+      sk ! com.actorbase.actorsystem.storekeeper.messages.Init()
+      sk ! com.actorbase.actorsystem.storekeeper.messages.Insert("lol", "lel")
+      sk ! com.actorbase.actorsystem.storekeeper.messages.GetAllItem()
+      sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem("lol")
+      sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem("lel")
     }
   }
-
-  /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-  def receive = runRoute(route)
 
 }

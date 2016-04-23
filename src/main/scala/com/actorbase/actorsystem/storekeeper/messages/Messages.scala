@@ -21,63 +21,19 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem.storekeeper.messages
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
-import com.actorbase.actorsystem.storefinder.messages.CreateSk
-import spray.can.Http
-import spray.httpx.SprayJsonSupport._
-import spray.routing._
-import akka.pattern.ask
-import akka.util.Timeout
+case class Init()
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+case class GetItem(key: String)
 
-import com.actorbase.actorsystem.main.Main.Response
-import com.actorbase.actorsystem.main.Main.Testsk
+case class GetAllItem()
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-class RestClientActor(main: ActorRef) extends Actor with  HttpServiceBase with ActorLogging {
-  val route: Route = {
-    path("actorbase" / "\\S+".r) { resource =>
-      get {
-        complete {
-          log.info(s"Request for $resource")
-          main.ask(resource)(5 seconds).mapTo[Response]
-        }
-      }
-    }
-    //test route for sf and sk
-    path("testStorefinder".r){ resource =>
-      get {
-        complete {
-          log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsk)(5 seconds).mapTo[Response]
-        }
-      }
-    }
-  }
+case class Insert(key: String, value: String)
 
-  /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-  def receive = runRoute(route)
-
-}
+case class RemoveItem(key: String)

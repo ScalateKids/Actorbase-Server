@@ -29,7 +29,10 @@
 package com.actorbase.actorsystem.main
 
 import akka.actor.{Actor, ActorLogging}
+import com.actorbase.actorsystem.storefinder.messages.CreateSk
 import spray.json.DefaultJsonProtocol._
+
+import com.actorbase.actorsystem.storefinder.Storefinder
 
 /**
   * Insert description here
@@ -43,6 +46,7 @@ object Main {
   case object Response {
     implicit val goJson = jsonFormat1(Response.apply)
   }
+  case class Testsk()
 }
 
 /**
@@ -67,6 +71,12 @@ class Main extends Actor with ActorLogging {
     case resource: String =>
       log.info(s"$resource request")
       sender ! Response(resource)
+
+    case Testsk =>{
+      val sf = context.actorOf(Storefinder.props())
+      sf ! CreateSk
+      sender ! Response("test successful")
+    }
 
     case _ => log.info("Still waiting for an ordination")
 

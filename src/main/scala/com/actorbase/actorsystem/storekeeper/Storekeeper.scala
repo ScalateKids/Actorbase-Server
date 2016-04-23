@@ -21,63 +21,39 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
-import com.actorbase.actorsystem.storefinder.messages.CreateSk
-import spray.can.Http
-import spray.httpx.SprayJsonSupport._
-import spray.routing._
-import akka.pattern.ask
-import akka.util.Timeout
+import akka.actor.{Props, Actor, ActorLogging}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import com.actorbase.actorsystem.storekeeper.messages._
 
-import com.actorbase.actorsystem.main.Main.Response
-import com.actorbase.actorsystem.main.Main.Testsk
+object Storekeeper {
+  def props() : Props = Props(new Storekeeper())
+}
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-class RestClientActor(main: ActorRef) extends Actor with  HttpServiceBase with ActorLogging {
-  val route: Route = {
-    path("actorbase" / "\\S+".r) { resource =>
-      get {
-        complete {
-          log.info(s"Request for $resource")
-          main.ask(resource)(5 seconds).mapTo[Response]
-        }
-      }
+class Storekeeper extends Actor with ActorLogging{
+
+  def receive = {
+    case Init() => {
+      println("init")
     }
-    //test route for sf and sk
-    path("testStorefinder".r){ resource =>
-      get {
-        complete {
-          log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsk)(5 seconds).mapTo[Response]
-        }
-      }
+    case getItem: GetItem  => {
+      println("getitem " + getItem.key)
+    }
+    case GetAllItem() => {
+      println("getAllItem")
+    }
+    case rem: RemoveItem => {
+      println("removeitem " + rem.key)
+    }
+    case ins: Insert => {
+      println("insert key: " + ins.key + " value: " + ins.value)
     }
   }
-
-  /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-  def receive = runRoute(route)
 
 }
