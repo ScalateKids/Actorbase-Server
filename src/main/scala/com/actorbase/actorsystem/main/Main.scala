@@ -29,10 +29,10 @@
 package com.actorbase.actorsystem.main
 
 import akka.actor.{Actor, ActorLogging}
-import com.actorbase.actorsystem.storefinder.messages.CreateSk
 import spray.json.DefaultJsonProtocol._
 
 import com.actorbase.actorsystem.storefinder.Storefinder
+import com.actorbase.actorsystem.storefinder.messages._
 
 /**
   * Insert description here
@@ -74,7 +74,12 @@ class Main extends Actor with ActorLogging {
 
     case Testsk =>{
       val sf = context.actorOf(Storefinder.props())
-      sf ! CreateSk
+      sf ! Init
+      sf ! GetItem("")
+      sf ! GetItem("test")
+      sf ! Insert("chiave", "valore")
+      sf ! RemoveItem("rimuovi")
+      sf ! DuplicateRequest
       sender ! Response("test successful")
     }
 

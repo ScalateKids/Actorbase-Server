@@ -30,4 +30,12 @@
 
 package com.actorbase.actorsystem.storefinder.messages
 
-case class CreateSk()
+case class Init()
+
+case class DuplicateRequest()
+
+case class GetItem(key: String)
+
+case class RemoveItem(key: String)
+
+case class Insert(key: String, value: String)

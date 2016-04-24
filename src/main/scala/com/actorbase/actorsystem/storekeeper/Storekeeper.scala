@@ -39,13 +39,13 @@ object Storekeeper {
 class Storekeeper extends Actor with ActorLogging{
 
   def receive = {
-    case Init() => {
+    case Init => {
       println("init")
     }
     case getItem: GetItem  => {
       println("getitem " + getItem.key)
     }
-    case GetAllItem() => {
+    case GetAllItem => {
       println("getAllItem")
     }
     case rem: RemoveItem => {

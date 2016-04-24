@@ -30,12 +30,11 @@
 package com.actorbase.actorsystem.restclientactor
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
-import com.actorbase.actorsystem.storefinder.messages.CreateSk
-import spray.can.Http
+//import spray.can.Http     intellij dice che sono inutili, provo a commentare
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
-import akka.util.Timeout
+//import akka.util.Timeout  intellij dice che sono inutili, provo a commentare
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

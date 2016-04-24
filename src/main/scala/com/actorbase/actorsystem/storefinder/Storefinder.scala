@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -34,7 +35,8 @@ import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.Props
 
-import com.actorbase.actorsystem.storefinder.messages._
+import com.actorbase.actorsystem.storefinder.messages.DuplicateRequest
+import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 
 object Storefinder {
@@ -44,13 +46,39 @@ object Storefinder {
 class Storefinder extends Actor with ActorLogging{
 
   def receive = {
-    case CreateSk => {
+    case com.actorbase.actorsystem.storefinder.messages.Init => {
+      println("SF: init")
       val sk = context.actorOf(Storekeeper.props())
-      sk ! com.actorbase.actorsystem.storekeeper.messages.Init()
-      sk ! com.actorbase.actorsystem.storekeeper.messages.Insert("lol", "lel")
-      sk ! com.actorbase.actorsystem.storekeeper.messages.GetAllItem()
-      sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem("lol")
-      sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem("lel")
+      sk ! com.actorbase.actorsystem.storekeeper.messages.Init
+    }
+
+    case DuplicateRequest => {  //cambiare nome in DuplicateNotify o qualcosa del genere?
+      val sk = context.actorOf(Storekeeper.props())
+      println("uno storekeeper è stato sdoppiato (not really but still, that's the idea)")
+    }
+
+    case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
+      println("SF: insert")
+      val sk = context.actorOf(Storekeeper.props())
+      sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+    }
+
+    case get: com.actorbase.actorsystem.storefinder.messages.GetItem => {
+      val sk = context.actorOf(Storekeeper.props())
+      if(get.key == "") {
+        println("SF: get all storekeeper")
+        sk.!(GetAllItem)
+      }
+      else {
+        println("SF: get one item")
+        sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
+      }
+    }
+
+    case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem => {
+      println("SF: remove")
+      val sk = context.actorOf(Storekeeper.props())
+      sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
     }
   }
 
