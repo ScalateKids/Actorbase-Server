@@ -21,24 +21,12 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
 
 package com.actorbase.actorsystem.restclientactor
-
-import akka.actor.{Actor, ActorLogging, ActorRef}
-import spray.httpx.SprayJsonSupport._
-import spray.routing._
-import akka.pattern.ask
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-
-import com.actorbase.actorsystem.main.Main.Response
-import com.actorbase.actorsystem.main.Main.Testsk
 
 /**
   * Insert description here
@@ -47,36 +35,27 @@ import com.actorbase.actorsystem.main.Main.Testsk
   * @return
   * @throws
   */
-class RestClientActor(main: ActorRef) extends Actor
-    with HttpServiceBase with ActorLogging with Authenticator {
+object UserApi {
 
-  val route: Route = {
-    path("actorbase" / "\\S+".r) { resource =>
-      get {
-        complete {
-          log.info(s"Request for $resource")
-          main.ask(resource)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    //test route for sf and sk
-    path("testStorefinder"){
-      get {
-        complete {
-          log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsk)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    // private area
-    pathPrefix("private") {
-      authenticate(basicUserAuthenticator) { authInfo =>
-        // only authenticated users can enter here
-        get {
-          complete(s"Private area: hi ${authInfo.user.login}")
-        }
-      }
-    }
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case class User(login: String, hashedPassword: Option[String] = None) {
+
+    /**
+      * Basic password matching, will be implemented at least with
+      * bcrypt for hashing the password
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    def passwordMatches(password: String): Boolean = hashedPassword.get == password
+
   }
 
   /**
@@ -86,6 +65,26 @@ class RestClientActor(main: ActorRef) extends Actor
     * @return
     * @throws
     */
-  def receive = runRoute(route)
+  case object User {
+
+    /**
+      * Mock password retrieving, will send a message to the Main
+      * actor and get the real password from the Userkeeper
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    def apply(login: String): User = new User(login, Some("pass"))
+  }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case class AuthInfo(val user: User)
 
 }

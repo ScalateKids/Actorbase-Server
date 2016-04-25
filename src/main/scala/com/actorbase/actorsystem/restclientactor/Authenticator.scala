@@ -21,7 +21,6 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -29,16 +28,13 @@
 
 package com.actorbase.actorsystem.restclientactor
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
-import spray.httpx.SprayJsonSupport._
-import spray.routing._
-import akka.pattern.ask
+import spray.routing.authentication.BasicAuth
+import spray.routing.authentication.UserPass
+import spray.routing.directives.AuthMagnet
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-
-import com.actorbase.actorsystem.main.Main.Response
-import com.actorbase.actorsystem.main.Main.Testsk
+import com.actorbase.actorsystem.restclientactor.UserApi.{User, AuthInfo}
 
 /**
   * Insert description here
@@ -47,37 +43,7 @@ import com.actorbase.actorsystem.main.Main.Testsk
   * @return
   * @throws
   */
-class RestClientActor(main: ActorRef) extends Actor
-    with HttpServiceBase with ActorLogging with Authenticator {
-
-  val route: Route = {
-    path("actorbase" / "\\S+".r) { resource =>
-      get {
-        complete {
-          log.info(s"Request for $resource")
-          main.ask(resource)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    //test route for sf and sk
-    path("testStorefinder"){
-      get {
-        complete {
-          log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsk)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    // private area
-    pathPrefix("private") {
-      authenticate(basicUserAuthenticator) { authInfo =>
-        // only authenticated users can enter here
-        get {
-          complete(s"Private area: hi ${authInfo.user.login}")
-        }
-      }
-    }
-  }
+trait Authenticator {
 
   /**
     * Insert description here
@@ -86,6 +52,32 @@ class RestClientActor(main: ActorRef) extends Actor
     * @return
     * @throws
     */
-  def receive = runRoute(route)
+  def basicUserAuthenticator(implicit ec: ExecutionContext): AuthMagnet[AuthInfo] = {
 
+    /**
+      * Insert description here
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
+      for {
+        p <- userPass
+        user = User(p.user)
+        if user.passwordMatches(p.pass)
+      } yield new AuthInfo(user)
+    }
+
+    /**
+      * Insert description here
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    def authenticator(userPass: Option[UserPass]): Future[Option[AuthInfo]] = Future { validateUser(userPass) }
+
+    BasicAuth(authenticator _, realm = "Private area")
+  }
 }
