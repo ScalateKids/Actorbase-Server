@@ -58,7 +58,7 @@ class RestClientActor(main: ActorRef) extends Actor with  HttpServiceBase with A
           main.ask(resource)(5 seconds).mapTo[Response]
         }
       }
-    }
+    }~
     //test route for sf and sk
     path("testStorefinder".r){ resource =>
       get {
