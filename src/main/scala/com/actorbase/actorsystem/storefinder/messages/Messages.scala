@@ -26,65 +26,16 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.main
+// TEMPORARY
 
-import akka.actor.{Actor, ActorLogging}
-import spray.json.DefaultJsonProtocol._
+package com.actorbase.actorsystem.storefinder.messages
 
-import com.actorbase.actorsystem.storefinder.Storefinder
-import com.actorbase.actorsystem.storefinder.messages._
+case class Init()
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-object Main {
-  case class Response(response: String)
-  case object Response {
-    implicit val goJson = jsonFormat1(Response.apply)
-  }
-  case class Testsk()
-}
+case class DuplicateRequest()
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-class Main extends Actor with ActorLogging {
-  import Main._
+case class GetItem(key: String)
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-  def receive = {
+case class RemoveItem(key: String)
 
-    case resource: String =>
-      log.info(s"$resource request")
-      sender ! Response(resource)
-
-    case Testsk =>{
-      val sf = context.actorOf(Storefinder.props())
-      sf ! Init
-      sf ! GetItem("")
-      sf ! GetItem("test")
-      sf ! Insert("chiave", "valore")
-      sf ! RemoveItem("rimuovi")
-      sf ! DuplicateRequest
-      sender ! Response("test successful")
-    }
-
-    case _ => log.info("Still waiting for an ordination")
-
-  }
-
-}
+case class Insert(key: String, value: String)

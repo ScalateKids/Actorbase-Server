@@ -26,65 +26,34 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.main
+package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Actor, ActorLogging}
-import spray.json.DefaultJsonProtocol._
+import akka.actor.{Props, Actor, ActorLogging}
 
-import com.actorbase.actorsystem.storefinder.Storefinder
-import com.actorbase.actorsystem.storefinder.messages._
+import com.actorbase.actorsystem.storekeeper.messages._
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-object Main {
-  case class Response(response: String)
-  case object Response {
-    implicit val goJson = jsonFormat1(Response.apply)
-  }
-  case class Testsk()
+object Storekeeper {
+  def props() : Props = Props(new Storekeeper())
 }
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-class Main extends Actor with ActorLogging {
-  import Main._
+class Storekeeper extends Actor with ActorLogging{
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
   def receive = {
-
-    case resource: String =>
-      log.info(s"$resource request")
-      sender ! Response(resource)
-
-    case Testsk =>{
-      val sf = context.actorOf(Storefinder.props())
-      sf ! Init
-      sf ! GetItem("")
-      sf ! GetItem("test")
-      sf ! Insert("chiave", "valore")
-      sf ! RemoveItem("rimuovi")
-      sf ! DuplicateRequest
-      sender ! Response("test successful")
+    case Init => {
+      println("init")
     }
-
-    case _ => log.info("Still waiting for an ordination")
-
+    case getItem: GetItem  => {
+      println("getitem " + getItem.key)
+    }
+    case GetAllItem => {
+      println("getAllItem")
+    }
+    case rem: RemoveItem => {
+      println("removeitem " + rem.key)
+    }
+    case ins: Insert => {
+      println("insert key: " + ins.key + " value: " + ins.value)
+    }
   }
 
 }
