@@ -47,11 +47,11 @@ class Storekeeper(private var data: TreeMap[String, Object] = TreeMap[String, Ob
       println("init")
     }
     case getItem: GetItem  => {
-      sender() ! data.get(getItem.key)
+      getItem.client ! data.get(getItem.key)
     }
-    case GetAllItem => {
+    case getAllItem: GetAllItem => {
       val items = data
-      sender() ! items
+      getAllItem.client ! items
     }
     case rem: RemoveItem => {
       data -= rem.key

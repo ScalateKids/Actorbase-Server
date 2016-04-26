@@ -26,7 +26,15 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem.clientactor
+
+import spray.routing.authentication.BasicAuth
+import spray.routing.authentication.UserPass
+import spray.routing.directives.AuthMagnet
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import com.actorbase.actorsystem.clientactor.UserApi.{User, AuthInfo}
 
 /**
   * Insert description here
@@ -35,7 +43,7 @@ package com.actorbase.actorsystem.restclientactor
   * @return
   * @throws
   */
-object UserApi {
+trait Authenticator {
 
   /**
     * Insert description here
@@ -44,47 +52,32 @@ object UserApi {
     * @return
     * @throws
     */
-  case class User(login: String, hashedPassword: Option[String] = None) {
+  def basicUserAuthenticator(implicit ec: ExecutionContext): AuthMagnet[AuthInfo] = {
 
     /**
-      * Basic password matching, will be implemented at least with
-      * bcrypt for hashing the password
+      * Insert description here
       *
       * @param
       * @return
       * @throws
       */
-    def passwordMatches(password: String): Boolean = hashedPassword.get == password
-
-  }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case object User {
+    def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
+      for {
+        p <- userPass
+        user = User(p.user)
+        if user.passwordMatches(p.pass)
+      } yield new AuthInfo(user)
+    }
 
     /**
-      * Mock password retrieving, will send a message to the Main
-      * actor and get the real password from the Userkeeper
+      * Insert description here
       *
       * @param
       * @return
       * @throws
       */
-    def apply(login: String): User = new User(login, Some("pass"))
+    def authenticator(userPass: Option[UserPass]): Future[Option[AuthInfo]] = Future { validateUser(userPass) }
+
+    BasicAuth(authenticator _, realm = "Private area")
   }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case class AuthInfo(val user: User)
-
 }

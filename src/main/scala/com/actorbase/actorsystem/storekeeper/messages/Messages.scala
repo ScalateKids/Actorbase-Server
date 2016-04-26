@@ -28,11 +28,13 @@
 
 package com.actorbase.actorsystem.storekeeper.messages
 
+import akka.actor.ActorRef
+
 case class Init()
 
-case class GetItem(key: String)
+case class GetItem(key: String, client: ActorRef)
 
-case object GetAllItem
+case class GetAllItem(client: ActorRef)
 
 case class Insert(key: String, value: String)
 
