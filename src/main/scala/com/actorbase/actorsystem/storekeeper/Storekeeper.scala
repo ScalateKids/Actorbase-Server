@@ -40,11 +40,11 @@ object Storekeeper {
 
 
 
-class Storekeeper(private var data: TreeMap[String, Object] = TreeMap[String, Object]()) extends Actor with ActorLogging{
+class Storekeeper(private var data: TreeMap[String, Object] = TreeMap[String, Object]()) extends Actor with ActorLogging {
 
   def receive = {
     case Init => {
-      println("init")
+      log.info("init")
     }
     case getItem: GetItem  => {
       getItem.client ! data.get(getItem.key)

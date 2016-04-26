@@ -94,8 +94,6 @@ class Main extends Actor with ActorLogging {
 
     case Login => context.actorOf(Userkeeper.props) ! GetPassword(sender)
 
-    case _ => log.info("Still waiting")
-
     case Testsf => {
       val sf = context.actorOf(Storefinder.props())
       for(i <- 0 to 30){
@@ -107,7 +105,7 @@ class Main extends Actor with ActorLogging {
       sender ! Response("test successful.... Magari")
     }
 
-    case _ => log.info("Still waiting for an ordination")
+    case _ => log.info("Still waiting")
 
   }
 
