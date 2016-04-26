@@ -47,8 +47,16 @@ object Storefinder {
 
 class Storefinder extends Actor with ActorLogging {
 
+  // skMap maps string ranges to the sk reference
   var skMap = new TreeMap[KeyRange, ActorRef]()
 
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
   def receive = {
     case com.actorbase.actorsystem.storefinder.messages.Init => {
       log.info("SF: init")
@@ -61,34 +69,29 @@ class Storefinder extends Actor with ActorLogging {
       log.info("uno storekeeper è stato sdoppiato (not really but still, that's the idea)")
     }
 
+    // INSERT item
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       log.info("SF: insert")
       skMap.size match {
+          // empty TreeMap -> create SK and forward message to him
         case 0 => {
           val sk = context.actorOf(Storekeeper.props())
           skMap += (new KeyRange("aaa","zzz") -> sk)    // questo non va bene se lo SF si crea per sdoppiamentoooooooo
           sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.ref)
         }
-        /*case 1 => {
-         //skMap.get[0] ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
-         }*/
+          // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
         case _ => {
           for ((keyRange, sk) <- skMap){
             //log.info (keyRange.toString())
-            if( keyRange.isInside( ins.key ) )
+            if( keyRange.contains( ins.key ) )
               sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.ref)
           }
         }
       }
-
-      // just for test
-      /*val sk = context.actorOf(Storekeeper.props())
-       sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
-       */ // end test
-
     }
 
-    case get: com.actorbase.actorsystem.storefinder.messages.GetItem => {
+    case get: com.actorbase.actorsystem.storefinder.messages.GetItem => { //TODO implementare diversi tipi di getItem
+      log.info("SF: getItem")
       /*val sk = context.actorOf(Storekeeper.props())
        if(get.key == "") {
        log.info("SF: get all storekeeper")
@@ -98,9 +101,10 @@ class Storefinder extends Actor with ActorLogging {
        log.info("SF: get one item")
        sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
        }*/
+      // search for the right KeyRange to get the ActorRef of the needed SK
       for ((keyRange, sk) <- skMap){
         //log.info (keyRange.toString())
-        if( keyRange.isInside( get.key ) )
+        if( keyRange.contains( get.key ) )
           sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key, get.ref)
       }
     }
@@ -109,9 +113,10 @@ class Storefinder extends Actor with ActorLogging {
       log.info("SF: remove")
       /*val sk = context.actorOf(Storekeeper.props())
        sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)*/
+      // search for the right KeyRange to get the ActorRef of the needed SK
       for ((keyRange, sk) <- skMap){
         //log.info (keyRange.toString())
-        if( keyRange.isInside( rem.key ) )
+        if( keyRange.contains( rem.key ) )
           sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key, rem.ref)
       }
     }
@@ -142,7 +147,7 @@ class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange]{
     maxRange = range
   }
 
-  def isInside(key: String): Boolean = {  // forse si può sostituire togliendo questo e facendo < getMax sullo SF (marculo)
+  def contains(key: String): Boolean = {  // forse si può sostituire togliendo questo e facendo < getMax sullo SF (marculo)
     if(key >= minRange && key <= maxRange)
       return true
     else
