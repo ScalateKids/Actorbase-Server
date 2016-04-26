@@ -32,18 +32,22 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.actor.Actor
+import akka.actor.ActorRef
 import akka.actor.ActorLogging
 import akka.actor.Props
-
 import com.actorbase.actorsystem.storefinder.messages.DuplicateRequest
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
+
+import scala.collection.immutable.TreeMap
 
 object Storefinder {
   def props() : Props = Props(new Storefinder())
 }
 
 class Storefinder extends Actor with ActorLogging{
+
+  var skMap = new TreeMap[KeyRange, ActorRef]()
 
   def receive = {
     case com.actorbase.actorsystem.storefinder.messages.Init => {
@@ -59,12 +63,33 @@ class Storefinder extends Actor with ActorLogging{
 
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       println("SF: insert")
-      val sk = context.actorOf(Storekeeper.props())
+      skMap.size match {
+        case 0 => {
+          val sk = context.actorOf(Storekeeper.props())
+          skMap += (new KeyRange("aaa","zzz") -> sk)    // questo non va bene se lo SF si crea per sdoppiamentoooooooo
+          sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+        }
+        /*case 1 => {
+          //skMap.get[0] ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+        }*/
+        case _ => {
+          for ((keyRange, sk) <- skMap){
+            //println (keyRange.toString())
+            if( keyRange.isInside( ins.key ) )
+              sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+          }
+        }
+      }
+
+      // just for test
+      /*val sk = context.actorOf(Storekeeper.props())
       sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+      */ // end test
+
     }
 
     case get: com.actorbase.actorsystem.storefinder.messages.GetItem => {
-      val sk = context.actorOf(Storekeeper.props())
+      /*val sk = context.actorOf(Storekeeper.props())
       if(get.key == "") {
         println("SF: get all storekeeper")
         sk.!(GetAllItem)
@@ -72,14 +97,78 @@ class Storefinder extends Actor with ActorLogging{
       else {
         println("SF: get one item")
         sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
+      }*/
+      for ((keyRange, sk) <- skMap){
+        //println (keyRange.toString())
+        if( keyRange.isInside( get.key ) )
+          sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
       }
     }
 
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem => {
       println("SF: remove")
-      val sk = context.actorOf(Storekeeper.props())
-      sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
+      /*val sk = context.actorOf(Storekeeper.props())
+      sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)*/
+      for ((keyRange, sk) <- skMap){
+        //println (keyRange.toString())
+        if( keyRange.isInside( rem.key ) )
+          sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
+      }
     }
+
   }
 
+}
+
+
+class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange]{
+
+  private var minRange: String = minR
+  private var maxRange: String = maxR
+
+  def getMinRange: String = {
+    minRange
+  }
+
+  def getMaxRange: String = {
+    maxRange
+  }
+
+  def setMinRange(range: String) = {
+    minRange = range
+  }
+
+  def setMaxRange(range: String) = {
+    maxRange = range
+  }
+
+  def isInside(key: String): Boolean = {  // forse si può sostituire togliendo questo e facendo < getMax sullo SF (marculo)
+    if(key >= minRange && key <= maxRange)
+      return true
+    else
+      return false
+  }
+
+  override def toString: String = {
+    return "from "+ minRange + " to " + maxRange
+  }
+
+  // TODO tutti da fare
+  override def <(range: KeyRange): Boolean = {
+    return true
+  }
+  override def >(range: KeyRange): Boolean = {
+    return true
+  }
+  override def <=(range: KeyRange): Boolean = {
+    return true
+  }
+  override def >=(range: KeyRange): Boolean = {
+    return true
+  }
+  override def compareTo(range: KeyRange): Int = {
+    return 1
+  }
+  override def compare(that: KeyRange): Int =  {
+    return -1 }
 }

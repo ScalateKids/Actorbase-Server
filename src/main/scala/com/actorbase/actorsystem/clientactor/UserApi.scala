@@ -26,7 +26,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem.clientactor
 
 import akka.actor.ActorRef
 import akka.pattern.ask

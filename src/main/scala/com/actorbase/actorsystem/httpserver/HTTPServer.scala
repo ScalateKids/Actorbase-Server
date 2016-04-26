@@ -33,7 +33,7 @@ import akka.io.IO
 import spray.can.Http
 import akka.event.LoggingReceive
 
-import com.actorbase.actorsystem.restclientactor.RestClientActor
+import com.actorbase.actorsystem.clientactor.ClientActor
 import com.actorbase.actorsystem.main.Main
 
 /**
@@ -58,7 +58,7 @@ class HTTPServer(main: ActorRef, listenPort: Int) extends Actor with ActorLoggin
   def receive: Receive = LoggingReceive {
     case _: Http.Connected =>
       val serverConnection = sender()
-      val handler = context.actorOf(Props(new RestClientActor(main)))
+      val handler = context.actorOf(Props(new ClientActor(main)))
       serverConnection ! Http.Register(handler)
   }
 
