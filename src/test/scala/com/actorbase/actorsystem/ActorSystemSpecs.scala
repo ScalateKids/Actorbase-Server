@@ -26,77 +26,29 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem
 
-import akka.actor.ActorRef
-import akka.pattern.ask
-
-import com.actorbase.actorsystem.main.Main.Login
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.Await
+import org.scalatest._
+import org.scalatest.concurrent._
 
 /**
-  * Insert description here
+  * Module containing all specifications for testing driver components.
+  * All types of specifications and tests related to the Driver component
+  * should be added here.
   *
   * @param
   * @return
   * @throws
   */
-object UserApi {
+object ActorSystemSpecs {
 
   /**
-    * Insert description here
+    * Basic unit-testing class with Future capabilities
     *
     * @param
     * @return
     * @throws
     */
-  case class User(login: String, main: ActorRef, hashedPassword: Option[String] = None) {
-
-    /**
-      * Basic password matching, will be implemented at least with
-      * bcrypt for hashing the password
-      *
-      * @param
-      * @return
-      * @throws
-      */
-    def passwordMatches(password: String): Boolean = hashedPassword.get == password
-
-  }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case object User {
-
-    /**
-      * Mock password retrieving, will send a message to the Main
-      * actor and get the real password from the Userkeeper
-      *
-      * @param
-      * @return
-      * @throws
-      */
-    def apply(login: String, main: ActorRef): User = {
-      val password = Await.result(main.ask(Login)(5 seconds).mapTo[Option[String]].map{ pass => pass}, Duration.Inf)
-      new User(login, main, password)
-    }
-  }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case class AuthInfo(val user: User)
+  abstract class ActorSystemUnitSpec extends FlatSpec with Matchers with ScalaFutures
 
 }

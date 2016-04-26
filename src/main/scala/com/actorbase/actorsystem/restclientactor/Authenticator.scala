@@ -28,6 +28,7 @@
 
 package com.actorbase.actorsystem.restclientactor
 
+import akka.actor.ActorRef
 import spray.routing.authentication.BasicAuth
 import spray.routing.authentication.UserPass
 import spray.routing.directives.AuthMagnet
@@ -52,7 +53,7 @@ trait Authenticator {
     * @return
     * @throws
     */
-  def basicUserAuthenticator(implicit ec: ExecutionContext): AuthMagnet[AuthInfo] = {
+  def basicUserAuthenticator(implicit ec: ExecutionContext, main: ActorRef): AuthMagnet[AuthInfo] = {
 
     /**
       * Insert description here
@@ -64,7 +65,7 @@ trait Authenticator {
     def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
       for {
         p <- userPass
-        user = User(p.user)
+        user = User(p.user, main)
         if user.passwordMatches(p.pass)
       } yield new AuthInfo(user)
     }

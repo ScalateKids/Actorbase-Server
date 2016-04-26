@@ -26,77 +26,38 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem.userkeeper
 
-import akka.actor.ActorRef
-import akka.pattern.ask
-
-import com.actorbase.actorsystem.main.Main.Login
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import akka.actor.{ActorSystem, Props}
 import scala.concurrent.duration._
 import scala.concurrent.Await
+import akka.pattern.ask
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
+import com.actorbase.actorsystem.userkeeper.Userkeeper._
 
 /**
-  * Insert description here
+  * Userkeeper specification tests
   *
   * @param
   * @return
   * @throws
   */
-object UserApi {
+class UserkeeperSpec extends ActorSystemUnitSpec {
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case class User(login: String, main: ActorRef, hashedPassword: Option[String] = None) {
+  "An Userkeeper" should "answer" in {
 
-    /**
-      * Basic password matching, will be implemented at least with
-      * bcrypt for hashing the password
-      *
-      * @param
-      * @return
-      * @throws
-      */
-    def passwordMatches(password: String): Boolean = hashedPassword.get == password
+    val system = ActorSystem("UserkeeperSpec")
 
+    val actorRef = system.actorOf(Props(new Userkeeper("user", "pass")))
+
+    actorRef ! AddCollection(true, "ciao")
+
+    val collections = Await.result(actorRef.ask(GetCollections(true))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+
+    collections.size should be(1)
   }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case object User {
-
-    /**
-      * Mock password retrieving, will send a message to the Main
-      * actor and get the real password from the Userkeeper
-      *
-      * @param
-      * @return
-      * @throws
-      */
-    def apply(login: String, main: ActorRef): User = {
-      val password = Await.result(main.ask(Login)(5 seconds).mapTo[Option[String]].map{ pass => pass}, Duration.Inf)
-      new User(login, main, password)
-    }
-  }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case class AuthInfo(val user: User)
 
 }

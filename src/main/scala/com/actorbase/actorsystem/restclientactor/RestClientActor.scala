@@ -34,6 +34,7 @@ import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -49,6 +50,8 @@ import com.actorbase.actorsystem.main.Main.Testsk
   */
 class RestClientActor(main: ActorRef) extends Actor
     with HttpServiceBase with ActorLogging with Authenticator {
+
+  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   val route: Route = {
     path("actorbase" / "\\S+".r) { resource =>
@@ -70,7 +73,7 @@ class RestClientActor(main: ActorRef) extends Actor
     } ~
     // private area
     pathPrefix("private") {
-      authenticate(basicUserAuthenticator) { authInfo =>
+      authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
         // only authenticated users can enter here
         get {
           complete(s"Private area: hi ${authInfo.user.login}")

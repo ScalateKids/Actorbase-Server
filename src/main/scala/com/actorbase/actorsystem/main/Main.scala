@@ -33,6 +33,8 @@ import spray.json.DefaultJsonProtocol._
 
 import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.storefinder.messages._
+import com.actorbase.actorsystem.userkeeper.Userkeeper
+import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
 
 /**
   * Insert description here
@@ -47,6 +49,9 @@ object Main {
     implicit val goJson = jsonFormat1(Response.apply)
   }
   case class Testsk()
+
+  case object Login
+
 }
 
 /**
@@ -60,12 +65,12 @@ class Main extends Actor with ActorLogging {
   import Main._
 
   /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
   def receive = {
 
     case resource: String =>
@@ -83,7 +88,9 @@ class Main extends Actor with ActorLogging {
       sender ! Response("test successful")
     }
 
-    case _ => log.info("Still waiting for an ordination")
+    case Login => context.actorOf(Userkeeper.props) ! GetPassword(sender)
+
+    case _ => log.info("Still waiting")
 
   }
 

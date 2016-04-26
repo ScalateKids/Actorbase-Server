@@ -26,16 +26,28 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem.userkeeper
 
-import akka.actor.ActorRef
-import akka.pattern.ask
+import akka.actor.{Actor, ActorRef, ActorLogging, Props}
+import scala.collection.mutable.ListBuffer
 
-import com.actorbase.actorsystem.main.Main.Login
+object Userkeeper {
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.Await
+  def props() : Props = Props(new Userkeeper("user", "pass"))
+
+  case class GetCollections(read: Boolean)
+
+  case class GetPassword(client: ActorRef)
+
+  case class ChangePassword(newPassword: String)
+
+  case class RemoveCollection(read: Boolean, collection: String)
+
+  case class AddCollection(read: Boolean, collection: String)
+
+  case class BindClient(client: ActorRef)
+
+}
 
 /**
   * Insert description here
@@ -44,7 +56,13 @@ import scala.concurrent.Await
   * @return
   * @throws
   */
-object UserApi {
+class Userkeeper(var username: String = "user", var password: String = "pass") extends Actor with ActorLogging {
+
+  import Userkeeper._
+
+  private var collections: ListBuffer[String] = new ListBuffer[String]
+
+  private var readCollections: ListBuffer[String] = new ListBuffer[String]
 
   /**
     * Insert description here
@@ -53,50 +71,29 @@ object UserApi {
     * @return
     * @throws
     */
-  case class User(login: String, main: ActorRef, hashedPassword: Option[String] = None) {
+  def receive = {
 
-    /**
-      * Basic password matching, will be implemented at least with
-      * bcrypt for hashing the password
-      *
-      * @param
-      * @return
-      * @throws
-      */
-    def passwordMatches(password: String): Boolean = hashedPassword.get == password
+    case GetCollections(read) =>
+      if(read)
+        sender ! readCollections
+      else sender ! collections
+
+    case GetPassword(client) => client ! Some(password)
+
+    case ChangePassword(newPassword) => password = newPassword
+
+    case AddCollection(read, collection) =>
+      if(read)
+        readCollections :+= collection
+      else
+        collections :+= collection
+
+    case RemoveCollection(read, collection) =>
+      if(read)
+        readCollections -= collection
+      else
+        collections -= collection
 
   }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case object User {
-
-    /**
-      * Mock password retrieving, will send a message to the Main
-      * actor and get the real password from the Userkeeper
-      *
-      * @param
-      * @return
-      * @throws
-      */
-    def apply(login: String, main: ActorRef): User = {
-      val password = Await.result(main.ask(Login)(5 seconds).mapTo[Option[String]].map{ pass => pass}, Duration.Inf)
-      new User(login, main, password)
-    }
-  }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case class AuthInfo(val user: User)
 
 }
