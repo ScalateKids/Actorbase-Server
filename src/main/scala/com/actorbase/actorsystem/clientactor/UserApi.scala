@@ -26,15 +26,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.httpserver
-
-import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, Props}
-import akka.io.IO
-import spray.can.Http
-import akka.event.LoggingReceive
-
-import com.actorbase.actorsystem.clientactor.ClientActor
-import com.actorbase.actorsystem.main.Main
+package com.actorbase.actorsystem.clientactor
 
 /**
   * Insert description here
@@ -43,10 +35,7 @@ import com.actorbase.actorsystem.main.Main
   * @return
   * @throws
   */
-class HTTPServer(main: ActorRef, listenPort: Int) extends Actor with ActorLogging {
-
-  implicit val system = context.system
-  IO(Http)(system) ! Http.Bind(self, interface = "127.0.0.1", port = listenPort)
+object UserApi {
 
   /**
     * Insert description here
@@ -55,24 +44,47 @@ class HTTPServer(main: ActorRef, listenPort: Int) extends Actor with ActorLoggin
     * @return
     * @throws
     */
-  def receive: Receive = LoggingReceive {
-    case _: Http.Connected =>
-      val serverConnection = sender()
-      val handler = context.actorOf(Props(new ClientActor(main)))
-      serverConnection ! Http.Register(handler)
+  case class User(login: String, hashedPassword: Option[String] = None) {
+
+    /**
+      * Basic password matching, will be implemented at least with
+      * bcrypt for hashing the password
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    def passwordMatches(password: String): Boolean = hashedPassword.get == password
+
   }
 
-}
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case object User {
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-object HTTPServer extends App {
-  implicit val system = ActorSystem("actorbase")
-  val main = system.actorOf(Props[Main])
-  system.actorOf(Props(new HTTPServer(main, 9999)))
+    /**
+      * Mock password retrieving, will send a message to the Main
+      * actor and get the real password from the Userkeeper
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    def apply(login: String): User = new User(login, Some("pass"))
+  }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case class AuthInfo(val user: User)
+
 }

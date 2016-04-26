@@ -26,58 +26,6 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem.clientactor.messages
 
-import spray.routing.authentication.BasicAuth
-import spray.routing.authentication.UserPass
-import spray.routing.directives.AuthMagnet
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import com.actorbase.actorsystem.restclientactor.UserApi.{User, AuthInfo}
-
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-trait Authenticator {
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def basicUserAuthenticator(implicit ec: ExecutionContext): AuthMagnet[AuthInfo] = {
-
-    /**
-      * Insert description here
-      *
-      * @param
-      * @return
-      * @throws
-      */
-    def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
-      for {
-        p <- userPass
-        user = User(p.user)
-        if user.passwordMatches(p.pass)
-      } yield new AuthInfo(user)
-    }
-
-    /**
-      * Insert description here
-      *
-      * @param
-      * @return
-      * @throws
-      */
-    def authenticator(userPass: Option[UserPass]): Future[Option[AuthInfo]] = Future { validateUser(userPass) }
-
-    BasicAuth(authenticator _, realm = "Private area")
-  }
-}
+case class Response(resp: Object)

@@ -27,7 +27,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.restclientactor
+package com.actorbase.actorsystem.clientactor
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import spray.httpx.SprayJsonSupport._
@@ -37,7 +37,6 @@ import akka.pattern.ask
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.main.Main.Response
 import com.actorbase.actorsystem.main.Main.Testsk
 
 /**
@@ -47,7 +46,7 @@ import com.actorbase.actorsystem.main.Main.Testsk
   * @return
   * @throws
   */
-class RestClientActor(main: ActorRef) extends Actor
+class ClientActor(main: ActorRef) extends Actor
     with HttpServiceBase with ActorLogging with Authenticator {
 
   val route: Route = {
@@ -55,7 +54,7 @@ class RestClientActor(main: ActorRef) extends Actor
       get {
         complete {
           log.info(s"Request for $resource")
-          main.ask(resource)(5 seconds).mapTo[Response]
+          main.ask(resource)(5 seconds).mapTo[com.actorbase.actorsystem.main.Main.Response]
         }
       }
     } ~
@@ -64,7 +63,8 @@ class RestClientActor(main: ActorRef) extends Actor
       get {
         complete {
           log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsk)(5 seconds).mapTo[Response]
+          var l = main.ask(Testsk)(5 seconds).mapTo[com.actorbase.actorsystem.clientactor.messages.Response]
+          println(l.toString)
         }
       }
     } ~
@@ -86,6 +86,8 @@ class RestClientActor(main: ActorRef) extends Actor
     * @return
     * @throws
     */
-  def receive = runRoute(route)
+  def receive = {
+    runRoute(route)
+  }
 
 }
