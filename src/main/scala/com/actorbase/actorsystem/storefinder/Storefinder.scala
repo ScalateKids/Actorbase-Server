@@ -73,13 +73,13 @@ class Storefinder extends Actor with ActorLogging {
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       log.info("SF: insert")
       skMap.size match {
-          // empty TreeMap -> create SK and forward message to him
+        // empty TreeMap -> create SK and forward message to him
         case 0 => {
           val sk = context.actorOf(Storekeeper.props())
           skMap += (new KeyRange("aaa","zzz") -> sk)    // questo non va bene se lo SF si crea per sdoppiamentoooooooo
           sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.ref)
         }
-          // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
+        // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
         case _ => {
           for ((keyRange, sk) <- skMap){
             //log.info (keyRange.toString())
@@ -126,37 +126,23 @@ class Storefinder extends Actor with ActorLogging {
 }
 
 
-class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange]{
+class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
 
   private var minRange: String = minR
   private var maxRange: String = maxR
 
-  def getMinRange: String = {
-    minRange
-  }
+  def getMinRange: String = minRange
 
-  def getMaxRange: String = {
-    maxRange
-  }
+  def getMaxRange: String = maxRange
 
-  def setMinRange(range: String) = {
-    minRange = range
-  }
+  def setMinRange(range: String) = minRange = range
 
-  def setMaxRange(range: String) = {
-    maxRange = range
-  }
+  def setMaxRange(range: String) = maxRange = range
 
-  def contains(key: String): Boolean = {  // forse si può sostituire togliendo questo e facendo < getMax sullo SF (marculo)
-    if(key >= minRange && key <= maxRange)
-      return true
-    else
-      return false
-  }
+  // forse si può sostituire togliendo questo e facendo < getMax sullo SF (marculo)
+  def contains(key: String): Boolean =(key >= minRange && key <= maxRange)
 
-  override def toString: String = {
-    return "from "+ minRange + " to " + maxRange
-  }
+  override def toString: String = "from "+ minRange + " to " + maxRange
 
   // TODO tutti da fare
   override def <(range: KeyRange): Boolean = {
