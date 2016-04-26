@@ -30,12 +30,14 @@
 
 package com.actorbase.actorsystem.storefinder.messages
 
+import akka.actor.ActorRef
+
 case class Init()
 
 case class DuplicateRequest()
 
-case class GetItem(key: String)
+case class GetItem(key: String, ref: ActorRef)
 
-case class RemoveItem(key: String)
+case class RemoveItem(key: String, ref: ActorRef)
 
-case class Insert(key: String, value: String)
+case class Insert(key: String, value: String, ref: ActorRef)

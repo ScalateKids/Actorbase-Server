@@ -39,6 +39,7 @@ import scala.concurrent.duration._
 
 import com.actorbase.actorsystem.main.Main.Response
 import com.actorbase.actorsystem.main.Main.Testsk
+import com.actorbase.actorsystem.main.Main.Testsf
 
 /**
   * Insert description here
@@ -60,11 +61,20 @@ class RestClientActor(main: ActorRef) extends Actor
       }
     } ~
     //test route for sf and sk
-    path("testStorefinder"){
+    path("testStorekeeper"){
       get {
         complete {
           log.info(s"Test storefinder e storekeeper")
           main.ask(Testsk)(5 seconds).mapTo[Response]
+        }
+      }
+    } ~
+    //test route for sf and sk
+    path("testStorefinder"){
+      get {
+        complete {
+          log.info(s"Test storefinder e storekeeper")
+          main.ask(Testsf)(5 seconds).mapTo[Response]
         }
       }
     } ~

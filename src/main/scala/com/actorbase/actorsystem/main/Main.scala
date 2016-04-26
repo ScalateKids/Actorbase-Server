@@ -28,9 +28,8 @@
 
 package com.actorbase.actorsystem.main
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import spray.json.DefaultJsonProtocol._
-
 import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.storefinder.messages._
 
@@ -47,6 +46,7 @@ object Main {
     implicit val goJson = jsonFormat1(Response.apply)
   }
   case class Testsk()
+  case class Testsf(clientRef: ActorRef)
 }
 
 /**
@@ -81,6 +81,17 @@ class Main extends Actor with ActorLogging {
       sf ! RemoveItem("rimuovi")
       sf ! DuplicateRequest
       sender ! Response("test successful")
+    }
+
+    case Testsf => {
+      val sf = context.actorOf(Storefinder.props())
+      for(i <- 0 to 30){
+        sf ! Insert("chiave"+i , "valore"+i)
+      }
+      sf ! GetItem("chiave5", self)
+      sf ! RemoveItem("chiave5", self)
+      sf ! GetItem("chiave5", self)
+      sender ! Response("test successful.... Magari")
     }
 
     case _ => log.info("Still waiting for an ordination")

@@ -74,7 +74,7 @@ class Storefinder extends Actor with ActorLogging{
         }*/
         case _ => {
           for ((keyRange, sk) <- skMap){
-            println (keyRange.toString())
+            //println (keyRange.toString())
             if( keyRange.isInside( ins.key ) )
               sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
           }
@@ -99,7 +99,7 @@ class Storefinder extends Actor with ActorLogging{
         sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
       }*/
       for ((keyRange, sk) <- skMap){
-        println (keyRange.toString())
+        //println (keyRange.toString())
         if( keyRange.isInside( get.key ) )
           sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
       }
@@ -110,11 +110,12 @@ class Storefinder extends Actor with ActorLogging{
       /*val sk = context.actorOf(Storekeeper.props())
       sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)*/
       for ((keyRange, sk) <- skMap){
-        println (keyRange.toString())
+        //println (keyRange.toString())
         if( keyRange.isInside( rem.key ) )
           sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
       }
     }
+
   }
 
 }
