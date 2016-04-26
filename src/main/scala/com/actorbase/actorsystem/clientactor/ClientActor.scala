@@ -38,8 +38,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.main.Main.Testsk
-import com.actorbase.actorsystem.main.Main.Testsf
+import com.actorbase.actorsystem.main.Main.{Testsf, Testsk, Response}
 
 /**
   * Insert description here
@@ -58,7 +57,7 @@ class ClientActor(main: ActorRef) extends Actor
       get {
         complete {
           log.info(s"Request for $resource")
-          main.ask(resource)(5 seconds).mapTo[com.actorbase.actorsystem.main.Main.Response]
+          main.ask(resource)(5 seconds).mapTo[Response]
         }
       }
     } ~
@@ -67,8 +66,7 @@ class ClientActor(main: ActorRef) extends Actor
       get {
         complete {
           log.info(s"Test storefinder e storekeeper")
-          var l = main.ask(Testsk)(5 seconds).mapTo[com.actorbase.actorsystem.clientactor.messages.Response]
-          println(l.toString)
+          main.ask(Testsk)(5 seconds).mapTo[Response]
         }
       }
     } ~
@@ -77,7 +75,7 @@ class ClientActor(main: ActorRef) extends Actor
       get {
         complete {
           log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsf)(5 seconds).mapTo[com.actorbase.actorsystem.clientactor.messages.Response]
+          main.ask(Testsf)(5 seconds).mapTo[Response]
         }
       }
     } ~
