@@ -84,10 +84,10 @@ class Main extends Actor with ActorLogging {
     case Testsk =>{
       val sf = context.actorOf(Storefinder.props())
       sf ! Init
-      sf ! GetItem("", sender())
-      sf ! GetItem("test", sender())
-      sf ! Insert("chiave", "valore", sender())
-      sf ! RemoveItem("rimuovi", sender())
+      sf ! GetItem("", sender)
+      sf ! GetItem("test", sender)
+      sf ! Insert("chiave", "valore", sender)
+      sf ! RemoveItem("rimuovi", sender)
       sf ! DuplicateRequest
       sender ! Response("test successful")
     }
@@ -95,14 +95,13 @@ class Main extends Actor with ActorLogging {
     case Login => context.actorOf(Userkeeper.props) ! GetPassword(sender)
 
     case Testsf => {
-      val sf = context.actorOf(Storefinder.props())
+      val sf = context.actorOf(Storefinder.props)
       for(i <- 0 to 30){
-        sf ! Insert("chiave"+i , "valore"+i, sender())
+        sf ! Insert("chiave"+i , "valore"+i, sender)
       }
-      sf ! GetItem("chiave5", sender())
-      sf ! RemoveItem("chiave5", sender())
-      sf ! GetItem("chiave5", sender())
-      sender ! Response("test successful.... Magari")
+      sf ! GetItem("chiave5", sender)
+      sf ! RemoveItem("chiave5", sender)
+      sf ! GetItem("chiave5", sender)
     }
 
     case _ => log.info("Still waiting")

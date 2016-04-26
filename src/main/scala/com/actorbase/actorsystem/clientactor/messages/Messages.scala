@@ -28,4 +28,10 @@
 
 package com.actorbase.actorsystem.clientactor.messages
 
-case class Response(resp: Object)
+import spray.json.DefaultJsonProtocol._
+
+case class Response(response: String)
+
+case object Response {
+  implicit val goJson = jsonFormat1(Response.apply)
+}

@@ -40,14 +40,14 @@ object Storekeeper {
 
 
 
-class Storekeeper(private var data: TreeMap[String, Object] = TreeMap[String, Object]()) extends Actor with ActorLogging {
+class Storekeeper(private var data: TreeMap[String, Any] = TreeMap[String, Any]()) extends Actor with ActorLogging {
 
   def receive = {
     case Init => {
       log.info("init")
     }
     case getItem: GetItem  => {
-      getItem.client ! data.get(getItem.key)
+      getItem.client ! com.actorbase.actorsystem.main.Main.Response(data.get(getItem.key).getOrElse("None").asInstanceOf[String])
     }
     case getAllItem: GetAllItem => {
       val items = data
@@ -60,8 +60,8 @@ class Storekeeper(private var data: TreeMap[String, Object] = TreeMap[String, Ob
       if(data.size < 50)
         data += (ins.key -> ins.value)
       else
-        {}
-        //duplicate request to manager
+      {}
+      //duplicate request to manager
     }
   }
 

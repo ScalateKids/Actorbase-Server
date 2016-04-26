@@ -60,7 +60,7 @@ class Storefinder extends Actor with ActorLogging {
       val sk = context.actorOf(Storekeeper.props())
       log.info("uno storekeeper è stato sdoppiato (not really but still, that's the idea)")
     }
-      
+
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       log.info("SF: insert")
       skMap.size match {
@@ -70,8 +70,8 @@ class Storefinder extends Actor with ActorLogging {
           sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.ref)
         }
         /*case 1 => {
-          //skMap.get[0] ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
-        }*/
+         //skMap.get[0] ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+         }*/
         case _ => {
           for ((keyRange, sk) <- skMap){
             //log.info (keyRange.toString())
@@ -83,21 +83,21 @@ class Storefinder extends Actor with ActorLogging {
 
       // just for test
       /*val sk = context.actorOf(Storekeeper.props())
-      sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
-      */ // end test
+       sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+       */ // end test
 
     }
 
     case get: com.actorbase.actorsystem.storefinder.messages.GetItem => {
       /*val sk = context.actorOf(Storekeeper.props())
-      if(get.key == "") {
-        log.info("SF: get all storekeeper")
-        sk.!(GetAllItem)
-      }
-      else {
-        log.info("SF: get one item")
-        sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
-      }*/
+       if(get.key == "") {
+       log.info("SF: get all storekeeper")
+       sk.!(GetAllItem)
+       }
+       else {
+       log.info("SF: get one item")
+       sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
+       }*/
       for ((keyRange, sk) <- skMap){
         //log.info (keyRange.toString())
         if( keyRange.isInside( get.key ) )
@@ -108,7 +108,7 @@ class Storefinder extends Actor with ActorLogging {
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem => {
       log.info("SF: remove")
       /*val sk = context.actorOf(Storekeeper.props())
-      sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)*/
+       sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)*/
       for ((keyRange, sk) <- skMap){
         //log.info (keyRange.toString())
         if( keyRange.isInside( rem.key ) )
