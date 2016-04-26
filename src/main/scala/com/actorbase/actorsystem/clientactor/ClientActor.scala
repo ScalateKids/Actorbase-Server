@@ -52,6 +52,17 @@ class ClientActor(main: ActorRef) extends Actor
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
+  /**
+    * HTTP routes mapped to handle CRUD operations, these should be nouns
+    * (not verbs!) e.g.
+    *
+    * GET /collections                       - List all collections
+    * GET /collections/customers             - Retrieve collection customers
+    * POST /collections/customers            - Insert new customer
+    * PUT /collections/customers/aracing     - Update
+    * DELETE /collections/customers/aracing  - Delete key aracing from customers
+    *
+    */
   val route: Route = {
     path("actorbase" / "find" / "\\S+".r) { resource =>
       get {
