@@ -84,10 +84,10 @@ class Main extends Actor with ActorLogging {
     case Testsk =>{
       val sf = context.actorOf(Storefinder.props())
       sf ! Init
-      sf ! GetItem("", self)
-      sf ! GetItem("test", self)
-      sf ! Insert("chiave", "valore", self)
-      sf ! RemoveItem("rimuovi", self)
+      sf ! GetItem("", sender())
+      sf ! GetItem("test", sender())
+      sf ! Insert("chiave", "valore", sender())
+      sf ! RemoveItem("rimuovi", sender())
       sf ! DuplicateRequest
       sender ! Response("test successful")
     }
@@ -97,11 +97,11 @@ class Main extends Actor with ActorLogging {
     case Testsf => {
       val sf = context.actorOf(Storefinder.props())
       for(i <- 0 to 30){
-        sf ! Insert("chiave"+i , "valore"+i, self)
+        sf ! Insert("chiave"+i , "valore"+i, sender())
       }
-      sf ! GetItem("chiave5", self)
-      sf ! RemoveItem("chiave5", self)
-      sf ! GetItem("chiave5", self)
+      sf ! GetItem("chiave5", sender())
+      sf ! RemoveItem("chiave5", sender())
+      sf ! GetItem("chiave5", sender())
       sender ! Response("test successful.... Magari")
     }
 

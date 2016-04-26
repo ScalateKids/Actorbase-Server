@@ -60,7 +60,7 @@ class Storefinder extends Actor with ActorLogging {
       val sk = context.actorOf(Storekeeper.props())
       log.info("uno storekeeper è stato sdoppiato (not really but still, that's the idea)")
     }
-
+      
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       log.info("SF: insert")
       skMap.size match {
