@@ -32,7 +32,7 @@ case class Init()
 
 case class GetItem(key: String)
 
-case class GetAllItem()
+case object GetAllItem
 
 case class Insert(key: String, value: String)
 

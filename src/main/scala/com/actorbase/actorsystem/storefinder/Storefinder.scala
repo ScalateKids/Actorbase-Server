@@ -78,6 +78,7 @@ class Storefinder extends Actor with ActorLogging{
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem => {
       println("SF: remove")
       val sk = context.actorOf(Storekeeper.props())
+      sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(rem.key, "valore")
       sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
     }
   }
