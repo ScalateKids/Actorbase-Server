@@ -38,7 +38,8 @@ import scala.concurrent.Future
 import com.actorbase.actorsystem.clientactor.UserApi.{User, AuthInfo}
 
 /**
-  * Insert description here
+  * Authenticator, mix it with a HttpServiceBase class to give basic
+  * authentication capabilities
   *
   * @param
   * @return
@@ -47,19 +48,22 @@ import com.actorbase.actorsystem.clientactor.UserApi.{User, AuthInfo}
 trait Authenticator {
 
   /**
-    * Insert description here
+    * Basic authentication method
     *
-    * @param
-    * @return
+    * @param ec ExecutionContext
+    * @param main ActorRef representing a reference to the Main actor
+    * @return a BasicAuth uncrypted for a private area
     * @throws
     */
   def basicUserAuthenticator(implicit ec: ExecutionContext, main: ActorRef): AuthMagnet[AuthInfo] = {
 
     /**
-      * Insert description here
+      * Validation method, get an Option[UserPass] reference and test for
+      * a matching password against the one saved into the system
       *
-      * @param
-      * @return
+      * @param userPass Option[UserPass] extract by the method authenticate
+      * @return a reference of Option[AuthInfo] containig the credentials
+      * of the authenticated user
       * @throws
       */
     def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
@@ -71,10 +75,12 @@ trait Authenticator {
     }
 
     /**
-      * Insert description here
+      * Authentication method, call for validateUser and test for a matching
+      * password against the one saved into the system
       *
-      * @param
-      * @return
+      * @param userPass Option[UserPass] extract by the method authenticate
+      * @return a reference to a Future of type AuthInfo containing the
+      * credentials of the authenticated user
       * @throws
       */
     def authenticator(userPass: Option[UserPass]): Future[Option[AuthInfo]] = Future { validateUser(userPass) }

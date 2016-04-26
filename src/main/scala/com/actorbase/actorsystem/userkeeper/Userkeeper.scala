@@ -35,9 +35,9 @@ object Userkeeper {
 
   def props() : Props = Props(new Userkeeper("user", "pass"))
 
-  case class GetCollections(read: Boolean)
+  case object GetPassword
 
-  case class GetPassword(client: ActorRef)
+  case class GetCollections(read: Boolean)
 
   case class ChangePassword(newPassword: String)
 
@@ -61,12 +61,26 @@ class Userkeeper(var username: String = "user", var password: String = "pass")
 
   import Userkeeper._
 
+  /** read-write collections list */
   private var collections: ListBuffer[String] = new ListBuffer[String]
 
+  /** read-only collections list */
   private var readCollections: ListBuffer[String] = new ListBuffer[String]
 
+  /** client ActorRef associated */
+  private var client: ActorRef = _
+
   /**
-    * Insert description here
+    * Receive method of Userkeeper actor, it currently handle 6 message type:
+    *
+    * - GetPassword send associated password to the ClientActor reference who ask for it
+    * - ChangePassword replace the password to a new password
+    * - AddCollection add a new collection to ListBuffer[String] collections or to
+    *   readCollections based on a Boolean flag
+    * - RemoveCollection remove a new collection to ListBuffer[String] collections or to
+    *   readCollections based on a Boolean flag
+    * - BindClient associate an ActorRef representing a ClientActor to the instance of this
+    *   actor
     *
     * @param
     * @return
@@ -79,7 +93,7 @@ class Userkeeper(var username: String = "user", var password: String = "pass")
         sender ! readCollections
       else sender ! collections
 
-    case GetPassword(client) => client ! Some(password)
+    case GetPassword => sender ! Some(password)
 
     case ChangePassword(newPassword) => password = newPassword
 
@@ -94,6 +108,8 @@ class Userkeeper(var username: String = "user", var password: String = "pass")
         readCollections -= collection
       else
         collections -= collection
+
+    case BindClient(assoc) => client = assoc
 
   }
 

@@ -92,7 +92,7 @@ class Main extends Actor with ActorLogging {
       sender ! Response("test successful")
     }
 
-    case Login => context.actorOf(Userkeeper.props) ! GetPassword(sender)
+    case Login => context.actorOf(Userkeeper.props) forward GetPassword
 
     case Testsf => {
       val sf = context.actorOf(Storefinder.props)

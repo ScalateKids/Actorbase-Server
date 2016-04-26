@@ -38,8 +38,13 @@ object Storekeeper {
   def props() : Props = Props(new Storekeeper())
 }
 
-
-
+/**
+  * Insert description here
+  *
+  * @param
+  * @return
+  * @throws
+  */
 class Storekeeper(private var data: TreeMap[String, Any] = TreeMap[String, Any]()) extends Actor with ActorLogging {
 
   def receive = {
