@@ -32,27 +32,31 @@ import akka.actor.{Props, Actor, ActorLogging}
 
 import com.actorbase.actorsystem.storekeeper.messages._
 
+import scala.collection.immutable.TreeMap
+
 object Storekeeper {
   def props() : Props = Props(new Storekeeper())
 }
 
-class Storekeeper extends Actor with ActorLogging{
+
+
+class Storekeeper(private var data: TreeMap[String, Object] = TreeMap[String, Object]()) extends Actor with ActorLogging{
 
   def receive = {
     case Init => {
       println("init")
     }
     case getItem: GetItem  => {
-      println("getitem " + getItem.key)
+      sender() ! data.get(getItem.key)
     }
     case GetAllItem => {
       println("getAllItem")
     }
     case rem: RemoveItem => {
-      println("removeitem " + rem.key)
+      data -= rem.key
     }
     case ins: Insert => {
-      println("insert key: " + ins.key + " value: " + ins.value)
+      data += (ins.key -> ins.value)
     }
   }
 
