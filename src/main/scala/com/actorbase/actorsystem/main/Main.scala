@@ -54,7 +54,7 @@ object Main {
 
   case object Login
 
-  case class Testsf(clientRef: ActorRef)
+  case class Testsf(key: String)
 
 }
 
@@ -94,14 +94,14 @@ class Main extends Actor with ActorLogging {
 
     case Login => context.actorOf(Userkeeper.props) forward GetPassword
 
-    case Testsf => {
+    case Testsf(key: String) => {
       val sf = context.actorOf(Storefinder.props)
       for(i <- 0 to 30){
         sf ! Insert("chiave"+i , "valore"+i, sender)
       }
-      sf ! GetItem("chiave5", sender)
-      sf ! RemoveItem("chiave5", sender)
-      sf ! GetItem("chiave5", sender)
+      //sf ! GetItem("chiave5", sender)
+      //sf ! RemoveItem("chiave5", sender)
+      sf ! GetItem(key , sender)
     }
 
     case _ => log.info("Still waiting")

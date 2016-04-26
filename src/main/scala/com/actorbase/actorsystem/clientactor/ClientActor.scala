@@ -53,6 +53,14 @@ class ClientActor(main: ActorRef) extends Actor
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   val route: Route = {
+    path("actorbase" / "find" / "\\S+".r) { resource =>
+      get {
+        complete {
+          log.info(s"Find for $resource")
+          main.ask(Testsf(resource))(5 seconds).mapTo[Response]
+        }
+      }
+    } ~
     path("actorbase" / "\\S+".r) { resource =>
       get {
         complete {
