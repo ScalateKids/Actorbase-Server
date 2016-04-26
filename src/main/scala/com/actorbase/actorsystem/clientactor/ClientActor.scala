@@ -74,7 +74,7 @@ class ClientActor(main: ActorRef) extends Actor
       get {
         complete {
           log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsf)(5 seconds).mapTo[Response]
+          main.ask(Testsf)(5 seconds).mapTo[com.actorbase.actorsystem.clientactor.messages.Response]
         }
       }
     } ~
