@@ -67,7 +67,7 @@ class Storefinder extends Actor with ActorLogging{
         case 0 => {
           val sk = context.actorOf(Storekeeper.props())
           skMap += (new KeyRange("aaa","zzz") -> sk)    // questo non va bene se lo SF si crea per sdoppiamentoooooooo
-          sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+          sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.ref)
         }
         /*case 1 => {
           //skMap.get[0] ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
@@ -76,7 +76,7 @@ class Storefinder extends Actor with ActorLogging{
           for ((keyRange, sk) <- skMap){
             //println (keyRange.toString())
             if( keyRange.isInside( ins.key ) )
-              sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+              sk ! com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.ref)
           }
         }
       }
@@ -101,7 +101,7 @@ class Storefinder extends Actor with ActorLogging{
       for ((keyRange, sk) <- skMap){
         //println (keyRange.toString())
         if( keyRange.isInside( get.key ) )
-          sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
+          sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key, get.ref)
       }
     }
 
@@ -112,7 +112,7 @@ class Storefinder extends Actor with ActorLogging{
       for ((keyRange, sk) <- skMap){
         //println (keyRange.toString())
         if( keyRange.isInside( rem.key ) )
-          sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
+          sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key, rem.ref)
       }
     }
 
