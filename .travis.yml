@@ -8,8 +8,7 @@ notifications:
                 change
 
 language: scala
-jdk: openjdk7
+jdk: oraclejdk7
 
 scala:
     - 2.11.8
-

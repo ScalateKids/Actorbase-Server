@@ -56,7 +56,8 @@ object Userkeeper {
   * @return
   * @throws
   */
-class Userkeeper(var username: String = "user", var password: String = "pass") extends Actor with ActorLogging {
+class Userkeeper(var username: String = "user", var password: String = "pass")
+    extends Actor with ActorLogging {
 
   import Userkeeper._
 
