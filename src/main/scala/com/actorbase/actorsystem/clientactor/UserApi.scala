@@ -59,8 +59,8 @@ object UserApi {
       * Basic password matching, will be implemented at least with
       * bcrypt for hashing the password
       *
-      * @param
-      * @return
+      * @param password a String representing the password to be tested
+      * @return a Boolean, true if the password matches, false otherwise
       * @throws
       */
     def passwordMatches(password: String): Boolean = hashedPassword.get == password
@@ -80,8 +80,12 @@ object UserApi {
       * Mock password retrieving, will send a message to the Main
       * actor and get the real password from the Userkeeper
       *
-      * @param
-      * @return
+      * @param login a String representing the username of the athenticating
+      * client
+      * @param main an ActorRef pointing to the actor Main, useful to retrieve
+      * the Userkeeper ActorRef and get the password back
+      * @return a reference to User initialized with username and password
+      * retrieved from the Userkeeper
       * @throws
       */
     def apply(login: String, main: ActorRef): User = {

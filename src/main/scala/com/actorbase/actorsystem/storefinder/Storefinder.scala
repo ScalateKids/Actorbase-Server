@@ -140,7 +140,7 @@ class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
   def setMaxRange(range: String) = maxRange = range
 
   // forse si può sostituire togliendo questo e facendo < getMax sullo SF (marculo)
-  def contains(key: String): Boolean =(key >= minRange && key <= maxRange)
+  def contains(key: String): Boolean = (key >= minRange && key <= maxRange)
 
   override def toString: String = "from "+ minRange + " to " + maxRange
 
