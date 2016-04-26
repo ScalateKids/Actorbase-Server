@@ -50,13 +50,18 @@ class Storekeeper(private var data: TreeMap[String, Object] = TreeMap[String, Ob
       sender() ! data.get(getItem.key)
     }
     case GetAllItem => {
-      println("getAllItem")
+      val items = data
+      sender() ! items
     }
     case rem: RemoveItem => {
       data -= rem.key
     }
     case ins: Insert => {
-      data += (ins.key -> ins.value)
+      if(data.size < 50)
+        data += (ins.key -> ins.value)
+      else
+        {}
+        //duplicate request to manager
     }
   }
 
