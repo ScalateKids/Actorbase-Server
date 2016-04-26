@@ -47,17 +47,80 @@ import com.actorbase.actorsystem.userkeeper.Userkeeper._
   */
 class UserkeeperSpec extends ActorSystemUnitSpec {
 
-  "An Userkeeper" should "answer" in {
+  val system = ActorSystem("UserkeeperSpec")
 
-    val system = ActorSystem("UserkeeperSpec")
+  /**
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
+  override def afterAll() : Unit = system.shutdown
+
+  /**
+    * User credentials tests
+    */
+  "Concerning password, an Userkeeper" should {
 
     val actorRef = system.actorOf(Props(new Userkeeper("user", "pass")))
 
-    actorRef ! AddCollection(true, "ciao")
+    "set the password: pass" in {
 
-    val collections = Await.result(actorRef.ask(GetCollections(true))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+      val password = Await.result(actorRef.ask(GetPassword)(5 seconds).mapTo[Option[String]].map{ pass => pass }, Duration.Inf)
+      password.getOrElse("No-Password-Received") should be("pass")
+    }
 
-    collections.size should be(1)
+    "set the password: newPass using ChangePassword" in {
+
+      actorRef ! ChangePassword("newPass")
+      val password = Await.result(actorRef.ask(GetPassword)(5 seconds).mapTo[Option[String]].map{ results => results }, Duration.Inf)
+      password.getOrElse("No-Password-Received") should be("newPass")
+    }
+
+  }
+
+  /**
+    * Read-write permission collections tests
+    */
+  "Adding a read-write collection to an Userkeeper" should {
+
+    val actorRef = system.actorOf(Props(new Userkeeper("user", "pass")))
+
+    "increment the size of the read-write buffer" in {
+
+      actorRef ! AddCollection(true, "collection_1")
+      val collections = Await.result(actorRef.ask(GetCollections(true))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+      collections.size should be(1)
+    }
+
+    "add the collection to the read-write buffer" in {
+
+      actorRef ! AddCollection(true, "collection_2")
+      val collections = Await.result(actorRef.ask(GetCollections(true))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+      collections.contains("collection_2") should be(true)
+    }
+
+  }
+
+  /**
+    * Read-only permission collections tests
+    */
+  "Adding a read-only collection to an Userkeeper" should {
+
+    val actorRef = system.actorOf(Props(new Userkeeper("user", "pass")))
+
+    "increment the size of the read-only buffer" in {
+
+      actorRef ! AddCollection(false, "collection_1")
+      val collections = Await.result(actorRef.ask(GetCollections(false))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+      collections.size should be(1)
+    }
+
+    "add the collection to the read-only buffer" in {
+
+      actorRef ! AddCollection(false, "collection_2")
+      val collections = Await.result(actorRef.ask(GetCollections(false))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+      collections.contains("collection_2") should be(true)
+    }
+
   }
 
 }

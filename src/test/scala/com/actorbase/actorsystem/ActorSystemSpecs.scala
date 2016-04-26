@@ -49,6 +49,6 @@ object ActorSystemSpecs {
     * @return
     * @throws
     */
-  abstract class ActorSystemUnitSpec extends FlatSpec with Matchers with ScalaFutures
+  abstract class ActorSystemUnitSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterAll
 
 }
