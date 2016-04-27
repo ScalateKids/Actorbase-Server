@@ -43,13 +43,15 @@ import com.actorbase.actorsystem.main.Main
   * @return
   * @throws
   */
-class HTTPServer(main: ActorRef, listenPort: Int) extends Actor with ActorLogging {
+class HTTPServer(main: ActorRef, listenPort: Int) extends Actor
+    with ActorLogging with SslConfiguration {
 
   implicit val system = context.system
   IO(Http)(system) ! Http.Bind(self, interface = "127.0.0.1", port = listenPort)
 
   /**
-    * Insert description here
+    * Receive method, handle connection from outside, registering it to a
+    * dedicated actor
     *
     * @param
     * @return
