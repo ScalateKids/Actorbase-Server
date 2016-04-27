@@ -30,15 +30,6 @@
 package com.actorbase.actorsystem.clientactor
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
-import spray.httpx.SprayJsonSupport._
-import spray.routing._
-import akka.pattern.ask
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-
-import com.actorbase.actorsystem.main.Main.{Testsf, Testsk, Response}
 
 /**
   * Insert description here
@@ -47,67 +38,7 @@ import com.actorbase.actorsystem.main.Main.{Testsf, Testsk, Response}
   * @return
   * @throws
   */
-class ClientActor(main: ActorRef) extends Actor
-    with HttpServiceBase with ActorLogging with Authenticator {
-
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-
-  /**
-    * HTTP routes mapped to handle CRUD operations, these should be nouns
-    * (not verbs!) e.g.
-    *
-    * GET /collections                       - List all collections
-    * GET /collections/customers             - Retrieve collection customers
-    * POST /collections/customers            - Insert new customer
-    * PUT /collections/customers/aracing     - Update
-    * DELETE /collections/customers/aracing  - Delete key aracing from customers
-    *
-    */
-  val route: Route = {
-    path("actorbase" / "find" / "\\S+".r) { resource =>
-      get {
-        complete {
-          log.info(s"Find for $resource")
-          main.ask(Testsf(resource))(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    path("actorbase" / "\\S+".r) { resource =>
-      get {
-        complete {
-          log.info(s"Request for $resource")
-          main.ask(resource)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    //test route for sf and sk
-    path("testStorekeeper"){
-      get {
-        complete {
-          log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsk)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    //test route for sf and sk
-    path("testStorefinder"){
-      get {
-        complete {
-          log.info(s"Test storefinder e storekeeper")
-          main.ask(Testsf)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    // private area
-    pathPrefix("private") {
-      authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
-        // only authenticated users can enter here
-        get {
-          complete(s"Private area: hi ${authInfo.user.login}")
-        }
-      }
-    }
-  }
+class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi {
 
   /**
     * Insert description here
@@ -116,8 +47,6 @@ class ClientActor(main: ActorRef) extends Actor
     * @return
     * @throws
     */
-  def receive = {
-    runRoute(route)
-  }
+  def receive = runRoute(route(main))
 
 }
