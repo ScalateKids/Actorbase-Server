@@ -45,7 +45,9 @@ object Storekeeper {
   * @return
   * @throws
   */
-class Storekeeper(private var data: TreeMap[String, Any] = TreeMap[String, Any]()) extends Actor with ActorLogging {
+class Storekeeper() extends Actor with ActorLogging {
+
+  private var data = new TreeMap[String, Any]()
 
   def receive = {
     case Init => {

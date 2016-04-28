@@ -48,7 +48,7 @@ object Storefinder {
 class Storefinder extends Actor with ActorLogging {
 
   // skMap maps string ranges to the sk reference
-  var skMap = new TreeMap[KeyRange, ActorRef]()
+  private var skMap = new TreeMap[KeyRange, ActorRef]()
 
   /**
     * Insert description here
