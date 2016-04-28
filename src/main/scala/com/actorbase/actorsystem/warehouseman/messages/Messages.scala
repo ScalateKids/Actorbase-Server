@@ -21,55 +21,14 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.storekeeper
+package com.actorbase.actorsystem.warehouseman.messages
 
-import akka.actor.{Props, Actor, ActorLogging}
+case class Init()
 
-import com.actorbase.actorsystem.storekeeper.messages._
-
-import scala.collection.immutable.TreeMap
-
-object Storekeeper {
-  def props() : Props = Props(new Storekeeper())
-}
-
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-class Storekeeper() extends Actor with ActorLogging {
-
-  private var data = new TreeMap[String, Any]()
-
-  def receive = {
-    case Init => {
-      log.info("init")
-    }
-    case getItem: GetItem  => {
-      sender ! com.actorbase.actorsystem.main.Main.Response(data.get(getItem.key).getOrElse("None").asInstanceOf[String])
-    }
-    case GetAllItem => {
-      val items = data
-      sender ! items
-    }
-    case rem: RemoveItem => {
-      data -= rem.key
-    }
-    case ins: Insert => {
-      if(data.size < 50)
-        data += (ins.key -> ins.value)
-      else
-        log.info("SK: Must duplicate")
-      //duplicate request to manager
-    }
-  }
-
-}
+case class Save()

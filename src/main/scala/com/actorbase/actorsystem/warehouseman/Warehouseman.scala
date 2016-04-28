@@ -21,54 +21,33 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.storekeeper
+package com.actorbase.actorsystem.warehouseman
 
-import akka.actor.{Props, Actor, ActorLogging}
+import akka.actor.Actor
+import akka.actor.ActorLogging
+import akka.actor.Props
 
-import com.actorbase.actorsystem.storekeeper.messages._
+import com.actorbase.actorsystem.warehouseman.messages._
 
-import scala.collection.immutable.TreeMap
-
-object Storekeeper {
-  def props() : Props = Props(new Storekeeper())
+object Warehouseman {
+  def props() : Props = Props(new Warehouseman())
 }
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-class Storekeeper() extends Actor with ActorLogging {
-
-  private var data = new TreeMap[String, Any]()
+class Warehouseman extends Actor with ActorLogging {
 
   def receive = {
     case Init => {
-      log.info("init")
+      log.info("warehouseman: init")
     }
-    case getItem: GetItem  => {
-      sender ! com.actorbase.actorsystem.main.Main.Response(data.get(getItem.key).getOrElse("None").asInstanceOf[String])
-    }
-    case GetAllItem => {
-      val items = data
-      sender ! items
-    }
-    case rem: RemoveItem => {
-      data -= rem.key
-    }
-    case ins: Insert => {
-      if(data.size < 50)
-        data += (ins.key -> ins.value)
-      else
-        log.info("SK: Must duplicate")
-      //duplicate request to manager
+
+    case Save => {
+      log.info("warehouseman: save")
     }
   }
 
