@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.main.Main.{Testsf, Testsk, Response}
+import com.actorbase.actorsystem.main.Main.{Insert, GetItemFrom, Testsf, Testsk, BinTest, Response}
 
 /**
   * Insert description here
@@ -62,6 +62,65 @@ trait RestApi extends HttpServiceBase with Authenticator {
     *
     */
   def route(main: ActorRef): Route = {
+
+    /**
+      * Collections route, manage all collection related operations, based
+      * on the request received in the form of:
+      *
+      * GET collections/<collection>/<key>
+      * Retrieve value associated to <key> from the collection <collection>
+      *
+      * POST collections/<collection>/<key>
+      * Insert a value associated to <key> into the collection <collection>
+      * contained inside a binary payload
+      *
+      * PUT collections/<collection>/<key>
+      * Update a value associated to <key> into the collection <collection>
+      * contained inside a binary payload
+      *
+      * All routes return a standard marshallable of type Array[Byte]
+      */
+    path("collections" / "\\S+".r / "\\S+".r) { (collection, key) =>
+      get {
+        complete {
+          main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Array[Byte]]
+        }
+      } ~
+      post {
+        decompressRequest() {
+          entity(as[Array[Byte]]) { value =>
+            detach() {
+              complete {
+                main ! Insert(collection, key, value)
+                "Insert complete"
+              }
+            }
+          }
+        }
+      } ~
+      put {
+        decompressRequest() {
+          entity(as[Array[Byte]]) { value =>
+            detach() {
+              complete {
+                main ! Insert(collection, key, value, true)
+                "Update complete"
+              }
+            }
+          }
+        }
+      }
+    } ~
+    /* TEST ROUTES */
+    // bin test
+    path("actorbase" / "binary") {
+      get {
+        complete {
+          main.ask(BinTest)(5 seconds).mapTo[Array[Byte]]
+        }
+      }
+    } ~
+    // test miniotta
     path("actorbase" / "find" / "\\S+".r) { resource =>
       get {
         complete {

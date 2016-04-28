@@ -69,7 +69,17 @@ class Storefinder extends Actor with ActorLogging {
       log.info("uno storekeeper è stato sdoppiato (not really but still, that's the idea)")
     }
 
-    // INSERT item
+
+    /**
+      * Insert message, insert a key/value into a designed collection
+      *
+      * @param key a String representing the new key to be inserted
+      * @param value a Any object type representing the value to be inserted
+      * with associated key, default to Array[Byte] type
+      * @param update a Boolean flag, define the insert behavior (with or without
+      * updating the value)
+      *
+      */
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       log.info("SF: insert")
       skMap.size match {
@@ -77,21 +87,21 @@ class Storefinder extends Actor with ActorLogging {
         case 0 => {
           val sk = context.actorOf(Storekeeper.props())
           skMap += (new KeyRange("aaa","zzz") -> sk)    // questo non va bene se lo SF si crea per sdoppiamentoooooooo
-          sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+          sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
         }
         // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
         case _ => {
           for ((keyRange, sk) <- skMap){
             //log.info (keyRange.toString())
             if( keyRange.contains( ins.key ) )
-              sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value)
+              sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
           }
         }
       }
     }
 
     case get: com.actorbase.actorsystem.storefinder.messages.GetItem => { //TODO implementare diversi tipi di getItem
-      log.info("SF: getItem")
+      log.info(s"SF: getItem of key -> ${get.key}")
       /*val sk = context.actorOf(Storekeeper.props())
        if(get.key == "") {
        log.info("SF: get all storekeeper")

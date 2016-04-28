@@ -52,7 +52,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = TreeMap[String, Any](
       log.info("init")
     }
     case getItem: GetItem  => {
-      sender ! com.actorbase.actorsystem.main.Main.Response(data.get(getItem.key).getOrElse("None").asInstanceOf[String])
+      sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
     }
     case GetAllItem => {
       val items = data
@@ -61,12 +61,29 @@ class Storekeeper(private var data: TreeMap[String, Any] = TreeMap[String, Any](
     case rem: RemoveItem => {
       data -= rem.key
     }
+
+    /**
+      * Insert message, insert a key/value into a designed collection
+      *
+      * @param key a String representing the new key to be inserted
+      * @param value a Any object type representing the value to be inserted
+      * with associated key, default to Array[Byte] type
+      * @param update a Boolean flag, define the insert behavior (with or without
+      * updating the value)
+      *
+      */
     case ins: Insert => {
-      if(data.size < 50)
-        data += (ins.key -> ins.value)
-      else
+      if(data.size < 50) {
+        if(ins.update)
+          data += (ins.key -> ins.value)
+        else if(!ins.update && !data.contains(ins.key))
+          data += (ins.key -> ins.value)
+        else if(!ins.update && data.contains(ins.key))
+          log.info("SK: Duplicate key found, cannot insert")
+      }
+      else {
         log.info("SK: Must duplicate")
-      //duplicate request to manager
+      }
     }
   }
 

@@ -30,10 +30,14 @@ package com.actorbase.actorsystem.main
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import spray.json.DefaultJsonProtocol._
+import scala.collection.immutable.TreeMap
+
 import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
+
+import java.io._
 
 /**
   * Insert description here
@@ -56,6 +60,12 @@ object Main {
 
   case class Testsf(key: String)
 
+  case object BinTest
+
+  case class Insert(collection: String, key: String, value: Any, update: Boolean = false)
+
+  case class GetItemFrom(collection: String, key: String)
+
 }
 
 /**
@@ -68,6 +78,8 @@ object Main {
 class Main extends Actor with ActorLogging {
   import Main._
 
+  private var sfMap = new TreeMap[String, ActorRef]()
+
   /**
     * Insert description here
     *
@@ -77,16 +89,17 @@ class Main extends Actor with ActorLogging {
     */
   def receive = {
 
+    // TEST
     case resource: String =>
       log.info(s"$resource request")
       sender ! Response(resource)
 
-    case Testsk =>{
+    case Testsk => {
       val sf = context.actorOf(Storefinder.props())
       sf ! Init
       sf forward GetItem("")
       sf forward GetItem("test")
-      sf forward Insert("chiave", "valore")
+      sf forward com.actorbase.actorsystem.storefinder.messages.Insert("chiave", "valore")
       sf forward RemoveItem("rimuovi")
       sf ! DuplicateRequest
       sender ! Response("test successful")
@@ -97,12 +110,55 @@ class Main extends Actor with ActorLogging {
     case Testsf(key: String) => {
       val sf = context.actorOf(Storefinder.props)
       for(i <- 0 to 30){
-        sf forward Insert("chiave" + i , "valore" + i)
+        sf forward com.actorbase.actorsystem.storefinder.messages.Insert("chiave" + i , "valore" + i)
       }
       // sf forward GetItem("chiave5")
       sf forward RemoveItem("chiave5")
       sf forward GetItem(key)
     }
+
+    // bin test
+    case BinTest =>
+      val bos = new ByteArrayOutputStream()
+      var out = new ObjectOutputStream(bos)
+      out.writeObject("ciao");
+      val bytes = bos.toByteArray()
+      out.close();
+      bos.close();
+      sender ! bytes
+
+    /**
+      * Insert message, insert a key/value into a designed collection
+      *
+      * @param collection a String representing the collection name
+      * @param key a String representing the new key to be inserted
+      * @param value a Any object type representing the value to be inserted
+      * with associated key, default to Array[Byte] type
+      * @param update a Boolean flag, define the insert behavior (with or without
+      * updating the value)
+      *
+      */
+    case Insert(collection, key, value, update) =>
+      // need controls
+      if(sfMap.contains(collection))
+        sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
+      else {
+        val sf =  context.actorOf(Storefinder.props)
+        sfMap += (collection -> sf)
+        sf forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
+      }
+
+    /**
+      * Get item from collection  message, given a key of type String, retrieve
+      * a value from a specified collection
+      *
+      * @param collection a String representing the collection name
+      * @param key a String representing the new key to be inserted
+      *
+      */
+    case GetItemFrom(collection: String, key: String) =>
+      // need controls
+      sfMap.get(collection).get forward GetItem(key)
 
     case _ => log.info("Still waiting")
 
