@@ -30,6 +30,8 @@ package com.actorbase.actorsystem.manager
 
 import akka.actor.{Props, Actor, ActorLogging}
 
+import com.actorbase.actorsystem.manager.messages._
+
 object Manager {
   def props() : Props = Props(new Manager())
 }
