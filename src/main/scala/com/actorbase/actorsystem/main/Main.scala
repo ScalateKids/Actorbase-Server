@@ -66,6 +66,8 @@ object Main {
 
   case class GetItemFrom(collection: String, key: String)
 
+  case class RemoveItemFrom(collection: String, key: String)
+
 }
 
 /**
@@ -153,12 +155,24 @@ class Main extends Actor with ActorLogging {
       * a value from a specified collection
       *
       * @param collection a String representing the collection name
-      * @param key a String representing the new key to be inserted
+      * @param key a String representing the key to be retrieved
       *
       */
     case GetItemFrom(collection: String, key: String) =>
       // need controls
       sfMap.get(collection).get forward GetItem(key)
+
+    /**
+      * Remove item from collection  message, given a key of type String,
+      * delete key-value pair from a specified collection
+      *
+      * @param collection a String representing the collection name
+      * @param key a String representing the key to be deleted
+      *
+      */
+    case RemoveItemFrom(collection: String, key: String) =>
+      // need controls
+      sfMap.get(collection).get forward RemoveItem(key)
 
     case _ => log.info("Still waiting")
 

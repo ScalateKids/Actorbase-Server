@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.main.Main.{Insert, GetItemFrom, Testsf, Testsk, BinTest, Response}
+import com.actorbase.actorsystem.main.Main._
 
 /**
   * Insert description here
@@ -78,12 +78,21 @@ trait RestApi extends HttpServiceBase with Authenticator {
       * Update a value associated to <key> into the collection <collection>
       * contained inside a binary payload
       *
+      * DELETE collections/<collection>/<key>
+      * remove an item of key <key> from the collection <collection>
+      *
       * All routes return a standard marshallable of type Array[Byte]
       */
     path("collections" / "\\S+".r / "\\S+".r) { (collection, key) =>
       get {
         complete {
           main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Array[Byte]]
+        }
+      } ~
+      delete {
+        complete {
+          main ! RemoveItemFrom(collection, key)
+          "Remove complete"
         }
       } ~
       post {
