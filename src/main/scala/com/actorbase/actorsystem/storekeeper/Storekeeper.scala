@@ -52,11 +52,11 @@ class Storekeeper(private var data: TreeMap[String, Any] = TreeMap[String, Any](
       log.info("init")
     }
     case getItem: GetItem  => {
-      getItem.client ! com.actorbase.actorsystem.main.Main.Response(data.get(getItem.key).getOrElse("None").asInstanceOf[String])
+      sender ! com.actorbase.actorsystem.main.Main.Response(data.get(getItem.key).getOrElse("None").asInstanceOf[String])
     }
-    case getAllItem: GetAllItem => {
+    case GetAllItem => {
       val items = data
-      getAllItem.client ! items
+      sender ! items
     }
     case rem: RemoveItem => {
       data -= rem.key
@@ -65,7 +65,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = TreeMap[String, Any](
       if(data.size < 50)
         data += (ins.key -> ins.value)
       else
-      {}
+        log.info("SK: Must duplicate")
       //duplicate request to manager
     }
   }
