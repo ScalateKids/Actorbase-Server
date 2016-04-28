@@ -48,7 +48,11 @@ object Manager {
 class Manager extends Actor with ActorLogging {
 
   def receive = {
-    case DuplicationRequestSK => {}
-    case DuplicationRequestSF => {}
+    case DuplicationRequestSK => {
+      log.info("Duplication request SK")
+    }
+    case DuplicationRequestSF => {
+      log.info("Duplication request SF")
+    }
   }
 }

@@ -29,6 +29,6 @@
 
 package com.actorbase.actorsystem.warehouseman.messages
 
-case class Init()
+case class Init() //class because it will have parameters
 
-case class Save()
+case class Save() //class because it will have parameters
