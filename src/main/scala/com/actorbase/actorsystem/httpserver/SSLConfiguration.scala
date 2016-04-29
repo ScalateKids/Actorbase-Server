@@ -47,8 +47,9 @@ trait SslConfiguration {
     *
     */
   implicit def sslContext: SSLContext = {
-
-    val keyStoreResource = "actorbasejks.jks"
+    // java.lang.System.setProperty(
+    //   "sun.security.ssl.allowUnsafeRenegotiation", "true");
+    val keyStoreResource = "actorbase-server-jks.jks"
     val password = "abcdefg"
 
     val keyStore = KeyStore.getInstance("JKS")
@@ -61,7 +62,6 @@ trait SslConfiguration {
     val trustManagerFactory = TrustManagerFactory.getInstance("SunX509")
     trustManagerFactory.init(keyStore)
     val context = SSLContext.getInstance("TLS")
-    // System.setProperty("https.protocols", "TLSv1");
     context.init(keyManagerFactory.getKeyManagers, trustManagerFactory.getTrustManagers, new SecureRandom)
     context
   }
@@ -75,7 +75,7 @@ trait SslConfiguration {
   implicit def sslEngineProvider: ServerSSLEngineProvider = {
     ServerSSLEngineProvider { engine =>
       engine.setEnabledCipherSuites(Array("TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"))
-      engine.setEnabledProtocols(Array("SSLv3", "TLSv1"))
+      engine.setEnabledProtocols(Array("TLSv1.2")) // SSLv3
       engine
     }
   }
