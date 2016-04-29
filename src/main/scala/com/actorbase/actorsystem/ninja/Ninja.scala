@@ -62,6 +62,7 @@ class Ninja() extends Actor with ActorLogging {
     // if BecomeSK is received the ninja will change its context and create a new ninja actor
     case BecomeSK => {
       //create new ninja to backup this actor that's about to become a storekeeper
+      log.info("Ninja becomes SK")
       context.become(storage)
     }
   }

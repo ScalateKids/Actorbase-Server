@@ -160,6 +160,14 @@ trait RestApi extends HttpServiceBase with Authenticator {
         }
       }
     } ~
+    //test ninja
+    path("testNinja"){
+      get {
+        complete {
+          main.ask(Testnj)(5 seconds).mapTo[Response]
+        }
+      }
+    } ~
     // private area
     pathPrefix("private") {
       authenticate(basicUserAuthenticator(ec, main)) { authInfo =>

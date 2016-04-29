@@ -36,6 +36,9 @@ import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
+//impor per testing di ninja
+import com.actorbase.actorsystem.ninja.Ninja
+import com.actorbase.actorsystem.ninja.messages._
 
 import java.io._
 
@@ -68,6 +71,8 @@ object Main {
 
   case class RemoveItemFrom(collection: String, key: String)
 
+  case object Testnj
+
 }
 
 /**
@@ -95,7 +100,7 @@ class Main extends Actor with ActorLogging {
     case resource: String =>
       log.info(s"$resource request")
       sender ! Response(resource)
-
+    //test storekeeper
     case Testsk => {
       val sf = context.actorOf(Storefinder.props())
       sf ! Init
@@ -104,6 +109,17 @@ class Main extends Actor with ActorLogging {
       sf forward com.actorbase.actorsystem.storefinder.messages.Insert("chiave", "valore")
       sf forward RemoveItem("rimuovi")
       sf ! DuplicateRequest
+      sender ! Response("test successful")
+    }
+
+    //test ninja
+    case Testnj => {
+      val nj = context.actorOf(Ninja.props())
+      nj ! Init
+      nj ! Update
+      nj ! BecomeSK
+      nj ! com.actorbase.actorsystem.storekeeper.messages.Init
+      nj ! Update
       sender ! Response("test successful")
     }
 
