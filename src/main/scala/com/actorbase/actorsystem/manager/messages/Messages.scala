@@ -28,8 +28,8 @@
 
 package com.actorbase.actorsystem.manager.messages
 
-import akka.actor.ActorRef
+import scala.collection.immutable.TreeMap
 
-case class DuplicationRequestSK()
+case class DuplicationRequestSK(map: TreeMap[String, Any])
 
 case class DuplicationRequestSF()

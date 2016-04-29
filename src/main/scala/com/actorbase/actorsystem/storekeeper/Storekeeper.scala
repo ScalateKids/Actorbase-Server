@@ -30,6 +30,8 @@ package com.actorbase.actorsystem.storekeeper
 
 import akka.actor.{Props, Actor, ActorLogging}
 
+import com.actorbase.actorsystem.manager.Manager
+import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
 import com.actorbase.actorsystem.storekeeper.messages._
 
 import scala.collection.immutable.TreeMap
@@ -45,9 +47,7 @@ object Storekeeper {
   * @return
   * @throws
   */
-class Storekeeper() extends Actor with ActorLogging {
-
-  private var data = new TreeMap[String, Any]()
+class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any]()) extends Actor with ActorLogging {
 
   def receive = {
     case Init => {
@@ -85,6 +85,22 @@ class Storekeeper() extends Actor with ActorLogging {
       }
       else {
         log.info("SK: Must duplicate")
+        // ugly as fuck, to be improved
+        var (halfLeft, halfRight) = data.splitAt(25)
+        // save first and last key from halved collection
+        var firstKey = halfRight.firstKey
+        var lastKey = halfLeft.lastKey
+        // save first and last value associated with first and last key
+        val firstValue = halfRight.get(firstKey)
+        val lastValue = halfRight.get(lastKey)
+        // update first and last key
+        halfRight -= firstKey
+        halfLeft -= lastKey
+        halfLeft += (lastKey + "a" -> lastValue)
+        halfRight += (firstKey + "b" -> firstValue)
+        // update data and call for manager
+        data = halfLeft
+        context.actorOf(Props[Manager]) ! DuplicationRequestSK(halfRight)
       }
     }
   }

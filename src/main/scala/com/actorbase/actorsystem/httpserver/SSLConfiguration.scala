@@ -49,8 +49,8 @@ trait SslConfiguration {
   implicit def sslContext: SSLContext = {
     // java.lang.System.setProperty(
     //   "sun.security.ssl.allowUnsafeRenegotiation", "true");
-    val keyStoreResource = "actorbase-server-jks.jks"
-    val password = "abcdefg"
+    val keyStoreResource = "actorbase.com.jks"
+    val password = "vhjMYi9NRV"
 
     val keyStore = KeyStore.getInstance("JKS")
     val in = getClass.getClassLoader.getResourceAsStream(keyStoreResource)
@@ -74,8 +74,9 @@ trait SslConfiguration {
     */
   implicit def sslEngineProvider: ServerSSLEngineProvider = {
     ServerSSLEngineProvider { engine =>
-      engine.setEnabledCipherSuites(Array("TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"))
-      engine.setEnabledProtocols(Array("TLSv1.2")) // SSLv3
+      // engine.setEnabledCipherSuites(Array("TLS_RSA_WITH_AES_256_CBC_SHA"))
+      // engine.setEnabledCipherSuites(Array("TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_128_GCM_SHA256", "TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_RSA_WITH_AES_128_CBC_SHA", "SSL_RSA_WITH_3DES_EDE_CBC_SHA"))
+      engine.setEnabledProtocols(Array("TLSv1", "TLSv1.2", "TLSv1.1")) // SSLv3
       engine
     }
   }

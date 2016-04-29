@@ -30,6 +30,7 @@ package com.actorbase.actorsystem.manager
 
 import akka.actor.{Props, Actor, ActorLogging}
 
+import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.manager.messages._
 
 object Manager {
@@ -48,7 +49,9 @@ object Manager {
 class Manager extends Actor with ActorLogging {
 
   def receive = {
-    case DuplicationRequestSK => {
+    case DuplicationRequestSK(map) => {
+      // should notify storefinder with new actorref and update of the keyrange
+      context.actorOf(Props(new Storekeeper(map)))
       log.info("Duplication request SK")
     }
     case DuplicationRequestSF => {
