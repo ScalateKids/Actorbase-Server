@@ -40,6 +40,7 @@ import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 
 import scala.collection.immutable.TreeMap
+import scala.math.Ordered.orderingToOrdered
 
 object Storefinder {
   def props() : Props = Props(new Storefinder())
@@ -102,15 +103,6 @@ class Storefinder extends Actor with ActorLogging {
 
     case get: com.actorbase.actorsystem.storefinder.messages.GetItem => { //TODO implementare diversi tipi di getItem
       log.info(s"SF: getItem of key -> ${get.key}")
-      /*val sk = context.actorOf(Storekeeper.props())
-       if(get.key == "") {
-       log.info("SF: get all storekeeper")
-       sk.!(GetAllItem)
-       }
-       else {
-       log.info("SF: get one item")
-       sk ! com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
-       }*/
       // search for the right KeyRange to get the ActorRef of the needed SK
       for ((keyRange, sk) <- skMap){
         //log.info (keyRange.toString())
@@ -119,10 +111,15 @@ class Storefinder extends Actor with ActorLogging {
       }
     }
 
+    case com.actorbase.actorsystem.storefinder.messages.GetAllItem => {
+      log.info("SF: getallitem")
+      for ((keyRange, sk) <- skMap){
+        sk forward com.actorbase.actorsystem.storekeeper.messages.GetAllItem
+      }
+    }
+
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem => {
       log.info("SF: remove")
-      /*val sk = context.actorOf(Storekeeper.props())
-       sk ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)*/
       // search for the right KeyRange to get the ActorRef of the needed SK
       for ((keyRange, sk) <- skMap){
         //log.info (keyRange.toString())
@@ -137,7 +134,7 @@ class Storefinder extends Actor with ActorLogging {
 
 
 class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
-
+//valutare se tenere così o mettere val e cambiare keyrange quando ci sono gli sdoppiamenti
   private var minRange: String = minR
   private var maxRange: String = maxR
 
@@ -149,27 +146,11 @@ class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
 
   def setMaxRange(range: String) = maxRange = range
 
-  // forse si può sostituire togliendo questo e facendo < getMax sullo SF (marculo)
+  // forse si può sostituire togliendo questo e facendo < getMax sullo SF (alby culalby)
   def contains(key: String): Boolean = (key >= minRange && key <= maxRange)
 
   override def toString: String = "from "+ minRange + " to " + maxRange
 
-  // TODO tutti da fare
-  override def <(range: KeyRange): Boolean = {
-    return true
-  }
-  override def >(range: KeyRange): Boolean = {
-    return true
-  }
-  override def <=(range: KeyRange): Boolean = {
-    return true
-  }
-  override def >=(range: KeyRange): Boolean = {
-    return true
-  }
-  override def compareTo(range: KeyRange): Int = {
-    return 1
-  }
-  override def compare(that: KeyRange): Int =  {
-    return -1 }
+  //metodo trovato sull'internetto, da testare approfonditamente
+  override def compare(that: KeyRange): Int = (this.minRange, this.maxRange) compare (that.minRange, that.maxRange)
 }

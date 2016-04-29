@@ -38,6 +38,8 @@ case class DuplicateRequest()
 
 case class GetItem(key: String)
 
+case object GetAllItem
+
 case class RemoveItem(key: String)
 
 case class Insert(key: String, value: Any, update: Boolean = false)
