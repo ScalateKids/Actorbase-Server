@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -30,7 +31,6 @@ package com.actorbase.actorsystem.ninja
 
 import akka.actor.{ActorRef, Props, ActorLogging, Actor}
 import com.actorbase.actorsystem.ninja.messages._
-import com.actorbase.actorsystem.storefinder.KeyRange
 import com.actorbase.actorsystem.storekeeper.messages._
 
 import scala.collection.immutable.TreeMap
@@ -52,21 +52,27 @@ class Ninja() extends Actor with ActorLogging {
   // skMap maps string ranges to the sk reference
   private var data = new TreeMap[String, Any]()
 
-  def receive = {
-    case Update => { //copia da storekeeper
+  def receive = backup
+
+  def backup: Receive = {
+    case Update => {
+      //copia da storekeeper
       log.info("Ninja: update")
     }
-
-    case BecomeSK => { //diventa storekeeper
-
+    // if BecomeSK is received the ninja will change its context and create a new ninja actor
+    case BecomeSK => {
+      //create new ninja to backup this actor that's about to become a storekeeper
+      context.become(storage)
     }
+  }
 /*
- da qui in poi sono messaggi che riceve sempre o solo se diventa sk?
+ when this actor becomes a storekeeper it can receive the classic storekeeper messages
  */
+  def storage: Receive = {
     case Init => {
       log.info("init")
     }
-    case getItem: GetItem  => {
+    case getItem: GetItem => {
       sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
     }
     case GetAllItem => {
@@ -80,20 +86,20 @@ class Ninja() extends Actor with ActorLogging {
     /**
       * Insert message, insert a key/value into a designed collection
       *
-      * @param key a String representing the new key to be inserted
-      * @param value a Any object type representing the value to be inserted
-      * with associated key, default to Array[Byte] type
+      * @param key    a String representing the new key to be inserted
+      * @param value  a Any object type representing the value to be inserted
+      *               with associated key, default to Array[Byte] type
       * @param update a Boolean flag, define the insert behavior (with or without
-      * updating the value)
+      *               updating the value)
       *
       */
     case ins: Insert => {
-      if(data.size < 50) {
-        if(ins.update)
+      if (data.size < 50) {
+        if (ins.update)
           data += (ins.key -> ins.value)
-        else if(!ins.update && !data.contains(ins.key))
+        else if (!ins.update && !data.contains(ins.key))
           data += (ins.key -> ins.value)
-        else if(!ins.update && data.contains(ins.key))
+        else if (!ins.update && data.contains(ins.key))
           log.info("SK: Duplicate key found, cannot insert")
       }
       else {
