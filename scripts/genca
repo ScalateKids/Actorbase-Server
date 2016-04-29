@@ -1,0 +1,25 @@
+#!/bin/bash
+
+export PW=`cat password`
+
+# Create a self signed key pair root CA certificate.
+keytool -genkeypair -v \
+  -alias actorbaseca \
+  -dname "CN=actorbaseCA, OU=Actorbase-Server, O=ScalateKids, L=Padua, ST=Italy, C=IT" \
+  -keystore actorbaseca.jks \
+  -keypass:env PW \
+  -storepass:env PW \
+  -keyalg RSA \
+  -keysize 2048 \
+  -ext KeyUsage:critical="keyCertSign" \
+  -ext BasicConstraints:critical="ca:true" \
+  -validity 9999
+
+# Export the actorbaseCA public certificate so that it can be used in trust stores..
+keytool -export -v \
+  -alias actorbaseca \
+  -file actorbaseca.crt \
+  -keypass:env PW \
+  -storepass:env PW \
+  -keystore actorbaseca.jks \
+  -rfc
