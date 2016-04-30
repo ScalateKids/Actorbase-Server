@@ -37,6 +37,7 @@ import com.actorbase.actorsystem.storekeeper.messages._
 import scala.collection.immutable.TreeMap
 
 object Storekeeper {
+
   def props() : Props = Props(new Storekeeper())
 }
 
