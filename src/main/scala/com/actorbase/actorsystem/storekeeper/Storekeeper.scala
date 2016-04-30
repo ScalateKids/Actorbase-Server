@@ -34,7 +34,7 @@ import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.clientactor.messages.Response
-import com.actorbase.actorsystem.storefinder.Storefinder.KeyRange
+import com.actorbase.actorsystem.storefinder.KeyRange
 
 import scala.collection.immutable.TreeMap
 
