@@ -30,6 +30,6 @@ package com.actorbase.actorsystem.manager.messages
 
 import scala.collection.immutable.TreeMap
 
-case class DuplicationRequestSK(map: TreeMap[String, Any])
+case class DuplicationRequestSK(map: TreeMap[String, Any], left: KeyRange, right: KeyRange)
 
 case class DuplicationRequestSF()

@@ -85,7 +85,7 @@ object Main {
 class Main extends Actor with ActorLogging {
   import Main._
 
-  private var sfMap = new TreeMap[String, ActorRef]()
+  private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String]
 
   /**
     * Insert description here

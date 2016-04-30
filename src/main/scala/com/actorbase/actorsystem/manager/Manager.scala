@@ -49,8 +49,10 @@ object Manager {
 class Manager extends Actor with ActorLogging {
 
   def receive = {
-    case DuplicationRequestSK(map) => {
+    case DuplicationRequestSK(map, leftRange, rightRange) => {
       // should notify storefinder with new actorref and update of the keyrange
+      // parent ! modifica sf keyrangeleft e right
+      // should create a SK and init him
       context.actorOf(Props(new Storekeeper(map)))
       log.info("Duplication request SK")
     }
