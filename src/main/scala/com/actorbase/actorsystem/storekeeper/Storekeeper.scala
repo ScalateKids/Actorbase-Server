@@ -28,12 +28,13 @@
 
 package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Props, Actor, ActorLogging}
+import akka.actor.{Props, Actor, ActorLogging, ActorRef}
 
 import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.clientactor.messages.Response
+import com.actorbase.actorsystem.storefinder.Storefinder.KeyRange
 
 import scala.collection.immutable.TreeMap
 
@@ -50,7 +51,7 @@ object Storekeeper {
   */
 class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any]()) extends Actor with ActorLogging {
 
-  var manager : Manager
+  var manager : ActorRef
 
   def receive = {
     case Init => {
@@ -116,9 +117,9 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
         // set the treemap to the first half
         data = halfLeft
         // send the request at manager with the treemap, my new keyrange and the keyrange of the new SK
-        manager ! DuplicationRequestSK(halfRight, halfLeftKR, halfRightKR)\
+        manager ! DuplicationRequestSK(halfRight, halfLeftKR, halfRightKR)
       }
-      sender ! Response("inserted")
+      //sender ! Response("inserted")
     }
   }
 
