@@ -34,7 +34,6 @@ import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.clientactor.messages.Response
-import com.actorbase.actorsystem.storefinder.Storefinder.KeyRange
 
 import scala.collection.immutable.TreeMap
 
@@ -51,7 +50,7 @@ object Storekeeper {
   */
 class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any]()) extends Actor with ActorLogging {
 
-  var manager : ActorRef
+  private var manager : ActorRef = _
 
   def receive = {
     case Init => {
@@ -60,8 +59,8 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       this.manager = manager
     }
     case getItem: GetItem  => {
-      //sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
-      sender ! Response(data.get(getItem.key).getOrElse("None").toString())
+      sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
+      //sender ! Response(data.get(getItem.key).getOrElse("None").toString())
     }
     case GetAllItem => {
       val items = data
@@ -111,9 +110,9 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
         // half the collection
         var (halfLeft, halfRight) = data.splitAt(25)
         // create new keyrange to be updated for SF
-        val halfLeftKR = new KeyRange( halfLeft.firstKey, halfLeft.lastKey+"a" )
+        val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.firstKey, halfLeft.lastKey+"a" )
         // create new keyrange for the new storekeeper
-        val halfRightKR = new KeyRange( halfLeft.lastKey+"b", halfRight.lastKey )
+        val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey+"b", halfRight.lastKey )
         // set the treemap to the first half
         data = halfLeft
         // send the request at manager with the treemap, my new keyrange and the keyrange of the new SK
