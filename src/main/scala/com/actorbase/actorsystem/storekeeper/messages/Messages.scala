@@ -32,7 +32,7 @@ import akka.actor.ActorRef
 
 case object GetAllItem
 
-case class Init()
+case class Init(man: ActorRef)
 
 case class GetItem(key: String)
 
