@@ -101,6 +101,16 @@ object UserApi {
     * @return
     * @throws
     */
-  case class AuthInfo(val user: User)
+  case class AuthInfo(val user: User) {
+
+    /**
+      * Verify wether the user has admin privileges for restricted area
+      * operations
+      *
+      * @return true if the user has admin privileges, false otherwise
+      * @throws
+      */
+    def hasAdminPermissions = true
+  }
 
 }

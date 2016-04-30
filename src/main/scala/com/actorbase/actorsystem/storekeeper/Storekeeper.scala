@@ -56,7 +56,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
     case Init => {
       log.info("init")
       // iniialize manager, will be useful when this sk has to duplicate himself
-      manager = man
+      this.manager = manager
     }
     case getItem: GetItem  => {
       //sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]

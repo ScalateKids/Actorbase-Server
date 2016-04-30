@@ -31,13 +31,11 @@
 
 package com.actorbase.actorsystem.storefinder
 
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.ActorLogging
-import akka.actor.Props
+import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 import com.actorbase.actorsystem.storefinder.messages.DuplicateRequest
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
+import com.actorbase.actorsystem.manager.Manager
 
 import scala.collection.immutable.TreeMap
 import scala.math.Ordered.orderingToOrdered
@@ -62,7 +60,7 @@ class Storefinder extends Actor with ActorLogging {
     case com.actorbase.actorsystem.storefinder.messages.Init => {
       log.info("SF: init")
       val sk = context.actorOf(Storekeeper.props())
-      sk ! com.actorbase.actorsystem.storekeeper.messages.Init
+      sk ! com.actorbase.actorsystem.storekeeper.messages.Init(context.actorOf(Props[Manager]))
     }
 
     case DuplicateRequest => {  //cambiare nome in DuplicateNotify o qualcosa del genere?
@@ -134,7 +132,7 @@ class Storefinder extends Actor with ActorLogging {
 
 
 class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
-//valutare se tenere così o mettere val e cambiare keyrange quando ci sono gli sdoppiamenti
+  //valutare se tenere così o mettere val e cambiare keyrange quando ci sono gli sdoppiamenti
   private var minRange: String = minR
   private var maxRange: String = maxR
 
