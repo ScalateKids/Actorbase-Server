@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -84,7 +85,42 @@ trait RestApi extends HttpServiceBase with Authenticator {
       *
       * All routes return a standard marshallable of type Array[Byte]
       */
-    path("collections" / "\\S+".r / "\\S+".r) { (collection, key) =>
+    //path with pathPrefix etc...
+    pathPrefix("collections" / "\\S+".r) { (collection) =>
+      pathEndOrSingleSlash {
+        get {
+          complete {
+            main.ask(GetItemFrom(collection, ""))(5 seconds).mapTo[Array[Byte]]
+          }
+        }
+      } ~
+      pathSuffix("\\S+".r) { (key) =>
+        get {
+          complete {
+            main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Array[Byte]]
+          }
+        } ~
+        delete {
+          complete {
+            main ! RemoveItemFrom(collection, key)
+          }
+        } ~
+        post {
+          decompressRequest() {
+            entity(as[Array[Byte]]) { value =>
+              detach() {
+                complete {
+                  main ! Insert(collection, key, value)
+                }
+              }
+            }
+          }
+        }
+      }
+    } ~
+    /*
+    path without prefix etc. choose one version
+    path("collections" / "\\S+".r / "\\S*".r) { (collection, key) =>
       get {
         complete {
           main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Array[Byte]]
@@ -120,7 +156,8 @@ trait RestApi extends HttpServiceBase with Authenticator {
           }
         }
       }
-    } ~
+    } ~*/
+    //need to add item and user(?) routes
     /* TEST ROUTES */
     // bin test
     path("actorbase" / "binary") {
