@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -174,9 +175,13 @@ class Main extends Actor with ActorLogging {
       * @param key a String representing the key to be retrieved
       *
       */
-    case GetItemFrom(collection: String, key: String) =>
+    case GetItemFrom(collection: String, key: String) => {
       // need controls
-      sfMap.get(collection).get forward GetItem(key)
+      if(key == "")
+        sfMap.get(collection).get forward GetAllItem
+      else
+        sfMap.get(collection).get forward GetItem(key)
+    }
 
     /**
       * Remove item from collection  message, given a key of type String,
