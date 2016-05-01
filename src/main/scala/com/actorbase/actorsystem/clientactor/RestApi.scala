@@ -90,7 +90,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
       pathEndOrSingleSlash {
         get {
           complete {
-            main.ask(GetItemFrom(collection, ""))(5 seconds).mapTo[Array[Byte]]
+            main.ask(GetItemFrom(collection))(5 seconds).mapTo[Response]
           }
         }
       } ~

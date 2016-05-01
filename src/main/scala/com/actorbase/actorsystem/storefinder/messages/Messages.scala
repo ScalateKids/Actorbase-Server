@@ -32,7 +32,7 @@ package com.actorbase.actorsystem.storefinder.messages
 
 import akka.actor.ActorRef
 
-case class Init()
+case class Init(collName: String)
 
 case class DuplicateRequest()
 

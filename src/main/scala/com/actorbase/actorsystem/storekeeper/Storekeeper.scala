@@ -65,7 +65,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
     }
     case GetAllItem => {
       val items = data
-      sender ! items
+      sender ! Response(items.toString) // need marshalling
     }
     case rem: RemoveItem => {
       data -= rem.key

@@ -48,6 +48,8 @@ class Storefinder extends Actor with ActorLogging {
 
   // skMap maps string ranges to the sk reference
   private var skMap = new TreeMap[KeyRange, ActorRef]()
+  // collection name
+  private var collectionName: String = ""
 
   /**
     * Insert description here
@@ -57,8 +59,9 @@ class Storefinder extends Actor with ActorLogging {
     * @throws
     */
   def receive = {
-    case com.actorbase.actorsystem.storefinder.messages.Init => {
+    case com.actorbase.actorsystem.storefinder.messages.Init(name) => {
       log.info("SF: init")
+      collectionName = name
       val sk = context.actorOf(Storekeeper.props())
       sk ! com.actorbase.actorsystem.storekeeper.messages.Init(context.actorOf(Props[Manager]))
     }

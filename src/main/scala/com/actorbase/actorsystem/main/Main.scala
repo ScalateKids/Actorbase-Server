@@ -68,7 +68,7 @@ object Main {
 
   case class Insert(collection: String, key: String, value: Any, update: Boolean = false)
 
-  case class GetItemFrom(collection: String, key: String)
+  case class GetItemFrom(collection: String, key: String = "")
 
   case class RemoveItemFrom(collection: String, key: String)
 
@@ -104,7 +104,7 @@ class Main extends Actor with ActorLogging {
     //test storekeeper
     case Testsk => {
       val sf = context.actorOf(Storefinder.props())
-      sf ! Init
+      sf ! Init("storekeeper-test")
       sf forward GetItem("")
       sf forward GetItem("test")
       sf forward com.actorbase.actorsystem.storefinder.messages.Insert("chiave", "valore")
@@ -116,7 +116,7 @@ class Main extends Actor with ActorLogging {
     //test ninja
     case Testnj => {
       val nj = context.actorOf(Ninja.props())
-      nj ! Init
+      nj ! Init("ninja-test")
       nj ! Update
       nj ! BecomeSK
       nj ! com.actorbase.actorsystem.storekeeper.messages.Init
@@ -175,7 +175,7 @@ class Main extends Actor with ActorLogging {
       * @param key a String representing the key to be retrieved
       *
       */
-    case GetItemFrom(collection: String, key: String) => {
+    case GetItemFrom(collection, key) => {
       // need controls
       if(key == "")
         sfMap.get(collection).get forward GetAllItem
@@ -191,7 +191,7 @@ class Main extends Actor with ActorLogging {
       * @param key a String representing the key to be deleted
       *
       */
-    case RemoveItemFrom(collection: String, key: String) =>
+    case RemoveItemFrom(collection, key) =>
       // need controls
       sfMap.get(collection).get forward RemoveItem(key)
 

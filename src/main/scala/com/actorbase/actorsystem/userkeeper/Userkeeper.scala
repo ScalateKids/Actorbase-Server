@@ -31,6 +31,8 @@ package com.actorbase.actorsystem.userkeeper
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 import scala.collection.mutable.ListBuffer
 
+import java.util.UUID
+
 object Userkeeper {
 
   def props() : Props = Props(new Userkeeper("user", "pass"))
@@ -56,8 +58,9 @@ object Userkeeper {
   * @return
   * @throws
   */
-class Userkeeper(var username: String = "user", var password: String = "pass")
-    extends Actor with ActorLogging {
+class Userkeeper private (var username: String = "user",
+  var password: String = "pass",
+  val uuid: String = UUID.randomUUID.toString) extends Actor with ActorLogging {
 
   import Userkeeper._
 
