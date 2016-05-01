@@ -33,6 +33,9 @@ import akka.pattern.ask
 
 import com.actorbase.actorsystem.main.Main.Login
 
+import com.github.t3hnar.bcrypt._
+import org.mindrot.jbcrypt.BCrypt
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.Await
@@ -63,7 +66,7 @@ object UserApi {
       * @return a Boolean, true if the password matches, false otherwise
       * @throws
       */
-    def passwordMatches(password: String): Boolean = hashedPassword.get == password
+    def passwordMatches(password: String): Boolean = hashedPassword.exists(hash => BCrypt.checkpw(password, hash))
 
   }
 
