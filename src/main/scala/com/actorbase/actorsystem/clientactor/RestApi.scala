@@ -103,6 +103,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
         delete {
           complete {
             main ! RemoveItemFrom(collection, key)
+            "Remove complete"
           }
         } ~
         post {
@@ -111,6 +112,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
               detach() {
                 complete {
                   main ! Insert(collection, key, value)
+                  "Insert complete"
                 }
               }
             }
