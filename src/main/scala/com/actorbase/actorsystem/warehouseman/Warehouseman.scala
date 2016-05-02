@@ -32,6 +32,7 @@ package com.actorbase.actorsystem.warehouseman
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.Props
+import java.io._
 
 import com.actorbase.actorsystem.warehouseman.messages._
 
@@ -48,7 +49,9 @@ class Warehouseman extends Actor with ActorLogging {
 
     case Save(map) => {
       log.info("warehouseman: save")
-
+      val writer = new PrintWriter(new File("database.txt"))
+      writer.write("Ecco il nostro bellissimo database")
+      writer.close()
     }
   }
 
