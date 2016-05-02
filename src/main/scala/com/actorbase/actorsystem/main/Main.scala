@@ -115,7 +115,7 @@ class Main extends Actor with ActorLogging {
       sf forward GetItem("test")
       sf forward com.actorbase.actorsystem.storefinder.messages.Insert("chiave", "valore")
       sf forward RemoveItem("rimuovi")
-      sf ! DuplicateRequest
+      //sf ! DuplicateSKNotify()
       sender ! Response("test successful")
     }
 

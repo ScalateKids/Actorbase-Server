@@ -32,7 +32,7 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
-import com.actorbase.actorsystem.storefinder.messages.DuplicateRequest
+import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.manager.Manager
@@ -50,6 +50,7 @@ class Storefinder extends Actor with ActorLogging {
   private var skMap = new TreeMap[KeyRange, ActorRef]()
   // collection name
   private var collectionName: String = ""
+  private var sfManager: ActorRef = _
 
   /**
     * Insert description here
@@ -62,14 +63,29 @@ class Storefinder extends Actor with ActorLogging {
 
     case com.actorbase.actorsystem.storefinder.messages.Init(name) => {
       log.info("SF: init")
+      // initialize the collection name
       collectionName = name
-      val sk = context.actorOf(Storekeeper.props())
-      sk ! com.actorbase.actorsystem.storekeeper.messages.Init(context.actorOf(Props[Manager]))
+      // create a manager and bind it to this actor, this Ref will be needed by the Storekeepers
+      sfManager = context.actorOf(Props[Manager])
+
+      /*
+       val sk = context.actorOf(Storekeeper.props())
+       // create a Manager and send his Ref to
+       sk ! com.actorbase.actorsystem.storekeeper.messages.Init(context.actorOf(Props[Manager]))
+       */
     }
 
-    case DuplicateRequest => {  // cambiare nome in DuplicateNotify o qualcosa del genere?
-      val sk = context.actorOf(Storekeeper.props())
-      log.info("uno storekeeper è stato sdoppiato (not really but still, that's the idea)")
+    case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {
+      log.info("SF: DuplicateSKNotify")
+      // update skMap due to a SK duplicate happened
+      //scorrere skmap, trovare cosa aggiorare con leftrange
+      // get old sk actorRef
+      val tmpActorRef = skMap.get( oldKeyRange ).get
+      // remove entry associated with that actorRef
+      skMap = skMap - oldKeyRange   // non so se sia meglio così o fare una specie di update key (che non c'è)
+                                    // add the entry with the oldSK and the new one
+      skMap += (leftRange -> tmpActorRef)
+      skMap += (rightRange -> newSk)
     }
 
     /**
@@ -88,7 +104,10 @@ class Storefinder extends Actor with ActorLogging {
         // empty TreeMap -> create SK and forward message to him
         case 0 => {
           val sk = context.actorOf(Storekeeper.props())
-          skMap += (new KeyRange("aaa","zzz") -> sk)    // questo non va bene se lo SF si crea per sdoppiamentoooooooo
+          val kr = new KeyRange("a", "z") // questo non va bene se lo SF si crea per sdoppiamentoooooooo
+          skMap += (kr -> sk)
+          // init the storekeeper passing the manager ref
+          sk ! com.actorbase.actorsystem.storekeeper.messages.Init( sfManager, kr )
           sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
         }
         // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
@@ -134,11 +153,21 @@ class Storefinder extends Actor with ActorLogging {
 }
 
 
+/*object KeyRange{  forse no serve
+ private var id = 0
+ private def inc = {
+ id+= 1
+ id
+ }
+ }*/
 class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
   //valutare se tenere così o mettere val e cambiare keyrange quando ci sono gli sdoppiamenti
   private var minRange: String = minR
   private var maxRange: String = maxR
+  /* private val rangeId = KeyRange.inc
 
+   def getId: Int = rangeId
+   */
   def getMinRange: String = minRange
 
   def getMaxRange: String = maxRange
