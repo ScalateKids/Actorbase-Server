@@ -34,7 +34,7 @@ import com.actorbase.actorsystem.storefinder.KeyRange
 
 import akka.actor.ActorRef
 
-case class Init(collName: String)
+case class Init(collName: String, manager: ActorRef, range: KeyRange)
 
 case class DuplicateSKNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: ActorRef, rightRange: KeyRange)
 

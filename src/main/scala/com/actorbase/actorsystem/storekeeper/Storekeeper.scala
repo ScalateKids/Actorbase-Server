@@ -33,7 +33,7 @@ import akka.actor.{Props, Actor, ActorLogging, ActorRef}
 import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
 import com.actorbase.actorsystem.storekeeper.messages._
-import com.actorbase.actorsystem.clientactor.messages.Response
+import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
 import com.actorbase.actorsystem.storefinder.KeyRange
 
 import scala.collection.immutable.TreeMap
@@ -54,6 +54,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
 
   private var manager : ActorRef = _
   private var range : KeyRange = _
+  private val maxSize: Int = 2  // this should be configurable, probably must read from file
 
   def receive = {
     case Init => {
@@ -62,13 +63,20 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       this.manager = manager
       this.range = range
     }
+
+    /**
+      * GetItem message, will send back a value associated with the input key
+      *
+      * @param key a String representing the key of the item to be returned (sta roba sarà da cambiare)
+      *
+       */
     case getItem: GetItem  => {
       sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
       //sender ! Response(data.get(getItem.key).getOrElse("None").toString())
     }
     case GetAllItem => {
       val items = data
-      sender ! Response(items.toString) // need marshalling
+      sender ! MapResponse("collectionName", items) // need marshalling
     }
     case rem: RemoveItem => {
       data -= rem.key
@@ -86,13 +94,8 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       */
     case ins: Insert => {
       log.info("SK: Insert")
-      if(data.size < 50) {  // 50 should be configurable
-        if(ins.update)
-          data += (ins.key -> ins.value)
-        else if(!ins.update && !data.contains(ins.key))
-          data += (ins.key -> ins.value)
-        else if(!ins.update && data.contains(ins.key))
-          log.info("SK: Duplicate key found, cannot insert")
+      if(data.size < maxSize-1 ) {
+        insertOrUpdate( ins.update, ins.key, ins.value)
       }
       else {
         log.info("SK: Must duplicate")
@@ -112,8 +115,10 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
         halfRight += (firstKey + "b" -> firstValue)
         // update data and call for manager */
 
+        // insert the item, then we will duplicate
+        insertOrUpdate( ins.update, ins.key, ins.value)
         // half the collection
-        var (halfLeft, halfRight) = data.splitAt(25)  // 25 should be maxsize/2
+        var (halfLeft, halfRight) = data.splitAt( maxSize/2 )
         // create new keyrange to be updated for SF
         val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.firstKey, halfLeft.lastKey+"a" )
         // create new keyrange for the new storekeeper
@@ -128,6 +133,15 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       }
       //sender ! Response("inserted")
     }
+  }
+
+  private def insertOrUpdate(update: Boolean, key: String, value: Any): Unit = {
+    if(update)
+      data += (key -> value)
+    else if(!update && !data.contains(key))
+      data += (key -> value)
+    else if(!update && data.contains(key))
+      log.info("SK: Duplicate key found, cannot insert")
   }
 
 }

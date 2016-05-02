@@ -30,6 +30,7 @@ package com.actorbase.actorsystem.manager
 
 import akka.actor.{Props, Actor, ActorLogging, ActorRef}
 
+import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.manager.messages._
 
@@ -63,8 +64,17 @@ class Manager extends Actor with ActorLogging {
       //parent ! modifica sf keyrangeleft e right
       context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSk, rightRange)
     }
-    case DuplicationRequestSF => {
+    case DuplicationRequestSF(oldKeyRange, leftRange, map, rightRange) => {
       log.info("Manager: Duplication request SF")
+      // create a SF with the map received and init him
+      val newSf = context.actorOf(Props(new Storefinder(map)))
+
+      // initialize the new Sk sending self
+      newSf ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
+
+      // should notify storefinder with new actorref and update of the keyrange
+      //parent ! modifica sf keyrangeleft e right
+      context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSf, rightRange)
     }
   }
 }

@@ -3,6 +3,7 @@ target/
 
 *.class
 *.log
+*.iml
 
 # sbt specific
 .cache

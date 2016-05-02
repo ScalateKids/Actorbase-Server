@@ -47,7 +47,7 @@ class Warehouseman extends Actor with ActorLogging {
       log.info("warehouseman: init")
     }
 
-    case Save => {
+    case Save(map) => {
       log.info("warehouseman: save")
       val writer = new PrintWriter(new File("database.txt"))
       writer.write("Ecco il nostro bellissimo database")
