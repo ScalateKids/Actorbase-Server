@@ -28,10 +28,41 @@
 
 package com.actorbase.actorsystem.clientactor.messages
 
+import spray.json._
 import spray.json.DefaultJsonProtocol._
 
 case class Response(response: String)
 
 case object Response {
   implicit val goJson = jsonFormat1(Response.apply)
+}
+
+case class MapResponse(collection: String, map: Map[String, Any])
+
+case object MapResponse {
+  implicit object AnyJsonFormat extends JsonFormat[Any] {
+
+    def write(x: Any) = x match {
+      case n: Int => JsNumber(n)
+      case s: String => JsString(s)
+      case x: Seq[_] => seqFormat[Any].write(x)
+      case m: Map[String, _] => mapFormat[String, Any].write(m)
+      case b: Boolean if b == true => JsTrue
+      case b: Boolean if b == false => JsFalse
+      case a: Array[Byte] => arrayFormat[Byte].write(a)
+      case x => serializationError("Do not understand object of type " + x.getClass.getName)
+    }
+
+    def read(value: JsValue) = value match {
+      case JsNumber(n) => n.intValue()
+      case JsString(s) => s
+      case a: JsArray => listFormat[Any].read(value)
+      case o: JsObject => mapFormat[String, Any].read(value)
+      case JsTrue => true
+      case JsFalse => false
+      case x => deserializationError("Do not understand how to deserialize " + x)
+    }
+
+  }
+  implicit val mapResponseMarshall = jsonFormat2(MapResponse.apply)
 }
