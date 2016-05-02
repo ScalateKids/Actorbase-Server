@@ -37,11 +37,12 @@ import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.userfinder.Userfinder
 import com.actorbase.actorsystem.userfinder.messages._
 import com.actorbase.actorsystem.storefinder.messages._
-import com.actorbase.actorsystem.userkeeper.Userkeeper
-import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
 //impor per testing di ninja
 import com.actorbase.actorsystem.ninja.Ninja
 import com.actorbase.actorsystem.ninja.messages._
+
+import com.github.t3hnar.bcrypt._
+import org.mindrot.jbcrypt.BCrypt
 
 import java.io._
 
@@ -62,7 +63,7 @@ object Main {
 
   case class Testsk()
 
-  case object Login
+  case class Login(username: String)
 
   case class Testsf(key: String)
 
@@ -90,7 +91,7 @@ object Main {
 class Main extends Actor with ActorLogging {
   import Main._
 
-  private val userSf: ActorRef = context.actorOf(Userfinder.props, "userSf")
+  private val ukRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder")
 
   private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String]
 
@@ -130,7 +131,7 @@ class Main extends Actor with ActorLogging {
       sender ! Response("test successful")
     }
 
-    // case Login => context.actorOf(Userkeeper.props) forward GetPassword
+    case Login(username) => ukRef forward GetPasswordOf(username)
 
     case Testsf(key: String) => {
       val sf = context.actorOf(Storefinder.props)
@@ -152,10 +153,20 @@ class Main extends Actor with ActorLogging {
       bos.close();
       sender ! bytes
 
+    /** This message will probably populate username/password after disk read */
     case InitUsers =>
-      userSf ! InsertTo("user", "pass")
-      userSf ! InsertTo("user2", "pass2")
+      ukRef ! InsertTo("user", "pass")
+      ukRef ! InsertTo("user2", "pass2")
 
+    /**
+      * Add a new user sending the username and hashing a password with Blowfish
+      * salt
+      *
+      * @param username a String representing the username of the newly added User
+      * @param password a String representing the associated password to the newly
+      * added User
+      */
+    case AddUser(username, password) => ukRef ! InsertTo(username, password.bcrypt(generateSalt))
     /**
       * Insert message, insert a key/value into a designed collection
       *
