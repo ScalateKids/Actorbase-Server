@@ -125,10 +125,11 @@ class Storekeeper(private var manager: ActorRef,
         // half the collection
         var (halfLeft, halfRight) = data.splitAt( maxSize/2 )
         // create new keyrange to be updated for SF
-        val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.firstKey, halfLeft.lastKey+"a" )
+        val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( range.getMinRange, halfLeft.lastKey+"a" )
         // create new keyrange for the new storekeeper
-        val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey+"b", halfRight.lastKey )
+        val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey+"aa", range.getMaxRange/*halfRight.lastKey*/ )
         // set the treemap to the first half
+        log.info("left key range "+halfLeftKR+" right key range "+halfRightKR)
         data = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
