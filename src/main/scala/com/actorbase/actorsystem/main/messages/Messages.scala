@@ -26,24 +26,11 @@
   * @since 1.0
   */
 
-// TEMPORARY
 
-package com.actorbase.actorsystem.storefinder.messages
-
-import com.actorbase.actorsystem.storefinder.KeyRange
+package com.actorbase.actorsystem.main.messages
 
 import akka.actor.ActorRef
+import com.actorbase.actorsystem.storefinder.KeyRange
 
-case class Init(collName: String, manager: ActorRef, range: KeyRange)
 
-case class DuplicateSKNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: ActorRef, rightRange: KeyRange)
-
-case class GetItem(key: String)
-
-case object GetAllItem
-
-case class RemoveItem(key: String)
-
-case class Insert(key: String, value: Any, update: Boolean = false)
-
-case class InsertUser(key: String, value: Any, update: Boolean = false)
+case class DuplicateSFNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: ActorRef, rightRange: KeyRange)

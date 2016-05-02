@@ -32,6 +32,7 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
+import com.actorbase.actorsystem.manager.messages.DuplicationRequestSF
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
@@ -44,13 +45,13 @@ object Storefinder {
   def props() : Props = Props(new Storefinder())
 }
 
-class Storefinder extends Actor with ActorLogging {
+class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef]()) extends Actor with ActorLogging {
 
   // skMap maps string ranges to the sk reference
-  private var skMap = new TreeMap[KeyRange, ActorRef]()
   // collection name
   private var collectionName: String = ""
   private var sfManager: ActorRef = _
+  private var range: KeyRange = _
 
   /**
     * Insert description here
@@ -61,12 +62,13 @@ class Storefinder extends Actor with ActorLogging {
     */
   def receive = {
 
-    case com.actorbase.actorsystem.storefinder.messages.Init(name) => {
+    case com.actorbase.actorsystem.storefinder.messages.Init(name, manager, range) => {
       log.info("SF: init")
       // initialize the collection name
       collectionName = name
       // create a manager and bind it to this actor, this Ref will be needed by the Storekeepers
-      sfManager = context.actorOf(Props[Manager])
+      sfManager = manager
+      this.range = range
 
       /*
        val sk = context.actorOf(Storekeeper.props())
@@ -80,12 +82,29 @@ class Storefinder extends Actor with ActorLogging {
       // update skMap due to a SK duplicate happened
       //scorrere skmap, trovare cosa aggiorare con leftrange
       // get old sk actorRef
-      val tmpActorRef = skMap.get( oldKeyRange ).get
+      val tmpActorRef = skMap.get(oldKeyRange).get
       // remove entry associated with that actorRef
-      skMap = skMap - oldKeyRange   // non so se sia meglio così o fare una specie di update key (che non c'è)
-                                    // add the entry with the oldSK and the new one
+      skMap = skMap - oldKeyRange // non so se sia meglio così o fare una specie di update key (che non c'è)
+      // add the entry with the oldSK and the new one
       skMap += (leftRange -> tmpActorRef)
       skMap += (rightRange -> newSk)
+      //checks if skmap is at maxSize (will be configurable)
+      if(skMap.size == 50){
+        log.info("SK: Must duplicate")
+        // half the collection
+        var (halfLeft, halfRight) = skMap.splitAt(25)  // 25 should be maxsize/2
+        // create new keyrange to be updated for SF
+        val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange+"a" )
+        // create new keyrange for the new storekeeper
+        val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey.getMinRange+"b", halfRight.lastKey.getMaxRange )
+        // set the treemap to the first half
+        skMap = halfLeft
+        // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
+        // keyrange of the new sk
+        sfManager ! DuplicationRequestSF(range, halfLeftKR, halfRight, halfRightKR)
+        // update keyRangeId or himself
+        range = halfLeftKR
+      }
     }
 
     /**

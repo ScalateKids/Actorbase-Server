@@ -39,6 +39,7 @@ import com.actorbase.actorsystem.userfinder.messages._
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
+import com.actorbase.actorsystem.storefinder.KeyRange
 //impor per testing di ninja
 import com.actorbase.actorsystem.ninja.Ninja
 import com.actorbase.actorsystem.ninja.messages._
@@ -110,7 +111,7 @@ class Main extends Actor with ActorLogging {
     //test storekeeper
     case Testsk => {
       val sf = context.actorOf(Storefinder.props())
-      sf ! Init("storekeeper-test")
+      //sf ! Init("storekeeper-test") commentato se no da errori, l'init dello sf è diverso ora, HAKUNA MATATA ALBERTO è UNA PATATA
       sf forward GetItem("")
       sf forward GetItem("test")
       sf forward com.actorbase.actorsystem.storefinder.messages.Insert("chiave", "valore")
@@ -122,7 +123,7 @@ class Main extends Actor with ActorLogging {
     //test ninja
     case Testnj => {
       val nj = context.actorOf(Ninja.props())
-      nj ! Init("ninja-test")
+      //nj ! Init("ninja-test") commentato se no da errori, l'init dello sf (e quindi del ninja) è diverso ora, HAKUNA MATATA ALBERTO è UNA PATATA
       nj ! Update
       nj ! BecomeSK
       nj ! com.actorbase.actorsystem.storekeeper.messages.Init
