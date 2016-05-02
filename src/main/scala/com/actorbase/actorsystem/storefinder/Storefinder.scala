@@ -123,6 +123,7 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
       */
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       log.info("SF: insert")
+      log.info("storefinder route "+range)
       skMap.size match {
         // empty TreeMap -> create SK and forward message to him
         case 0 => {

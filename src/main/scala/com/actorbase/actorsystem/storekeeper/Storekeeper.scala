@@ -98,6 +98,7 @@ class Storekeeper(private var manager: ActorRef,
       */
     case ins: Insert => {
       log.info("SK: Insert")
+      log.info("storekeeper range "+range)
       if(data.size < maxSize-1 ) {
         insertOrUpdate( ins.update, ins.key, ins.value)
       }
@@ -150,9 +151,11 @@ class Storekeeper(private var manager: ActorRef,
   }
 
   private def logAllItems(): Unit = {
+    var itemslog: String = ""
     for( (key, value) <- data){
-      log.info("key "+key+" -> "+value)
+      itemslog += "key "+key+" -> "+value+" "
     }
+    log.info(itemslog)
   }
 
 }
