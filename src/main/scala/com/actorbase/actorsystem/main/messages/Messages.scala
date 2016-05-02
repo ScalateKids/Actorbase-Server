@@ -21,17 +21,16 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.warehouseman.messages
+
+package com.actorbase.actorsystem.main.messages
 
 import akka.actor.ActorRef
-import scala.collection.immutable.TreeMap
+import com.actorbase.actorsystem.storefinder.KeyRange
 
-case class Init() //class because it will have parameters
 
-case class Save(map: TreeMap[String, Any]) //class because it will have parameters
+case class DuplicateSFNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: ActorRef, rightRange: KeyRange)
