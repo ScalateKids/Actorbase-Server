@@ -29,6 +29,9 @@
 
 package com.actorbase.actorsystem.warehouseman.messages
 
+import akka.actor.ActorRef
+import scala.collection.immutable.TreeMap
+
 case class Init() //class because it will have parameters
 
-case class Save() //class because it will have parameters
+case class Save(map: TreeMap[String, Any]) //class because it will have parameters

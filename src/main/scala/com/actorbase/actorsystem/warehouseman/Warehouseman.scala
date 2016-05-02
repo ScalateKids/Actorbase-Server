@@ -46,8 +46,9 @@ class Warehouseman extends Actor with ActorLogging {
       log.info("warehouseman: init")
     }
 
-    case Save => {
+    case Save(map) => {
       log.info("warehouseman: save")
+
     }
   }
 
