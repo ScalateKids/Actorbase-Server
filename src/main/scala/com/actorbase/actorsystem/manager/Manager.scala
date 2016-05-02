@@ -28,10 +28,12 @@
 
 package com.actorbase.actorsystem.manager
 
-import akka.actor.{Props, Actor, ActorLogging}
+import akka.actor.{Props, Actor, ActorLogging, ActorRef}
 
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.manager.messages._
+
+import scala.collection.immutable.TreeMap
 
 object Manager {
   def props() : Props = Props(new Manager())
@@ -49,15 +51,20 @@ object Manager {
 class Manager extends Actor with ActorLogging {
 
   def receive = {
-    case DuplicationRequestSK(map, leftRange, rightRange) => {
+    case DuplicationRequestSK(oldKeyRange, leftRange, map, rightRange) => {
+      log.info("Manager: Duplication request SK")
+      // create a SK with the map received and init him
+      val newSk = context.actorOf(Props(new Storekeeper(map)))
+
+      // initialize the new Sk sending self
+      newSk ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
+
       // should notify storefinder with new actorref and update of the keyrange
-      // parent ! modifica sf keyrangeleft e right
-      // should create a SK and init him
-      context.actorOf(Props(new Storekeeper(map)))
-      log.info("Duplication request SK")
+      //parent ! modifica sf keyrangeleft e right
+      context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSk, rightRange)
     }
     case DuplicationRequestSF => {
-      log.info("Duplication request SF")
+      log.info("Manager: Duplication request SF")
     }
   }
 }

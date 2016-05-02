@@ -34,6 +34,7 @@ import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.clientactor.messages.Response
+import com.actorbase.actorsystem.storefinder.KeyRange
 
 import scala.collection.immutable.TreeMap
 
@@ -52,12 +53,14 @@ object Storekeeper {
 class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any]()) extends Actor with ActorLogging {
 
   private var manager : ActorRef = _
+  private var range : KeyRange = _
 
   def receive = {
     case Init => {
-      log.info("init")
-      // iniialize manager, will be useful when this sk has to duplicate himself
+      log.info("SK: init")
+      // initialize manager reference, will be useful when this sk has to duplicate himself
       this.manager = manager
+      this.range = range
     }
     case getItem: GetItem  => {
       sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
@@ -82,7 +85,8 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       *
       */
     case ins: Insert => {
-      if(data.size < 50) {
+      log.info("SK: Insert")
+      if(data.size < 50) {  // 50 should be configurable
         if(ins.update)
           data += (ins.key -> ins.value)
         else if(!ins.update && !data.contains(ins.key))
@@ -109,15 +113,18 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
         // update data and call for manager */
 
         // half the collection
-        var (halfLeft, halfRight) = data.splitAt(25)
+        var (halfLeft, halfRight) = data.splitAt(25)  // 25 should be maxsize/2
         // create new keyrange to be updated for SF
         val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.firstKey, halfLeft.lastKey+"a" )
         // create new keyrange for the new storekeeper
         val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey+"b", halfRight.lastKey )
         // set the treemap to the first half
         data = halfLeft
-        // send the request at manager with the treemap, my new keyrange and the keyrange of the new SK
-        manager ! DuplicationRequestSK(halfRight, halfLeftKR, halfRightKR)
+        // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
+        // keyrange of the new sk
+        manager ! DuplicationRequestSK(range, halfLeftKR, halfRight, halfRightKR)
+        // update keyRangeId or himself
+        range = halfLeftKR
       }
       //sender ! Response("inserted")
     }

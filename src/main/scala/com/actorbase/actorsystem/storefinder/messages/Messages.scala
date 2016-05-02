@@ -30,11 +30,13 @@
 
 package com.actorbase.actorsystem.storefinder.messages
 
+import com.actorbase.actorsystem.storefinder.KeyRange
+
 import akka.actor.ActorRef
 
 case class Init(collName: String)
 
-case class DuplicateRequest()
+case class DuplicateSKNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: ActorRef, rightRange: KeyRange)
 
 case class GetItem(key: String)
 

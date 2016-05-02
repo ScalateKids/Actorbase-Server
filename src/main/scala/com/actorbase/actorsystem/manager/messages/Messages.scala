@@ -31,6 +31,6 @@ package com.actorbase.actorsystem.manager.messages
 import scala.collection.immutable.TreeMap
 import com.actorbase.actorsystem.storefinder.KeyRange
 
-case class DuplicationRequestSK(map: TreeMap[String, Any], left: KeyRange, right: KeyRange)
+case class DuplicationRequestSK(oldKeyRange: KeyRange, leftRange: KeyRange, map: TreeMap[String, Any], rightRange: KeyRange)
 
 case class DuplicationRequestSF()
