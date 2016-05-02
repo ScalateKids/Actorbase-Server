@@ -54,7 +54,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
 
   private var manager : ActorRef = _
   private var range : KeyRange = _
-  private val maxSize: Int = 2  // this should be configurable, probably must read from file
+  private val maxSize: Int = 50  // this should be configurable, probably must read from file
 
   def receive = {
     case Init => {
