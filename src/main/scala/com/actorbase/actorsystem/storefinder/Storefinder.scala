@@ -81,7 +81,6 @@ class Storefinder extends Actor with ActorLogging {
       // get old sk actorRef
       val tmpActorRef = skMap.get( oldKeyRange ).get
       // remove entry associated with that actorRef
-      skMap = skMap - oldKeyRange   // non so se sia meglio così o fare una specie di update key (che non c'è)
       // add the entry with the oldSK and the new one
       skMap += (leftRange -> tmpActorRef)
       skMap += (rightRange -> newSk)
