@@ -45,13 +45,20 @@ object Storefinder {
   def props() : Props = Props(new Storefinder())
 }
 
-class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef]()) extends Actor with ActorLogging {
+/**
+  *
+  * @param skMap TreeMap[KeyRange, ActorRef]. This collection represent a map from keyranges to an ActorRef of a
+  *              Storekeeper
+  * @param range String that represent the range of the keys mappable in this storefinder
+  * @param sfManager
+  */
+class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
+                  private var range: KeyRange = new KeyRange("a", "z") ) extends Actor with ActorLogging {
 
-  // skMap maps string ranges to the sk reference
   // collection name
   private var collectionName: String = ""
-  private var sfManager: ActorRef = _
-  private var range: KeyRange = _
+  // initialize his manager
+  private val sfManager: ActorRef = context.actorOf(Manager.props())
 
   /**
     * Insert description here
@@ -62,21 +69,18 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
     */
   def receive = {
 
+    /**
+      *
+      */
     case com.actorbase.actorsystem.storefinder.messages.Init(name, manager, range) => {
       log.info("SF: init")
       // initialize the collection name
       collectionName = name
-      // create a manager and bind it to this actor, this Ref will be needed by the Storekeepers
-      sfManager = manager
-      this.range = range
-
-      /*
-       val sk = context.actorOf(Storekeeper.props())
-       // create a Manager and send his Ref to
-       sk ! com.actorbase.actorsystem.storekeeper.messages.Init(context.actorOf(Props[Manager]))
-       */
     }
 
+    /**
+      *
+      */
     case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {
       log.info("SF: DuplicateSKNotify")
       // update skMap due to a SK duplicate happened
@@ -119,14 +123,15 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
       */
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       log.info("SF: insert")
+      log.info("storefinder route "+range)
       skMap.size match {
         // empty TreeMap -> create SK and forward message to him
         case 0 => {
-          val sk = context.actorOf(Storekeeper.props())
-          val kr = new KeyRange("a", "z") // questo non va bene se lo SF si crea per sdoppiamentoooooooo
+          val kr = new KeyRange("a", "z") // pensare se questo vabene nel caso di sdoppiamentooo
+          val sk = context.actorOf(Storekeeper.props( sfManager, new TreeMap[String, Any](), kr ))
           skMap += (kr -> sk)
           // init the storekeeper passing the manager ref
-          sk ! com.actorbase.actorsystem.storekeeper.messages.Init( sfManager, kr )
+          //sk ! com.actorbase.actorsystem.storekeeper.messages.Init( sfManager, kr )
           sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
         }
         // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
@@ -140,6 +145,9 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
       }
     }
 
+    /**
+      *
+      */
     case get: com.actorbase.actorsystem.storefinder.messages.GetItem => { //TODO implementare diversi tipi di getItem
       log.info(s"SF: getItem of key -> ${get.key}")
       // search for the right KeyRange to get the ActorRef of the needed SK
@@ -150,6 +158,9 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
       }
     }
 
+    /**
+      *
+      */
     case com.actorbase.actorsystem.storefinder.messages.GetAllItem => {
       log.info("SF: getallitem")
       for ((keyRange, sk) <- skMap){
@@ -157,6 +168,9 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
       }
     }
 
+    /**
+      *
+      */
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem => {
       log.info("SF: remove")
       // search for the right KeyRange to get the ActorRef of the needed SK
@@ -179,10 +193,16 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
  id
  }
  }*/
+
+/**
+  *
+  * @param minR a String representing the minimum String inside the range
+  * @param maxR a String representing the maximum String inside the range
+  */
 class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
   //valutare se tenere così o mettere val e cambiare keyrange quando ci sono gli sdoppiamenti
   private var minRange: String = minR
-  private var maxRange: String = maxR
+  private var maxRange: String = maxR   // TODO DECIDERE LA CHIAVE MAXXXX
   /* private val rangeId = KeyRange.inc
 
    def getId: Int = rangeId

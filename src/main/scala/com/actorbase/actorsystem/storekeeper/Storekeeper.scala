@@ -28,7 +28,7 @@
 
 package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Props, Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 
 import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
@@ -39,22 +39,25 @@ import com.actorbase.actorsystem.storefinder.KeyRange
 import scala.collection.immutable.TreeMap
 
 object Storekeeper {
-
-  def props() : Props = Props(new Storekeeper())
+  //def props() : Props = Props( new Storekeeper())
+  def props( manager: ActorRef, data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper( manager, data, range))
+  def props( manager: ActorRef ) : Props = Props( new Storekeeper( manager ))
 }
 
 /**
-  * Insert description here
   *
-  * @param
-  * @return
-  * @throws
+  * @param data
+  * @param manager
+  * @param range
+  * @param maxSize
   */
-class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any]()) extends Actor with ActorLogging {
+class Storekeeper(private var manager: ActorRef,
+                  private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
+                  private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
-  private var manager : ActorRef = _
-  private var range : KeyRange = _
-  private val maxSize: Int = 50  // this should be configurable, probably must read from file
+  /*private var manager : ActorRef = _
+  private var range : KeyRange = _*/
+  private val maxSize: Int = 4  // this should be configurable, probably must read from file
 
   def receive = {
     case Init => {
@@ -94,6 +97,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       */
     case ins: Insert => {
       log.info("SK: Insert")
+      log.info("storekeeper range "+range)
       if(data.size < maxSize-1 ) {
         insertOrUpdate( ins.update, ins.key, ins.value)
       }
@@ -120,10 +124,11 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
         // half the collection
         var (halfLeft, halfRight) = data.splitAt( maxSize/2 )
         // create new keyrange to be updated for SF
-        val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.firstKey, halfLeft.lastKey+"a" )
+        val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( range.getMinRange, halfLeft.lastKey+"a" )
         // create new keyrange for the new storekeeper
-        val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey+"b", halfRight.lastKey )
+        val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey+"aa", range.getMaxRange/*halfRight.lastKey*/ )
         // set the treemap to the first half
+        log.info("left key range "+halfLeftKR+" right key range "+halfRightKR)
         data = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
@@ -133,6 +138,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       }
       //sender ! Response("inserted")
     }
+      logAllItems
   }
 
   private def insertOrUpdate(update: Boolean, key: String, value: Any): Unit = {
@@ -142,6 +148,14 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       data += (key -> value)
     else if(!update && data.contains(key))
       log.info("SK: Duplicate key found, cannot insert")
+  }
+
+  private def logAllItems(): Unit = {
+    var itemslog: String = ""
+    for( (key, value) <- data){
+      itemslog += "key "+key+" -> "+value+" "
+    }
+    log.info(itemslog)
   }
 
 }

@@ -55,10 +55,10 @@ class Manager extends Actor with ActorLogging {
     case DuplicationRequestSK(oldKeyRange, leftRange, map, rightRange) => {
       log.info("Manager: Duplication request SK")
       // create a SK with the map received and init him
-      val newSk = context.actorOf(Props(new Storekeeper(map)))
+      val newSk = context.actorOf(Props(new Storekeeper( self, map, rightRange)))
 
       // initialize the new Sk sending self
-      newSk ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
+      //newSk ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
 
       // should notify storefinder with new actorref and update of the keyrange
       //parent ! modifica sf keyrangeleft e right

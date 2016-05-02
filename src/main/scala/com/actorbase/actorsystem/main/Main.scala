@@ -102,7 +102,7 @@ class Main extends Actor with ActorLogging {
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder")
 
-  private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String]
+  private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String] o quella String è unica?
 
   /**
     * Insert description here
@@ -192,7 +192,7 @@ class Main extends Actor with ActorLogging {
       if(sfMap.contains(collection))
         sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       else {
-        val sf =  context.actorOf(Storefinder.props)
+        val sf =  context.actorOf(Storefinder.props() )
         sfMap += (collection -> sf)
         sf forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       }
