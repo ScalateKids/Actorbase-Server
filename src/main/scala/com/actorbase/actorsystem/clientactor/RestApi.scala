@@ -193,7 +193,8 @@ trait RestApi extends HttpServiceBase with Authenticator {
     path("actorbase" / "insert" / "\\S+".r / "\\S+".r / "\\S+".r) { (collection, key, value) =>
       get {
         complete {
-          main.ask(Insert(collection, key, value, true) )(5 seconds).mapTo[Response]
+          main.ask(Insert(collection, key, value, false))(5 seconds).mapTo[Response]
+          "boh"
         }
       }
     } ~

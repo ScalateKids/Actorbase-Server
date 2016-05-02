@@ -192,7 +192,7 @@ class Main extends Actor with ActorLogging {
       if(sfMap.contains(collection))
         sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       else {
-        val sf =  context.actorOf(Storefinder.props)
+        val sf =  context.actorOf(Storefinder.props() )
         sfMap += (collection -> sf)
         sf forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       }

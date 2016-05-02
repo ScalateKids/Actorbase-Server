@@ -28,7 +28,7 @@
 
 package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Props, Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 
 import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
@@ -39,22 +39,26 @@ import com.actorbase.actorsystem.storefinder.KeyRange
 import scala.collection.immutable.TreeMap
 
 object Storekeeper {
-
-  def props() : Props = Props(new Storekeeper())
+  //def props() : Props = Props( new Storekeeper())
+  def props( manager: ActorRef, data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper( manager, data, range))
+  def props( manager: ActorRef ) : Props = Props( new Storekeeper( manager ))
 }
 
 /**
-  * Insert description here
   *
-  * @param
-  * @return
-  * @throws
+  * @param data
+  * @param manager
+  * @param range
+  * @param maxSize
   */
-class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any]()) extends Actor with ActorLogging {
+class Storekeeper(private var manager: ActorRef,
+                  private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
+                  private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
-  private var manager : ActorRef = _
-  private var range : KeyRange = _
-  private val maxSize: Int = 2  // this should be configurable, probably must read from file
+  /*private var manager : ActorRef = _
+  private var range : KeyRange = _*/
+  private val maxSize: Int = 4  // this should be configurable, probably must read from file
+
 
   def receive = {
     case Init => {
@@ -133,6 +137,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       }
       //sender ! Response("inserted")
     }
+      logAllItems
   }
 
   private def insertOrUpdate(update: Boolean, key: String, value: Any): Unit = {
@@ -142,6 +147,12 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       data += (key -> value)
     else if(!update && data.contains(key))
       log.info("SK: Duplicate key found, cannot insert")
+  }
+
+  private def logAllItems(): Unit = {
+    for( (key, value) <- data){
+      log.info("key "+key+" -> "+value)
+    }
   }
 
 }
