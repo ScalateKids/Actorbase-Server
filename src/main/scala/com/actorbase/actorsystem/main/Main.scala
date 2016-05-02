@@ -61,6 +61,8 @@ object Main {
     implicit val goJson = jsonFormat1(Response.apply)
   }
 
+  case class AddUser(username: String, password: String)
+
   case class Testsk()
 
   case class Login(username: String)
