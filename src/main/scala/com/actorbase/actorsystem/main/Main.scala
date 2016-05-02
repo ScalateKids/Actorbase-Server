@@ -102,7 +102,7 @@ class Main extends Actor with ActorLogging {
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder")
 
-  private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String]
+  private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String] o quella String è unica?
 
   /**
     * Insert description here

@@ -50,7 +50,7 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
   // skMap maps string ranges to the sk reference
   // collection name
   private var collectionName: String = ""
-  private var sfManager: ActorRef = _
+  private var sfManager: ActorRef = context.actorOf(Manager.props())
   private var range: KeyRange = _
 
   /**
@@ -182,7 +182,7 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
 class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
   //valutare se tenere così o mettere val e cambiare keyrange quando ci sono gli sdoppiamenti
   private var minRange: String = minR
-  private var maxRange: String = maxR
+  private var maxRange: String = maxR   // TODO DECIDERE LA CHIAVE MAXXXX
   /* private val rangeId = KeyRange.inc
 
    def getId: Int = rangeId
