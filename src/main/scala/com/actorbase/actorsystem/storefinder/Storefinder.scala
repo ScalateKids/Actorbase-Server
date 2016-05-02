@@ -59,6 +59,7 @@ class Storefinder extends Actor with ActorLogging {
     * @throws
     */
   def receive = {
+
     case com.actorbase.actorsystem.storefinder.messages.Init(name) => {
       log.info("SF: init")
       collectionName = name
@@ -66,11 +67,10 @@ class Storefinder extends Actor with ActorLogging {
       sk ! com.actorbase.actorsystem.storekeeper.messages.Init(context.actorOf(Props[Manager]))
     }
 
-    case DuplicateRequest => {  //cambiare nome in DuplicateNotify o qualcosa del genere?
+    case DuplicateRequest => {  // cambiare nome in DuplicateNotify o qualcosa del genere?
       val sk = context.actorOf(Storekeeper.props())
       log.info("uno storekeeper è stato sdoppiato (not really but still, that's the idea)")
     }
-
 
     /**
       * Insert message, insert a key/value into a designed collection

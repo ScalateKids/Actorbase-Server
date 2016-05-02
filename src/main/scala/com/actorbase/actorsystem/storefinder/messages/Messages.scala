@@ -30,8 +30,6 @@
 
 package com.actorbase.actorsystem.storefinder.messages
 
-import akka.actor.ActorRef
-
 case class Init(collName: String)
 
 case class DuplicateRequest()
@@ -43,3 +41,5 @@ case object GetAllItem
 case class RemoveItem(key: String)
 
 case class Insert(key: String, value: Any, update: Boolean = false)
+
+case class InsertUser(key: String, value: Any, update: Boolean = false)

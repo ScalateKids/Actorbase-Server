@@ -34,6 +34,8 @@ import spray.json.DefaultJsonProtocol._
 import scala.collection.immutable.TreeMap
 
 import com.actorbase.actorsystem.storefinder.Storefinder
+import com.actorbase.actorsystem.userfinder.Userfinder
+import com.actorbase.actorsystem.userfinder.messages._
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
@@ -74,6 +76,8 @@ object Main {
 
   case object Testnj
 
+  case object InitUsers
+
 }
 
 /**
@@ -85,6 +89,8 @@ object Main {
   */
 class Main extends Actor with ActorLogging {
   import Main._
+
+  private val userSf: ActorRef = context.actorOf(Userfinder.props, "userSf")
 
   private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String]
 
@@ -124,7 +130,7 @@ class Main extends Actor with ActorLogging {
       sender ! Response("test successful")
     }
 
-    case Login => context.actorOf(Userkeeper.props) forward GetPassword
+    // case Login => context.actorOf(Userkeeper.props) forward GetPassword
 
     case Testsf(key: String) => {
       val sf = context.actorOf(Storefinder.props)
@@ -145,6 +151,10 @@ class Main extends Actor with ActorLogging {
       out.close();
       bos.close();
       sender ! bytes
+
+    case InitUsers =>
+      userSf ! InsertTo("user", "pass")
+      userSf ! InsertTo("user2", "pass2")
 
     /**
       * Insert message, insert a key/value into a designed collection

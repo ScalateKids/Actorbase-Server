@@ -86,7 +86,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
       * All routes return a standard marshallable of type Array[Byte]
       */
     //path with pathPrefix etc...
-    pathPrefix("collections" / "\\S+".r) { (collection) =>
+    pathPrefix("collections" / "\\S+".r) { collection =>
       pathEndOrSingleSlash {
         get {
           complete {
@@ -94,7 +94,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
           }
         }
       } ~
-      pathSuffix("\\S+".r) { (key) =>
+      pathSuffix("\\S+".r) { key =>
         get {
           complete {
             main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Array[Byte]]
