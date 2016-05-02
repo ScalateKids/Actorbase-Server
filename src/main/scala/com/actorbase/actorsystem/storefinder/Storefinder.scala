@@ -45,13 +45,12 @@ object Storefinder {
   def props() : Props = Props(new Storefinder())
 }
 
-class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef]()) extends Actor with ActorLogging {
+class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](), private var range: KeyRange = new KeyRange("a", "z")) extends Actor with ActorLogging {
 
   // skMap maps string ranges to the sk reference
   // collection name
   private var collectionName: String = ""
   private var sfManager: ActorRef = context.actorOf(Manager.props())
-  private var range: KeyRange = _
 
   /**
     * Insert description here
