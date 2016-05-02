@@ -117,6 +117,18 @@ trait RestApi extends HttpServiceBase with Authenticator {
               }
             }
           }
+        } ~
+        put {
+          decompressRequest() {
+            entity(as[Array[Byte]]) { value =>
+              detach() {
+                complete {
+                  main ! Insert(collection, key, value, true)
+                  "Update complete"
+                }
+              }
+            }
+          }
         }
       }
     } ~
