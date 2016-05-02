@@ -35,7 +35,7 @@ import java.util.UUID
 
 object Userkeeper {
 
-  def props() : Props = Props(new Userkeeper("user", "pass"))
+  def props(username: String, password: String) : Props = Props(new Userkeeper(username, password))
 
   case object GetPassword
 
@@ -92,9 +92,14 @@ class Userkeeper private (var username: String = "user",
   def receive = {
 
     case GetCollections(read) =>
-      if(read)
-        sender ! readCollections
-      else sender ! collections
+      if(read) {
+        val rCollections = readCollections
+        sender ! rCollections
+      }
+      else {
+        val rwCollections = readCollections
+        sender ! rwCollections
+      }
 
     case GetPassword => sender ! Some(password)
 

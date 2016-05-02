@@ -60,6 +60,7 @@ class Storefinder extends Actor with ActorLogging {
     * @throws
     */
   def receive = {
+
     case com.actorbase.actorsystem.storefinder.messages.Init(name) => {
       log.info("SF: init")
       // initialize the collection name
@@ -68,10 +69,10 @@ class Storefinder extends Actor with ActorLogging {
       sfManager = context.actorOf(Props[Manager])
 
       /*
-      val sk = context.actorOf(Storekeeper.props())
-      // create a Manager and send his Ref to
-      sk ! com.actorbase.actorsystem.storekeeper.messages.Init(context.actorOf(Props[Manager]))
-      */
+       val sk = context.actorOf(Storekeeper.props())
+       // create a Manager and send his Ref to
+       sk ! com.actorbase.actorsystem.storekeeper.messages.Init(context.actorOf(Props[Manager]))
+       */
     }
 
     case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {
@@ -85,7 +86,6 @@ class Storefinder extends Actor with ActorLogging {
       skMap += (leftRange -> tmpActorRef)
       skMap += (rightRange -> newSk)
     }
-
 
     /**
       * Insert message, insert a key/value into a designed collection
@@ -153,20 +153,20 @@ class Storefinder extends Actor with ActorLogging {
 
 
 /*object KeyRange{  forse no serve
-  private var id = 0
-  private def inc = {
-    id+= 1
-    id
-  }
-}*/
+ private var id = 0
+ private def inc = {
+ id+= 1
+ id
+ }
+ }*/
 class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
   //valutare se tenere così o mettere val e cambiare keyrange quando ci sono gli sdoppiamenti
   private var minRange: String = minR
   private var maxRange: String = maxR
- /* private val rangeId = KeyRange.inc
+  /* private val rangeId = KeyRange.inc
 
-  def getId: Int = rangeId
-*/
+   def getId: Int = rangeId
+   */
   def getMinRange: String = minRange
 
   def getMaxRange: String = maxRange

@@ -28,22 +28,16 @@
 
 // TEMPORARY
 
-package com.actorbase.actorsystem.storefinder.messages
+package com.actorbase.actorsystem.userfinder.messages
 
-import com.actorbase.actorsystem.storefinder.KeyRange
+case class InsertTo(username: String, password: String)
 
-import akka.actor.ActorRef
+case class GetPasswordOf(username: String)
 
-case class Init(collName: String)
+case class GetCollectionsOf(username: String, read: Boolean)
 
-case class DuplicateSKNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: ActorRef, rightRange: KeyRange)
+case class ChangePasswordOf(username: String, newPassword: String)
 
-case class GetItem(key: String)
+case class RemoveCollectionFrom(username: String, read: Boolean, collection: String)
 
-case object GetAllItem
-
-case class RemoveItem(key: String)
-
-case class Insert(key: String, value: Any, update: Boolean = false)
-
-case class InsertUser(key: String, value: Any, update: Boolean = false)
+case class AddCollectionTo(username: String, read: Boolean, collection: String)
