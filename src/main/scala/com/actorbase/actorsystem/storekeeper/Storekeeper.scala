@@ -33,7 +33,7 @@ import akka.actor.{Props, Actor, ActorLogging, ActorRef}
 import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
 import com.actorbase.actorsystem.storekeeper.messages._
-import com.actorbase.actorsystem.clientactor.messages.Response
+import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
 import com.actorbase.actorsystem.storefinder.KeyRange
 
 import scala.collection.immutable.TreeMap
@@ -68,7 +68,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
     }
     case GetAllItem => {
       val items = data
-      sender ! Response(items.toString) // need marshalling
+      sender ! MapResponse("collectionName", items) // need marshalling
     }
     case rem: RemoveItem => {
       data -= rem.key
