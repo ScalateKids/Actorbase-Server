@@ -204,15 +204,6 @@ trait RestApi extends HttpServiceBase with Authenticator {
           main.ask(resource)(5 seconds).mapTo[Response]
         }
       }
-    } ~
-    // private area
-    pathPrefix("private") {
-      authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
-        // only authenticated users can enter here
-        get {
-          complete(s"Private area: hi ${authInfo.user.login}")
-        }
-      }
     }
   }
 }

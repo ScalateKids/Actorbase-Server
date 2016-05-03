@@ -47,6 +47,15 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi {
     * @return
     * @throws
     */
-  def receive = runRoute(route(main))
+  // private area
+  def login = pathPrefix("private") {
+    authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
+      // only authenticated users can enter here
+      get {
+        complete(s"Private area: hi ${authInfo.user.login}")
+      }
+    }
+  }
+  def receive = runRoute(route(main)~login)
 
 }
