@@ -53,7 +53,7 @@ class CollectionRange(private var collection: Collection, private var range: Key
   override def toString: String = "collection "+collection.getName+" with range from "+ getMinRange + " to " + getMaxRange
 
   // TODO DA TESTARE
-  def isSameCollection(that: collectionRange): Boolean = {
+  def isSameCollection(that: CollectionRange): Boolean = {
     (this.getCollectionName + this.getCollectionOwner == that.getCollectionName + that.getCollectionOwner)
   }
 
@@ -63,7 +63,7 @@ class CollectionRange(private var collection: Collection, private var range: Key
   }
 
   // TODO DA TESTARE
-  def compareKeyRanges(that: collectionRange): Int = {
+  def compareKeyRanges(that: CollectionRange): Int = {
     this.getKeyRange.compare(that.getKeyRange)
   }
 

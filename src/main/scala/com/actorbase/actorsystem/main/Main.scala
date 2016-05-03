@@ -80,7 +80,7 @@ object Main {
 
   case object BinTest
 
-  case class Insert(collection: String, key: String, value: Any, update: Boolean = false)
+  case class Insert(owner: String, name: String, key: String, value: Any, update: Boolean = false)
 
   case class GetItemFrom(collection: String, key: String = "")
 
@@ -90,7 +90,9 @@ object Main {
 
   case class RemoveContributor(username: String, permission: Boolean = false , collection: String)
 
-  case class CreateCollection(name: String, usernameOwner: String) // basta così al momento
+  case class CreateCollection(name: String, owner: String) // basta così al momento
+
+  case class RemoveCollection( name: String, owner: String)
 
   case object InitUsers
 
