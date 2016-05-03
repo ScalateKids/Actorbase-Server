@@ -59,8 +59,8 @@ object Userkeeper {
   * @throws
   */
 class Userkeeper private (var username: String = "user",
-                          var password: String = "pass",
-                          val uuid: String = UUID.randomUUID.toString) extends Actor with ActorLogging {
+  var password: String = "pass",
+  val uuid: String = UUID.randomUUID.toString) extends Actor with ActorLogging {
 
   import Userkeeper._
 
@@ -97,7 +97,7 @@ class Userkeeper private (var username: String = "user",
         sender ! rCollections
       }
       else {
-        val rwCollections = readCollections
+        val rwCollections = collections
         sender ! rwCollections
       }
 

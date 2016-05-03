@@ -29,30 +29,37 @@
 
 package com.actorbase.actorsystem.warehouseman
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import akka.actor.Props
+import akka.actor.{Actor, ActorLogging, Props}
+
 import java.io._
 
 import com.actorbase.actorsystem.warehouseman.messages._
+import com.actorbase.actorsystem.utils.CryptoUtils
 
 object Warehouseman {
-  def props() : Props = Props(new Warehouseman())
+
+  def props(s: String) : Props = Props(new Warehouseman(s))
+
 }
 
-class Warehouseman extends Actor with ActorLogging {
+class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLogging {
 
   def receive = {
-    case Init => {
-      log.info("warehouseman: init")
-    }
 
-    case Save(map) => {
+    case Init => log.info("warehouseman: init")
+
+    /**
+      * Save a shard of a collection represented by the TreeMap stored by a
+      * Storekeeper
+      *
+      * @param map a TreeMap representing Storekeeper data
+      */
+    case Save(map) =>
       log.info("warehouseman: save")
-      val writer = new PrintWriter(new File("database.txt"))
-      writer.write("Ecco il nostro bellissimo database")
-      writer.close()
-    }
+      val key = "Dummy implicit k"
+      val encryptedShardFile = new File(collectionShard)
+      CryptoUtils.encrypt(key, map, encryptedShardFile)
+      sender ! 0 // ok reply
   }
 
 }

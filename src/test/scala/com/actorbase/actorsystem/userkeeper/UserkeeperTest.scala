@@ -60,7 +60,7 @@ class UserkeeperSpec extends ActorSystemUnitSpec {
     */
   "Concerning password, an Userkeeper" should {
 
-    val actorRef = system.actorOf(Props(new Userkeeper("user", "pass")))
+    val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
 
     "set the password: pass" in {
 
@@ -82,7 +82,7 @@ class UserkeeperSpec extends ActorSystemUnitSpec {
     */
   "Adding a read-write collection to an Userkeeper" should {
 
-    val actorRef = system.actorOf(Props(new Userkeeper("user", "pass")))
+    val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
 
     "increment the size of the read-write buffer" in {
 
@@ -105,7 +105,7 @@ class UserkeeperSpec extends ActorSystemUnitSpec {
     */
   "Adding a read-only collection to an Userkeeper" should {
 
-    val actorRef = system.actorOf(Props(new Userkeeper("user", "pass")))
+    val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
 
     "increment the size of the read-only buffer" in {
 

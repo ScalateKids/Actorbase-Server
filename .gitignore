@@ -1,6 +1,8 @@
 .idea/
 target/
 
+shard
+
 *.class
 *.log
 *.iml
