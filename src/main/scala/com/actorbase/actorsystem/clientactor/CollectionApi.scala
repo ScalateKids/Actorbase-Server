@@ -58,12 +58,14 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         } ~
         post {
           complete {
+            //TODO controllare se esiste già
             main ! CreateCollection(collection, owner)
             "Create collection complete"
           }
         } ~
         delete {
           complete {
+            //TODO controllare, se non esiste inutile mandare il messaggio
             main ! RemoveCollection(collection, owner)
             "Remove collection complete"
           }
@@ -72,11 +74,13 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         pathSuffix("\\S+".r) { key =>
           get {
             complete {
+              //TODO controllare, se collection non esiste, inutile instradare
               main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Array[Byte]]
             }
           } ~
             delete {
               complete {
+                //TODO controllare, se collection non esiste, inutile instradare
                 main ! RemoveItemFrom(collection, key)
                 "Remove complete"
               }
@@ -86,6 +90,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                 entity(as[Array[Byte]]) { value =>
                   detach() {
                     complete {
+                      //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
                       main ! Insert(owner, collection, key, value)
                       "Insert complete"
                     }
@@ -98,6 +103,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                 entity(as[Array[Byte]]) { value =>
                   detach() {
                     complete {
+                      //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
                       main ! Insert(owner, collection, key, value, true)
                       "Update complete"
                     }

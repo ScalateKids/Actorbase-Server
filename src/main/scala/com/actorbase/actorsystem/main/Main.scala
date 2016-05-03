@@ -110,7 +110,7 @@ class Main extends Actor with ActorLogging {
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
 
-  private var sfMap = new TreeMap[Collection, ActorRef]()
+  private var sfMap = new TreeMap[CollectionRange, ActorRef]()
 
   /**
     * Insert description here
@@ -153,8 +153,19 @@ class Main extends Actor with ActorLogging {
       *
       */
     case Insert(owner, name, key, value, update) => {
-      // need controls
-      // TODO la collezione esiste, devo trovare se ce l'ha questo main, se si controllare keyrange e instradare, altrimenti mandare ai proprio BRO
+      // search if sfMap contains the collection i need, if it's present search the right keyrange
+      Boolean inserted = false
+      for( collectionRange, sfRef <- sfMap){
+        if( collectionRange.isSameCollection(name, owner) &&  collectionRange.getKey.contains(key) ){
+          // right collection and right keyrange (right collectionRange), let's insert here
+          sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update)
+          inserted = true
+        }
+      }
+      if( !inserted ){
+        //item has not been inserted, must send the message to the brothers
+        //TODO mandare agli altri main
+      }
 
       /*if(sfMap.contains(collection))
         sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
@@ -171,7 +182,6 @@ class Main extends Actor with ActorLogging {
       *
       */
     case CreateCollection(name, owner) => {
-      //
       createCollection(name, owner)
       // TODO avvisare lo userkeeper che a sua volta deve avvisare il client
     }
@@ -192,12 +202,12 @@ class Main extends Actor with ActorLogging {
       *
       */
     case GetItemFrom(collection, key) => {
-      // need controls
-      if(key == "")
+      // TODO
+/*      if(key == "")
         sfMap.get(collection).get forward GetAllItem
       else
         sfMap.get(collection).get forward GetItem(key)
-    }
+  */  }
 
     /**
       * Remove item from collection  message, given a key of type String,
@@ -208,8 +218,8 @@ class Main extends Actor with ActorLogging {
       *
       */
     case RemoveItemFrom(collection, key) =>
-      // need controls
-      sfMap.get(collection).get forward RemoveItem(key)
+      // TODO
+      //sfMap.get(collection).get forward RemoveItem(key)
 
     /**
       * Add Contributor from collection , given username of Contributor and read
@@ -241,7 +251,7 @@ class Main extends Actor with ActorLogging {
       */
     case DuplicateSFNotify( oldKeyRange, leftRangeKR, map, rightRangeKR ) => {
       log.info("MAIN: duplicateSFnotify")
-
+      //TODO
     }
   }
 

@@ -28,48 +28,131 @@
 
 package com.actorbase.actorsystem.utils
 
+import scala.math.Ordered.orderingToOrdered
+
 import com.actorbase.actorsystem.utils.{Collection, KeyRange}
 
 /**
-  * descript
+  * Class representing a piece of an actorbase collection. Used by MainActors.
+  * More precisely it represents the range of Keys of one collection mapped on a StoreFinder
   *
-  * @param
-  * @param
+  * @param collection. A Collection type representing the actorbase collection
+  * @param range. A KeyRange representing the upper and lower bounds of keys possible in this CollectionRange
   */
-class CollectionRange(private var collection: Collection, private var range: KeyRange){
+class CollectionRange(private var collection: Collection, private var range: KeyRange) extends Ordered{
 
+  /**
+    * @return a String representing the collection name
+    */
   def getCollectionName: String = collection.getName
 
+  /**
+    * @return a String representing the username of the owner of the collection
+    */
   def getCollectionOwner: String = collection.getOwner
 
+  /**
+    * @return a String representing the minimum Key mappable in this collectionRange
+    */
   def getMinRange: String = range.getMinRange
 
+  /**
+    * @return a String representing the maximum Key mappable in this collectionRange
+    */
   def getMaxRange: String = range.getMaxRange
 
+  /**
+    * @return a KeyRange representing the minimum and maximum Key mappable in this collectionRange
+    */
   def getKeyRange: KeyRange = range
 
+  /**
+    * @params key a String representing a key, the method will return true if the key is inside the KeyRange of this
+    *        CollectionRange, false otherwise
+    * @return a Boolean. True if the key is inside the KeyRange of this CollectionRange, false otherwise
+    */
   def contains(key: String): Boolean = range.contains(key)
 
+  /**
+    * @return a String representig the name and the KeyRange of this CollectionRange
+    */
   override def toString: String = "collection "+collection.getName+" with range from "+ getMinRange + " to " + getMaxRange
 
+  /**
+    * Check if the collection represented by the CollectionRange passed as input is the same collection
+    * of this CollectionRange
+    *
+    * @param that a CollectionRange
+    * @return Boolean. True if the collection represented by the CollectionRange passed as param is the same
+    *         as the collection represented by this object
+    */
   // TODO DA TESTARE
   def isSameCollection(that: CollectionRange): Boolean = {
     (this.getCollectionName + this.getCollectionOwner == that.getCollectionName + that.getCollectionOwner)
   }
 
+  /**
+    * Check if the collection represented by the Collection passed as input is the same collection
+    * of this CollectionRange
+    *
+    * @param coll a Collection
+    * @return Boolean. True if the collection represented by the Collection passed as param is the same
+    *         as the collection represented by this object
+    */
+  // TODO DA TESTARE
+  def isSameCollection(coll: Collection): Boolean = {
+    (this.getCollectionName + this.getCollectionOwner == coll.getName + coll.getOwner)
+  }
+
+  /**
+    * Check if the collection represented by the collection name and owner passed as input is the same collection
+    * of this CollectionRange
+    *
+    * @param that a String, the collection name
+    * @param owner a String, the owner of a collection
+    * @return Boolean. True if the collection represented by the input parameters is the same as the collection
+    *         represented by this object
+    */
   // TODO DA TESTARE
   def isSameCollection(name: String, owner: String): Boolean ={
     (this.getCollectionName == name && this.getCollectionOwner == owner)
   }
 
+  /**
+    * compare KeyRange of this CollectionRange with the passed param
+    *
+    * @param that a CollectionRange to compare with the KeyRange of this object
+    * @return Int. -1 if this KeyRange is < of the param one. 0 if they are the same. +1 if this KeyRange is > of
+    *         the param one
+    */
   // TODO DA TESTARE
   def compareKeyRanges(that: CollectionRange): Int = {
     this.getKeyRange.compare(that.getKeyRange)
   }
 
+  /**
+    * compare this CollectionRange with the passed param
+    *
+    * @param that a CollectionRange to compare with this object
+    * @return Int.
+    *         -1 if the this.collectionName is < of that.collectionName OR if the collections are the same
+    *         but this.KeyRange < that.KeyRange
+    *         0 if the collections are the same and also the KeyRanges are the same
+    *         +1 if the this.collectionName is > of that.collectionName OR if the collections are the same
+    *         but this.KeyRange > that.KeyRange
+    */
   // TODO DA TESTARE
-  /*override def compare(that: CollectionRange): Int = {
-    return isSameCollection(that) && this.range compare(that.getKeyRange)
-  }*/
+  override def compare(that: CollectionRange): Int = {
+    if( this.getCollectionName < that.getCollectionName)
+      -1
+    else{
+      if( this.getCollectionName > that.getCollectionName )
+        return 1
+      else{
+        return this.getKeyRange.compare(that.getKeyRange)
+      }
+    }
+    //return isSameCollection(that) && this.range compare(that.getKeyRange)
+  }
 
 }

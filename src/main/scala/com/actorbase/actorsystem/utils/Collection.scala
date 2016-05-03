@@ -29,17 +29,23 @@
 package com.actorbase.actorsystem.utils
 
 /**
-  * insert descript
+  * Class representing a collection of actorbase
   *
-  * @param name
-  * @param owner
+  * @param name a String representing the name of the collection
+  * @param owner a String representing the username of the owner of this collection
   */
 class Collection( private var name: String,
                   private var owner: String ){
   //TODO mettere uuid anche qui?
 
+  /**
+    * @return a String representing the name of the collection
+    */
   def getName: String = name
 
+  /**
+    * @return a String representing the username of the owner of this collection
+    */
   def getOwner: String = owner
 
 }
