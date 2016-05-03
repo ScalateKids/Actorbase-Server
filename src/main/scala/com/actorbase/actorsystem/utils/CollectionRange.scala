@@ -46,10 +46,30 @@ class CollectionRange(private var collection: Collection, private var range: Key
 
   def getMaxRange: String = range.getMaxRange
 
+  def getKeyRange: KeyRange = range
+
   def contains(key: String): Boolean = range.contains(key)
 
   override def toString: String = "collection "+collection.getName+" with range from "+ getMinRange + " to " + getMaxRange
 
-  //override def compare(that: KeyRange): Int = (this.minRange, this.maxRange) compare (that.minRange, that.maxRange)
+  // TODO DA TESTARE
+  def isSameCollection(that: CollectionRange): Boolean = {
+    (this.getCollectionName + this.getCollectionOwner == that.getCollectionName + that.getCollectionOwner)
+  }
+
+  // TODO DA TESTARE
+  def isSameCollection(name: String, owner: String): Boolean ={
+    (this.getCollectionName == name && this.getCollectionOwner == owner)
+  }
+
+  // TODO DA TESTARE
+  def compareKeyRanges(that: CollectionRange): Int = {
+    this.getKeyRange.compare(that.getKeyRange)
+  }
+
+  // TODO DA TESTARE
+  /*override def compare(that: CollectionRange): Int = {
+    return isSameCollection(that) && this.range compare(that.getKeyRange)
+  }*/
 
 }

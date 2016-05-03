@@ -9,7 +9,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.main.Main.{Testsk, Login, Testsf, BinTest, Insert, GetItemFrom, RemoveItemFrom, Testnj, CreateCollection, RemoveCollection}
+import com.actorbase.actorsystem.main.Main.{Insert, GetItemFrom, RemoveItemFrom, CreateCollection, RemoveCollection}
+
 import com.actorbase.actorsystem.clientactor.messages._
 
 trait CollectionApi extends HttpServiceBase with Authenticator {
@@ -57,12 +58,14 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         } ~
         post {
           complete {
-            main.ask(CreateCollection(collection, owner))
+            main ! CreateCollection(collection, owner)
+            "Create collection complete"
           }
         } ~
         delete {
           complete {
-            main.ask(RemoveCollection(collection, owner))
+            main ! RemoveCollection(collection, owner)
+            "Remove collection complete"
           }
         }
       } ~
