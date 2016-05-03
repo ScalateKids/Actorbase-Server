@@ -28,18 +28,28 @@
 
 package com.actorbase.actorsystem.utils
 
+import com.actorbase.actorsystem.utils.{Collection, KeyRange}
+
 /**
-  * insert descript
+  * descript
   *
-  * @param name
-  * @param owner
+  * @param
+  * @param
   */
-class Collection( private var name: String,
-                  private var owner: String ){
-  //TODO mettere uuid anche qui?
+class CollectionRange(private var collection: Collection, private var range: KeyRange){
 
-  def getName: String = name
+  def getCollectionName: String = collection.getName
 
-  def getOwner: String = owner
+  def getCollectionOwner: String = collection.getOwner
+
+  def getMinRange: String = range.getMinRange
+
+  def getMaxRange: String = range.getMaxRange
+
+  def contains(key: String): Boolean = range.contains(key)
+
+  override def toString: String = "collection "+collection.getName+" with range from "+ getMinRange + " to " + getMaxRange
+
+  //override def compare(that: KeyRange): Int = (this.minRange, this.maxRange) compare (that.minRange, that.maxRange)
 
 }

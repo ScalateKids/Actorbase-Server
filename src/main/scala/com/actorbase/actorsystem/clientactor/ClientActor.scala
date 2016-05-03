@@ -64,9 +64,10 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi {
     authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
       // only authenticated users can enter here
       get {
-        complete{ // ugly as hell
+        complete{
           // bind the userkeeper to this clientActor
           val future = sender ? com.actorbase.actorsystem.userkeeper.Userkeeper.BindClient( self )
+          // ugly as hell
           val result = Await.result(future, timeout.duration).asInstanceOf[Array[ListBuffer[String]]]
           collections = result(0)
           readCollections = result(1)

@@ -48,7 +48,7 @@ import com.actorbase.actorsystem.ninja.messages._
 
 import com.actorbase.actorsystem.main.messages._
 
-import com.actorbase.actorsystem.utils.{KeyRange, Collection}
+import com.actorbase.actorsystem.utils.{KeyRange, Collection, CollectionRange}
 
 import com.github.t3hnar.bcrypt._
 import org.mindrot.jbcrypt.BCrypt
@@ -108,7 +108,7 @@ class Main extends Actor with ActorLogging {
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
 
-  private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String] o quella String è unica?
+  private var sfMap = new TreeMap[CollectionRange, ActorRef]() // credo debba essere TreeMap[ActorRef -> String] o quella String è unica?
 
   /**
     * Insert description here
@@ -138,6 +138,7 @@ class Main extends Actor with ActorLogging {
       * added User
       */
     case AddUser(username, password) => ufRef ! InsertTo(username, password.bcrypt(generateSalt))
+
     /**
       * Insert message, insert a key/value into a designed collection
       *
@@ -154,6 +155,7 @@ class Main extends Actor with ActorLogging {
       if(sfMap.contains(collection))
         sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       else {
+        //TODO usare createCollection
         val sf =  context.actorOf(Storefinder.props( self ) )
         sfMap += (collection -> sf)
         sf forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
@@ -220,5 +222,7 @@ class Main extends Actor with ActorLogging {
 
     }
   }
+
+  private def createCollection()
 
 }
