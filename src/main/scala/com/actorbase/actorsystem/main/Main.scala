@@ -39,10 +39,12 @@ import com.actorbase.actorsystem.userfinder.messages._
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
-import com.actorbase.actorsystem.storefinder.KeyRange
+import com.actorbase.actorsystem.utils.KeyRange
 //impor per testing di ninja
 import com.actorbase.actorsystem.ninja.Ninja
 import com.actorbase.actorsystem.ninja.messages._
+
+import com.actorbase.actorsystem.main.messages._
 
 import com.github.t3hnar.bcrypt._
 import org.mindrot.jbcrypt.BCrypt

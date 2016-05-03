@@ -26,18 +26,14 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.storekeeper.messages
+package com.actorbase.actorsystem.utils
 
-import akka.actor.ActorRef
-import com.actorbase.actorsystem.storekeeper.Storekeeper
-import com.actorbase.actorsystem.utils.KeyRange
+/**
+  * insert descript
+  *
+  * @param name
+  * @param owner
+  */
+class Collection( private var name: String, private var owner: String ){
 
-case object GetAllItem
-
-case class Init(manager: ActorRef, range: KeyRange)
-
-case class GetItem(key: String)
-
-case class Insert(key: String, value: Any, update: Boolean = false)
-
-case class RemoveItem(key: String)
+}

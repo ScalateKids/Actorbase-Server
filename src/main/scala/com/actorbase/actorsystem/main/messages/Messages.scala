@@ -30,7 +30,7 @@
 package com.actorbase.actorsystem.main.messages
 
 import akka.actor.ActorRef
-import com.actorbase.actorsystem.storefinder.KeyRange
+import com.actorbase.actorsystem.utils.KeyRange
 
 
 case class DuplicateSFNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: ActorRef, rightRange: KeyRange)

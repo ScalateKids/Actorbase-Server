@@ -30,7 +30,7 @@
 
 package com.actorbase.actorsystem.storefinder.messages
 
-import com.actorbase.actorsystem.storefinder.KeyRange
+import com.actorbase.actorsystem.utils.KeyRange
 
 import akka.actor.ActorRef
 

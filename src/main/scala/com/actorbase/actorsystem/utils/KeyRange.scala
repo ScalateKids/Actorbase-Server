@@ -26,18 +26,36 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.storekeeper.messages
+package com.actorbase.actorsystem.utils
 
-import akka.actor.ActorRef
-import com.actorbase.actorsystem.storekeeper.Storekeeper
-import com.actorbase.actorsystem.utils.KeyRange
+import scala.math.Ordered.orderingToOrdered
 
-case object GetAllItem
+/**
+  * Class that models a keyrange for actorbase. This class has by 2 strings representing the lowest
+  * string and the highest strings that can fit inside this range. KeyRanges can be compared
+  *
+  * @param minR a String representing the minimum String inside the range
+  * @param maxR a String representing the maximum String inside the range
+  */
+class KeyRange(private val minRange: String, private val maxRange: String) extends Ordered[KeyRange] {
+  // TODO DECIDERE LA CHIAVE MAXXXX ( supermaxkey should be a costant outside class probably)
 
-case class Init(manager: ActorRef, range: KeyRange)
 
-case class GetItem(key: String)
+  /*private val minRange: String = minR
+  private val maxRange: String = maxR
+*/
 
-case class Insert(key: String, value: Any, update: Boolean = false)
+  def getMinRange: String = minRange
 
-case class RemoveItem(key: String)
+  def getMaxRange: String = maxRange
+
+  /*def setMinRange(range: String) = minRange = range
+
+  def setMaxRange(range: String) = maxRange = range
+*/
+  def contains(key: String): Boolean = (key >= minRange && key <= maxRange)
+
+  override def toString: String = "from "+ minRange + " to " + maxRange
+
+  override def compare(that: KeyRange): Int = (this.minRange, this.maxRange) compare (that.minRange, that.maxRange)
+}

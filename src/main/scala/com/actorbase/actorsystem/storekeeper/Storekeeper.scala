@@ -32,9 +32,12 @@ import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 
 import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
+
 import com.actorbase.actorsystem.storekeeper.messages._
+
 import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
-import com.actorbase.actorsystem.storefinder.KeyRange
+
+import com.actorbase.actorsystem.utils.KeyRange
 
 import scala.collection.immutable.TreeMap
 
@@ -117,9 +120,9 @@ class Storekeeper(private var manager: ActorRef,
         // half the collection
         var (halfLeft, halfRight) = data.splitAt( maxSize/2 )
         // create new keyrange to be updated for SF
-        val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( range.getMinRange, halfLeft.lastKey+"a" )
+        val halfLeftKR = new KeyRange( range.getMinRange, halfLeft.lastKey+"a" )
         // create new keyrange for the new storekeeper
-        val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey+"aa", range.getMaxRange/*halfRight.lastKey*/ )
+        val halfRightKR = new KeyRange( halfLeft.lastKey+"aa", range.getMaxRange/*halfRight.lastKey*/ )
         // set the treemap to the first half
         log.info("left key range "+halfLeftKR+" right key range "+halfRightKR)
         data = halfLeft

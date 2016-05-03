@@ -34,6 +34,8 @@ import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.manager.messages._
 
+import com.actorbase.actorsystem.main.messages.DuplicateSFNotify
+
 import scala.collection.immutable.TreeMap
 
 object Manager {
@@ -82,7 +84,7 @@ class Manager extends Actor with ActorLogging {
       // create a SF with the map received and init him
       val newSf = context.actorOf(Props(new Storefinder(mainActor, map ,rightRange)))
 
-      mainActor ! DuplicateSKNotify( oldKeyRange, leftRange, newSf, rightRange )
+      mainActor ! DuplicateSFNotify( oldKeyRange, leftRange, newSf, rightRange )
       // initialize the new Sk sending self
       //newSf ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
 
