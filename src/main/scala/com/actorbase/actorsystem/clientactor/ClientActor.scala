@@ -30,6 +30,12 @@
 package com.actorbase.actorsystem.clientactor
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
+
+import scala.collection.mutable.ListBuffer
 
 /**
   * Insert description here
@@ -38,7 +44,13 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
   * @return
   * @throws
   */
-class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi {
+class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi with CollectionApi {
+
+  implicit val timeout = Timeout(5 seconds)
+  /** read-write collections list */
+  private var collections: ListBuffer[String] = new ListBuffer[String]
+  /** read-only collections list */
+  private var readCollections: ListBuffer[String] = new ListBuffer[String]
 
   /**
     * Insert description here
@@ -52,10 +64,19 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi {
     authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
       // only authenticated users can enter here
       get {
-        complete(s"Private area: hi ${authInfo.user.login}")
+        complete{
+          // bind the userkeeper to this clientActor
+          val future = sender ? com.actorbase.actorsystem.userkeeper.Userkeeper.BindClient( self )
+          // ugly as hell
+          val result = Await.result(future, timeout.duration).asInstanceOf[Array[ListBuffer[String]]]
+          collections = result(0)
+          readCollections = result(1)
+          log.info("RESTCLIENT ACTOR: received collections")
+          (s"Private area: hi ${authInfo.user.login}")
+        }
       }
     }
   }
-  def receive = runRoute(route(main)~login)
+  def receive = runRoute(collections(main, "lol")~route(main)~login) //lol must be the name of the logged user
 
 }

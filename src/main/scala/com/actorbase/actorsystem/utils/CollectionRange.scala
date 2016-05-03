@@ -28,18 +28,48 @@
 
 package com.actorbase.actorsystem.utils
 
+import com.actorbase.actorsystem.utils.{Collection, KeyRange}
+
 /**
-  * insert descript
+  * descript
   *
-  * @param name
-  * @param owner
+  * @param
+  * @param
   */
-class Collection( private var name: String,
-                  private var owner: String ){
-  //TODO mettere uuid anche qui?
+class CollectionRange(private var collection: Collection, private var range: KeyRange){
 
-  def getName: String = name
+  def getCollectionName: String = collection.getName
 
-  def getOwner: String = owner
+  def getCollectionOwner: String = collection.getOwner
+
+  def getMinRange: String = range.getMinRange
+
+  def getMaxRange: String = range.getMaxRange
+
+  def getKeyRange: KeyRange = range
+
+  def contains(key: String): Boolean = range.contains(key)
+
+  override def toString: String = "collection "+collection.getName+" with range from "+ getMinRange + " to " + getMaxRange
+
+  // TODO DA TESTARE
+  def isSameCollection(that: CollectionRange): Boolean = {
+    (this.getCollectionName + this.getCollectionOwner == that.getCollectionName + that.getCollectionOwner)
+  }
+
+  // TODO DA TESTARE
+  def isSameCollection(name: String, owner: String): Boolean ={
+    (this.getCollectionName == name && this.getCollectionOwner == owner)
+  }
+
+  // TODO DA TESTARE
+  def compareKeyRanges(that: CollectionRange): Int = {
+    this.getKeyRange.compare(that.getKeyRange)
+  }
+
+  // TODO DA TESTARE
+  /*override def compare(that: CollectionRange): Int = {
+    return isSameCollection(that) && this.range compare(that.getKeyRange)
+  }*/
 
 }
