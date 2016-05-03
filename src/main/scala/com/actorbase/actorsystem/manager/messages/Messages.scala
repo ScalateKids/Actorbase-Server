@@ -33,6 +33,8 @@ import akka.actor.ActorRef
 import scala.collection.immutable.TreeMap
 import com.actorbase.actorsystem.storefinder.KeyRange
 
-case class DuplicationRequestSK(oldKeyRange: KeyRange, leftRange: KeyRange, map: TreeMap[String, Any], rightRange: KeyRange)
+case class DuplicationRequestSK(oldKeyRange: KeyRange, leftRange: KeyRange, map: TreeMap[String, Any],
+                                rightRange: KeyRange)
 
-case class DuplicationRequestSF(oldKeyRange: KeyRange, leftRange: KeyRange, map: TreeMap[KeyRange, ActorRef], rightRange: KeyRange)
+case class DuplicationRequestSF(oldKeyRange: KeyRange, leftRange: KeyRange, map: TreeMap[KeyRange, ActorRef],
+                                rightRange: KeyRange, mainActor: ActorRef)

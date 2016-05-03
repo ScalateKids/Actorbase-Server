@@ -100,7 +100,7 @@ object Main {
 class Main extends Actor with ActorLogging {
   import Main._
 
-  private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder")
+  private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
 
   private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String] o quella String è unica?
 
@@ -113,54 +113,10 @@ class Main extends Actor with ActorLogging {
     */
   def receive = {
 
-    // TEST
-    case resource: String =>
-      log.info(s"$resource request")
-      sender ! Response(resource)
-    //test storekeeper
-    case Testsk => {
-      val sf = context.actorOf(Storefinder.props())
-      //sf ! Init("storekeeper-test") commentato se no da errori, l'init dello sf è diverso ora, HAKUNA MATATA ALBERTO è UNA PATATA
-      sf forward GetItem("")
-      sf forward GetItem("test")
-      sf forward com.actorbase.actorsystem.storefinder.messages.Insert("chiave", "valore")
-      sf forward RemoveItem("rimuovi")
-      //sf ! DuplicateSKNotify()
-      sender ! Response("test successful")
-    }
-
-    //test ninja
-    case Testnj => {
-      val nj = context.actorOf(Ninja.props())
-      //nj ! Init("ninja-test") commentato se no da errori, l'init dello sf (e quindi del ninja) è diverso ora, HAKUNA MATATA ALBERTO è UNA PATATA
-      nj ! Update
-      nj ! BecomeSK
-      nj ! com.actorbase.actorsystem.storekeeper.messages.Init
-      nj ! Update
-      sender ! Response("test successful")
-    }
-
+    /**
+      *
+      */
     case Login(username) => ufRef forward GetPasswordOf(username)
-
-    case Testsf(key: String) => {
-      val sf = context.actorOf(Storefinder.props)
-      for(i <- 0 to 30){
-        sf forward com.actorbase.actorsystem.storefinder.messages.Insert("chiave" + i , "valore" + i)
-      }
-      // sf forward GetItem("chiave5")
-      sf forward RemoveItem("chiave5")
-      sf forward GetItem(key)
-    }
-
-    // bin test
-    case BinTest =>
-      val bos = new ByteArrayOutputStream()
-      var out = new ObjectOutputStream(bos)
-      out.writeObject("ciao");
-      val bytes = bos.toByteArray()
-      out.close();
-      bos.close();
-      sender ! bytes
 
     /** This message will probably populate username/password after disk read */
     case InitUsers =>
@@ -192,7 +148,7 @@ class Main extends Actor with ActorLogging {
       if(sfMap.contains(collection))
         sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       else {
-        val sf =  context.actorOf(Storefinder.props() )
+        val sf =  context.actorOf(Storefinder.props( self ) )
         sfMap += (collection -> sf)
         sf forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       }
@@ -225,22 +181,6 @@ class Main extends Actor with ActorLogging {
       // need controls
       sfMap.get(collection).get forward RemoveItem(key)
 
-    case _ => log.info("Still waiting")
-    /**
-      * Get item from collection  message, given a key of type String, retrieve
-      * a value from a specified collection
-      *
-      * @param collection a String representing the collection name
-      * @param key a String representing the key to be retrieved
-      *
-      */
-    case GetItemFrom(collection, key) => {
-      // need controls
-      if (key == "")
-        sfMap.get(collection).get forward GetAllItem
-      else
-        sfMap.get(collection).get forward GetItem(key)
-    }
     /**
       * Add Contributor from collection , given username of Contributor and read
       * ore readWrite permission
@@ -252,7 +192,7 @@ class Main extends Actor with ActorLogging {
       */
     case AddContributor(username , permission, collection) =>
       // need controls
-      ufRef!AddCollectionTo(username,permission,collection)
+      ufRef ! AddCollectionTo(username,permission,collection)
 
     /**
       * Remove Contributor from collection , given username of Contributor , and permission
@@ -264,8 +204,15 @@ class Main extends Actor with ActorLogging {
       */
     case RemoveContributor(username,permission,collection) =>
         // need controls
-        ufRef!RemoveCollectionFrom(username,permission,collection)
+        ufRef ! RemoveCollectionFrom(username,permission,collection)
 
+    /**
+      *
+       */
+    case DuplicateSFNotify( oldKeyRange, leftRangeKR, map, rightRangeKR ) => {
+      log.info("MAIN: duplicateSFnotify")
+
+    }
   }
 
 }

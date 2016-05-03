@@ -60,15 +60,15 @@ class Storekeeper(private var manager: ActorRef,
   private val maxSize: Int = 4  // this should be configurable, probably must read from file
 
   def receive = {
+    /**
+      * ???
+      */
     case Init => {
       log.info("SK: init")
-      // initialize manager reference, will be useful when this sk has to duplicate himself
-      this.manager = manager
-      this.range = range
     }
 
     /**
-      * GetItem message, will send back a value associated with the input key
+      * GetItem message, this actor will send back a value associated with the input key
       *
       * @param key a String representing the key of the item to be returned (sta roba sarà da cambiare)
       *
@@ -77,10 +77,19 @@ class Storekeeper(private var manager: ActorRef,
       sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
       //sender ! Response(data.get(getItem.key).getOrElse("None").toString())
     }
+
+    /**
+      * GetAllItem message, this actor will send back the collection name and all the collection.
+       */
     case GetAllItem => {
       val items = data
       sender ! MapResponse("collectionName", items) // need marshalling
     }
+
+    /**
+      * RemoveItem message, when the actor receive this message it will erase the item associated with the
+      * key in input. This method doesn't throw an exception if the item is not present.
+      */
     case rem: RemoveItem => {
       data -= rem.key
     }
@@ -103,22 +112,6 @@ class Storekeeper(private var manager: ActorRef,
       }
       else {
         log.info("SK: Must duplicate")
-        /*  what
-        // ugly as fuck, to be improved
-        var (halfLeft, halfRight) = data.splitAt(25)
-        // save first and last key from halved collection
-        var firstKey = halfRight.firstKey
-        var lastKey = halfLeft.lastKey
-        // save first and last value associated with first and last key
-        val firstValue = halfRight.get(firstKey)
-        val lastValue = halfRight.get(lastKey)
-        // update first and last key
-        halfRight -= firstKey
-        halfLeft -= lastKey
-        halfLeft += (lastKey + "a" -> lastValue)
-        halfRight += (firstKey + "b" -> firstValue)
-        // update data and call for manager */
-
         // insert the item, then we will duplicate
         insertOrUpdate( ins.update, ins.key, ins.value)
         // half the collection
@@ -141,6 +134,14 @@ class Storekeeper(private var manager: ActorRef,
       logAllItems
   }
 
+  /**
+    * private method that insert an item to the collection, can allow the update of the item or not
+    * changing the param update
+    *
+    * @param update boolean. 1 if the insert allow an update, 0 otherwise
+    * @param key String representing the key of the item
+    * @param value Any representing the value of the item
+    */
   private def insertOrUpdate(update: Boolean, key: String, value: Any): Unit = {
     if(update)
       data += (key -> value)
@@ -150,6 +151,9 @@ class Storekeeper(private var manager: ActorRef,
       log.info("SK: Duplicate key found, cannot insert")
   }
 
+  /**
+    * private method just for testing porpose, just log.info all the collection (key -> value)
+    **/
   private def logAllItems(): Unit = {
     var itemslog: String = ""
     for( (key, value) <- data){

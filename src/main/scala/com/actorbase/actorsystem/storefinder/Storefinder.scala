@@ -42,7 +42,7 @@ import scala.collection.immutable.TreeMap
 import scala.math.Ordered.orderingToOrdered
 
 object Storefinder {
-  def props() : Props = Props(new Storefinder())
+  def props( mainParent: ActorRef) : Props = Props(new Storefinder( mainParent ))
 }
 
 /**
@@ -52,13 +52,15 @@ object Storefinder {
   * @param range String that represent the range of the keys mappable in this storefinder
   * @param sfManager
   */
-class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
+class Storefinder(private val mainParent: ActorRef,
+                  private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
                   private var range: KeyRange = new KeyRange("a", "z") ) extends Actor with ActorLogging {
 
   // collection name
   private var collectionName: String = ""
   // initialize his manager
   private val sfManager: ActorRef = context.actorOf(Manager.props())
+  private val maxSize: Int = 4
 
   /**
     * Insert description here
@@ -81,8 +83,8 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
     /**
       *
       */
-    case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {
-      log.info("SF: DuplicateSKNotify")
+    case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {  //TODO CODICE MOLTO REPLICATO FROM SK
+      log.info("SF: DuplicateSFNotify")
       // update skMap due to a SK duplicate happened
       //scorrere skmap, trovare cosa aggiorare con leftrange
       // get old sk actorRef
@@ -92,20 +94,21 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
       // add the entry with the oldSK and the new one
       skMap += (leftRange -> tmpActorRef)
       skMap += (rightRange -> newSk)
-      //checks if skmap is at maxSize (will be configurable)
-      if(skMap.size == 50){
-        log.info("SK: Must duplicate")
+
+      if(skMap.size == maxSize-1 ){
+        log.info("SF: Must duplicate")
         // half the collection
-        var (halfLeft, halfRight) = skMap.splitAt(25)  // 25 should be maxsize/2
+        var (halfLeft, halfRight) = skMap.splitAt( maxSize/2 )
         // create new keyrange to be updated for SF
-        val halfLeftKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange+"a" )
+        val halfLeftKR = new KeyRange( halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange+"a" )
         // create new keyrange for the new storekeeper
-        val halfRightKR = new com.actorbase.actorsystem.storefinder.KeyRange( halfLeft.lastKey.getMinRange+"b", halfRight.lastKey.getMaxRange )
+        val halfRightKR = new KeyRange( halfLeft.lastKey.getMinRange+"aa", halfRight.lastKey.getMaxRange )
         // set the treemap to the first half
         skMap = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
-        sfManager ! DuplicationRequestSF(range, halfLeftKR, halfRight, halfRightKR)
+
+        sfManager ! DuplicationRequestSF(range, halfLeftKR, halfRight, halfRightKR, mainParent)
         // update keyRangeId or himself
         range = halfLeftKR
       }
@@ -186,36 +189,27 @@ class Storefinder(private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[
 }
 
 
-/*object KeyRange{  forse no serve
- private var id = 0
- private def inc = {
- id+= 1
- id
- }
- }*/
-
 /**
+  * Class that models a keyrange for actorbase. This class has by 2 strings representing the lowest
+  * string and the highest strings that can fit inside this range. KeyRanges can be compared
   *
   * @param minR a String representing the minimum String inside the range
   * @param maxR a String representing the maximum String inside the range
   */
 class KeyRange(minR: String, maxR: String) extends Ordered[KeyRange] {
-  //valutare se tenere così o mettere val e cambiare keyrange quando ci sono gli sdoppiamenti
-  private var minRange: String = minR
-  private var maxRange: String = maxR   // TODO DECIDERE LA CHIAVE MAXXXX
-  /* private val rangeId = KeyRange.inc
 
-   def getId: Int = rangeId
-   */
+  private val minRange: String = minR
+  private val maxRange: String = maxR   // TODO DECIDERE LA CHIAVE MAXXXX ( supermaxkey should be a costant outside class probably)
+
+
   def getMinRange: String = minRange
 
   def getMaxRange: String = maxRange
 
-  def setMinRange(range: String) = minRange = range
+  /*def setMinRange(range: String) = minRange = range
 
   def setMaxRange(range: String) = maxRange = range
-
-  // forse si può sostituire togliendo questo e facendo < getMax sullo SF (alby culalby)
+*/
   def contains(key: String): Boolean = (key >= minRange && key <= maxRange)
 
   override def toString: String = "from "+ minRange + " to " + maxRange

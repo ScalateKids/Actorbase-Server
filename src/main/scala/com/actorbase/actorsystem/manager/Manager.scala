@@ -52,29 +52,43 @@ object Manager {
 class Manager extends Actor with ActorLogging {
 
   def receive = {
+
+    /**
+      * DuplicationRequestSK message. When the actor receive this message it means that a Storekeeper is full.
+      * This actor has to create a new Storekeeper using the map in input and then notify the Storefinder that the
+      * duplication happened sending the new ActorRef and new KeyRanges.
+      *
+      * @param oldKeyRange a KeyRange representing the KeyRange that was duplicated. this is needed by the
+      *                    Storefinder to understand which KeyRange needs to be updated
+      * @param leftRange a KeyRange representing the new KeyRange of the Storekeeper that was duplicated
+      * @param map a TreeMap[String, Any] representing the collection for the Storekeeper that has to be created
+      * @param rightRange a KeyRange representing the KeyRange of the Storekeeper that has to be created
+      *
+      */
     case DuplicationRequestSK(oldKeyRange, leftRange, map, rightRange) => {
       log.info("Manager: Duplication request SK")
       // create a SK with the map received and init him
       val newSk = context.actorOf(Props(new Storekeeper( self, map, rightRange)))
 
-      // initialize the new Sk sending self
-      //newSk ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
-
       // should notify storefinder with new actorref and update of the keyrange
-      //parent ! modifica sf keyrangeleft e right
       context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSk, rightRange)
     }
-    case DuplicationRequestSF(oldKeyRange, leftRange, map, rightRange) => {
-      log.info("Manager: Duplication request SF")
-      // create a SF with the map received and init him
-      val newSf = context.actorOf(Props(new Storefinder(map)))
 
+    /**
+      *
+       */
+    case DuplicationRequestSF(oldKeyRange, leftRange, map, rightRange, mainActor) => {
+      log.info("Manager: Duplication request SFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+      // create a SF with the map received and init him
+      val newSf = context.actorOf(Props(new Storefinder(mainActor, map ,rightRange)))
+
+      mainActor ! DuplicateSKNotify( oldKeyRange, leftRange, newSf, rightRange )
       // initialize the new Sk sending self
-      newSf ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
+      //newSf ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
 
       // should notify storefinder with new actorref and update of the keyrange
       //parent ! modifica sf keyrangeleft e right
-      context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSf, rightRange)
+ //     context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicateSFNotify( oldKeyRange, leftRange, newSf, rightRange)
     }
   }
 }
