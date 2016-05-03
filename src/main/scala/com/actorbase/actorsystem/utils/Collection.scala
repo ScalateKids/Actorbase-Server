@@ -35,5 +35,10 @@ package com.actorbase.actorsystem.utils
   * @param owner
   */
 class Collection( private var name: String, private var owner: String ){
+  //TODO mettere uuid anche qui?
+
+  def getName: String = name
+
+  def getOwner: String = owner
 
 }

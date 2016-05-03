@@ -205,30 +205,6 @@ trait RestApi extends HttpServiceBase with Authenticator {
         }
       }
     } ~
-    //test route for sf and sk
-    path("testStorekeeper"){
-      get {
-        complete {
-          main.ask(Testsk)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    //test route for sf and sk
-    path("testStorefinder"){
-      get {
-        complete {
-          main.ask(Testsf)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
-    //test ninja
-    path("testNinja"){
-      get {
-        complete {
-          main.ask(Testnj)(5 seconds).mapTo[Response]
-        }
-      }
-    } ~
     // private area
     pathPrefix("private") {
       authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
@@ -240,3 +216,4 @@ trait RestApi extends HttpServiceBase with Authenticator {
     }
   }
 }
+

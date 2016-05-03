@@ -77,7 +77,7 @@ class Userkeeper private (var username: String = "user",
     * Receive method of Userkeeper actor, it currently handle 6 message type:
     *
     * - GetPassword send associated password to the ClientActor reference who ask for it
-    * - ChangePassword replace the password to a new password
+    * - ChangePassword replace the password with a new password
     * - AddCollection add a new collection to ListBuffer[String] collections or to
     *   readCollections based on a Boolean flag
     * - RemoveCollection remove a new collection to ListBuffer[String] collections or to
