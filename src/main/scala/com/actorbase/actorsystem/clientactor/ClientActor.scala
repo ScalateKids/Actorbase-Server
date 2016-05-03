@@ -48,7 +48,7 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi {
     * @throws
     */
   // private area
-  def login = pathPrefix("private") {
+  val login = pathPrefix("private") {
     authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
       // only authenticated users can enter here
       get {
