@@ -50,8 +50,6 @@ import com.actorbase.actorsystem.clientactor.messages._
   */
 trait RestApi extends HttpServiceBase with Authenticator {
 
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-
   /**
     * HTTP routes mapped to handle CRUD operations, these should be nouns
     * (not verbs!) e.g.
@@ -132,45 +130,6 @@ trait RestApi extends HttpServiceBase with Authenticator {
         }
       }
     } ~
-    /*
-    path without prefix etc. choose one version
-    path("collections" / "\\S+".r / "\\S*".r) { (collection, key) =>
-      get {
-        complete {
-          main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Array[Byte]]
-        }
-      } ~
-      delete {
-        complete {
-          main ! RemoveItemFrom(collection, key)
-          "Remove complete"
-        }
-      } ~
-      post {
-        decompressRequest() {
-          entity(as[Array[Byte]]) { value =>
-            detach() {
-              complete {
-                main ! Insert(collection, key, value)
-                "Insert complete"
-              }
-            }
-          }
-        }
-      } ~
-      put {
-        decompressRequest() {
-          entity(as[Array[Byte]]) { value =>
-            detach() {
-              complete {
-                main ! Insert(collection, key, value, true)
-                "Update complete"
-              }
-            }
-          }
-        }
-      }
-    } ~*/
     //need to add item and user(?) routes
     /* TEST ROUTES */
     // bin test

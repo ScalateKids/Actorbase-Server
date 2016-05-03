@@ -44,7 +44,7 @@ import scala.collection.mutable.ListBuffer
   * @return
   * @throws
   */
-class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi {
+class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi with CollectionApi {
 
   implicit val timeout = Timeout(5 seconds)
   /** read-write collections list */
@@ -77,6 +77,6 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi {
       }
     }
   }
-  def receive = runRoute(route(main)~login)
+  def receive = runRoute(collections(main, "lol")~route(main)~login) //lol must be the name of the logged user
 
 }
