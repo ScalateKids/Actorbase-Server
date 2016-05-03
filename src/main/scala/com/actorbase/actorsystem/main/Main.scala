@@ -108,7 +108,7 @@ class Main extends Actor with ActorLogging {
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
 
-  private var sfMap = new TreeMap[CollectionRange, ActorRef]() // credo debba essere TreeMap[ActorRef -> String] o quella String è unica?
+  private var sfMap = new TreeMap[String, ActorRef]() // credo debba essere TreeMap[ActorRef -> String] o quella String è unica?
 
   /**
     * Insert description here
@@ -223,6 +223,6 @@ class Main extends Actor with ActorLogging {
     }
   }
 
-  private def createCollection()
+  //private def createCollection()
 
 }
