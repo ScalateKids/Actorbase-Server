@@ -90,7 +90,7 @@ object Main {
 
   case class RemoveContributor(username: String, permission: Boolean = false , collection: String)
 
-  case object Testnj
+  case class CreateCollection(name: String, usernameOwner: String) // basta così al momento
 
   case object InitUsers
 
@@ -150,16 +150,36 @@ class Main extends Actor with ActorLogging {
       * updating the value)
       *
       */
-    case Insert(collection, key, value, update) =>
+    case Insert(owner, name, key, value, update) => {
       // need controls
-      if(sfMap.contains(collection))
+      // TODO la collezione esiste, devo trovare se ce l'ha questo main, se si controllare keyrange e instradare, altrimenti mandare ai proprio BRO
+
+      /*if(sfMap.contains(collection))
         sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       else {
         //TODO usare createCollection
-        val sf =  context.actorOf(Storefinder.props( self ) )
-        sfMap += (collection -> sf)
+        val sf = createCollection( name, )
+        //val sf =  context.actorOf(Storefinder.props( self ) )
+        //sfMap += (collection -> sf)
         sf forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
-      }
+      }*/
+    }
+
+    /**
+      *
+      */
+    case CreateCollection(name, owner) => {
+      //
+      createCollection(name, owner)
+      // TODO avvisare lo userkeeper che a sua volta deve avvisare il client
+    }
+
+    /**
+      *
+      */
+    case RemoveCollection(name, owner) => {
+      //TODO da implementare
+    }
 
     /**
       * Get item from collection  message, given a key of type String, retrieve
@@ -216,13 +236,23 @@ class Main extends Actor with ActorLogging {
 
     /**
       *
-       */
+      */
     case DuplicateSFNotify( oldKeyRange, leftRangeKR, map, rightRangeKR ) => {
       log.info("MAIN: duplicateSFnotify")
 
     }
   }
 
-  private def createCollection()
+  /**
+    *
+    * @param name
+    * @param owner
+    */
+  private def createCollection(name: String, owner: String): Unit ={
+    val sf =  context.actorOf(Storefinder.props( self ) )
+    var newCollection = new CollectionRange( new Collection(name, owner), new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
+    sfMap += (newCollection -> sf)
+    sf
+  }
 
 }
