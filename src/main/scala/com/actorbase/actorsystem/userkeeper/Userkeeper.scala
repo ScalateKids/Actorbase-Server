@@ -93,11 +93,11 @@ class Userkeeper private (var username: String = "user",
 
     case GetCollections(read) =>
       if(read) {
-        val rCollections = readCollections
+        val rCollections = readCollections // what vedi sotto
         sender ! rCollections
       }
       else {
-        val rwCollections = readCollections
+        val rwCollections = readCollections // what vedi sopra
         sender ! rwCollections
       }
 
@@ -117,7 +117,11 @@ class Userkeeper private (var username: String = "user",
       else
         collections -= collection
 
-    case BindClient(assoc) => client = assoc
+    case BindClient(assoc) => {
+      client = assoc
+      val toRet = Array(collections, readCollections)
+      sender ! Some(toRet)
+    }
 
   }
 
