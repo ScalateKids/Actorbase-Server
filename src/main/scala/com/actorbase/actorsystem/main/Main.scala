@@ -48,7 +48,7 @@ import com.actorbase.actorsystem.ninja.messages._
 
 import com.actorbase.actorsystem.main.messages._
 
-import com.actorbase.actorsystem.utils.{KeyRange, Collection, CollectionRange}
+import com.actorbase.actorsystem.utils.{KeyRange, ActorbaseCollection, CollectionRange}
 
 import com.github.t3hnar.bcrypt._
 import org.mindrot.jbcrypt.BCrypt
@@ -154,9 +154,9 @@ class Main extends Actor with ActorLogging {
       */
     case Insert(owner, name, key, value, update) => {
       // search if sfMap contains the collection i need, if it's present search the right keyrange
-      Boolean inserted = false
-      for( collectionRange, sfRef <- sfMap){
-        if( collectionRange.isSameCollection(name, owner) &&  collectionRange.getKey.contains(key) ){
+      var inserted: Boolean = false
+      for( (collectionRange, sfRef) <- sfMap){
+        if( collectionRange.isSameCollection(name, owner) &&  collectionRange.getKeyRange.contains(key) ){
           // right collection and right keyrange (right collectionRange), let's insert here
           sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update)
           inserted = true
@@ -167,7 +167,8 @@ class Main extends Actor with ActorLogging {
         //TODO mandare agli altri main
       }
 
-      /*if(sfMap.contains(collection))
+      /* old code
+      if(sfMap.contains(collection))
         sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       else {
         //TODO usare createCollection
@@ -191,6 +192,7 @@ class Main extends Actor with ActorLogging {
       */
     case RemoveCollection(name, owner) => {
       //TODO da implementare
+      //for( collectionRange)
     }
 
     /**
@@ -252,6 +254,7 @@ class Main extends Actor with ActorLogging {
     case DuplicateSFNotify( oldKeyRange, leftRangeKR, map, rightRangeKR ) => {
       log.info("MAIN: duplicateSFnotify")
       //TODO
+
     }
   }
 
@@ -260,10 +263,10 @@ class Main extends Actor with ActorLogging {
     * @param name
     * @param owner
     */
-  private def createCollection(name: String, owner: String): Unit ={
-    val sf =  context.actorOf(Storefinder.props( self ) )
-    var newCollection = new CollectionRange( new Collection(name, owner), new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
-    sfMap += (newCollection -> sf)
+  private def createCollection(name: String, owner: String): ActorRef ={
+    val sf =  context.actorOf(Storefinder.props( self, new ActorbaseCollection(name, owner ) ) )
+    var newCollectionRange = new CollectionRange( new ActorbaseCollection(name, owner), new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
+    sfMap += (newCollectionRange -> sf)
     sf
   }
 }

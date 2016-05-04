@@ -32,18 +32,18 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
-import com.actorbase.actorsystem.manager.messages.DuplicationRequestSF
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.manager.Manager
-import com.actorbase.actorsystem.utils.KeyRange
+import com.actorbase.actorsystem.manager.messages.DuplicationRequestSF
+import com.actorbase.actorsystem.utils.{KeyRange, ActorbaseCollection, CollectionRange}
 
 import scala.collection.immutable.TreeMap
 import scala.math.Ordered.orderingToOrdered
 
 object Storefinder {
-  def props( mainParent: ActorRef) : Props = Props(new Storefinder( mainParent ))
+  def props( mainParent: ActorRef, collection: ActorbaseCollection ) : Props = Props(new Storefinder( mainParent, collection ))
 }
 
 /**
@@ -54,11 +54,12 @@ object Storefinder {
   * @param sfManager
   */
 class Storefinder(private val mainParent: ActorRef,
+                  private var collection: ActorbaseCollection,
                   private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
                   private var range: KeyRange = new KeyRange("a", "z") ) extends Actor with ActorLogging {
 
   // collection name
-  private var collectionName: String = ""
+
   // initialize his manager
   private val sfManager: ActorRef = context.actorOf(Manager.props())
   private val maxSize: Int = 4
@@ -77,8 +78,6 @@ class Storefinder(private val mainParent: ActorRef,
       */
     case com.actorbase.actorsystem.storefinder.messages.Init(name, manager, range) => {
       log.info("SF: init")
-      // initialize the collection name
-      collectionName = name
     }
 
     /**
@@ -98,20 +97,21 @@ class Storefinder(private val mainParent: ActorRef,
 
       if(skMap.size == maxSize-1 ){
         log.info("SF: Must duplicate")
+        //TODO
         // half the collection
         var (halfLeft, halfRight) = skMap.splitAt( maxSize/2 )
         // create new keyrange to be updated for SF
-        val halfLeftKR = new KeyRange( halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange+"a" )
+        val halfLeftCollRange = new CollectionRange( collection, new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange+"a") )
         // create new keyrange for the new storekeeper
-        val halfRightKR = new KeyRange( halfLeft.lastKey.getMinRange+"aa", halfRight.lastKey.getMaxRange )
+        val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfLeft.lastKey.getMinRange+"aa", halfRight.lastKey.getMaxRange) )
         // set the treemap to the first half
         skMap = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
 
-        sfManager ! DuplicationRequestSF(range, halfLeftKR, halfRight, halfRightKR, mainParent)
+        sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
         // update keyRangeId or himself
-        range = halfLeftKR
+       // range = halfLeftKR
       }
     }
 

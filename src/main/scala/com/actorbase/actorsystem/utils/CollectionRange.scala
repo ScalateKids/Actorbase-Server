@@ -30,7 +30,7 @@ package com.actorbase.actorsystem.utils
 
 import scala.math.Ordered.orderingToOrdered
 
-import com.actorbase.actorsystem.utils.{Collection, KeyRange}
+import com.actorbase.actorsystem.utils.{ActorbaseCollection, KeyRange}
 
 /**
   * Class representing a piece of an actorbase collection. Used by MainActors.
@@ -39,7 +39,7 @@ import com.actorbase.actorsystem.utils.{Collection, KeyRange}
   * @param collection. A Collection type representing the actorbase collection
   * @param range. A KeyRange representing the upper and lower bounds of keys possible in this CollectionRange
   */
-class CollectionRange(private var collection: Collection, private var range: KeyRange) extends Ordered[CollectionRange]{
+class CollectionRange(private var collection: ActorbaseCollection, private var range: KeyRange) extends Ordered[CollectionRange]{
 
   /**
     * @return a String representing the collection name
@@ -69,7 +69,7 @@ class CollectionRange(private var collection: Collection, private var range: Key
   /**
     * @return a Collection representing the collection represented by this collectionRange
     */
-  def getCollection: Collection = collection
+  def getCollection: ActorbaseCollection = collection
 
 
   /**
@@ -106,7 +106,7 @@ class CollectionRange(private var collection: Collection, private var range: Key
     *         as the collection represented by this object
     */
   // TODO DA TESTARE
-  def isSameCollection(coll: Collection): Boolean = {
+  def isSameCollection(coll: ActorbaseCollection): Boolean = {
     (this.getCollectionName + this.getCollectionOwner == coll.getName + coll.getOwner)
   }
 

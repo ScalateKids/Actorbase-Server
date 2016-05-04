@@ -82,10 +82,11 @@ class Manager extends Actor with ActorLogging {
     case DuplicationRequestSF(oldKeyRange, leftRange, map, rightRange, mainActor) => {
       log.info("Manager: Duplication request SFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
       // create a SF with the map received and init him
-      val newSf = context.actorOf(Props(new Storefinder(mainActor, map ,rightRange)))
+      // TODO
+      /*val newSf = context.actorOf(Props(new Storefinder(mainActor, map)))
 
       mainActor ! DuplicateSFNotify( oldKeyRange, leftRange, newSf, rightRange )
-      // initialize the new Sk sending self
+      */// initialize the new Sk sending self
       //newSf ! com.actorbase.actorsystem.storekeeper.messages.Init( self, rightRange )
 
       // should notify storefinder with new actorref and update of the keyrange
