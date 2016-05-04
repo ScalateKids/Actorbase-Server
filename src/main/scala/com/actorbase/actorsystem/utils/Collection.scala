@@ -28,6 +28,8 @@
 
 package com.actorbase.actorsystem.utils
 
+import scala.math.Ordered.orderingToOrdered
+
 /**
   * Class representing a collection of actorbase
   *
@@ -35,7 +37,7 @@ package com.actorbase.actorsystem.utils
   * @param owner a String representing the username of the owner of this collection
   */
 class Collection( private var name: String,
-                  private var owner: String ){
+                  private var owner: String ) extends Ordered[Collection]{
   //TODO mettere uuid anche qui?
 
   /**
@@ -48,4 +50,7 @@ class Collection( private var name: String,
     */
   def getOwner: String = owner
 
+  override def compare(that: Collection): Int = {
+    (this.name+this.owner) compare (that.name + that.owner)
+  }
 }

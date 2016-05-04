@@ -39,7 +39,7 @@ import com.actorbase.actorsystem.utils.{Collection, KeyRange}
   * @param collection. A Collection type representing the actorbase collection
   * @param range. A KeyRange representing the upper and lower bounds of keys possible in this CollectionRange
   */
-class CollectionRange(private var collection: Collection, private var range: KeyRange) extends Ordered{
+class CollectionRange(private var collection: Collection, private var range: KeyRange) extends Ordered[CollectionRange]{
 
   /**
     * @return a String representing the collection name
@@ -65,6 +65,12 @@ class CollectionRange(private var collection: Collection, private var range: Key
     * @return a KeyRange representing the minimum and maximum Key mappable in this collectionRange
     */
   def getKeyRange: KeyRange = range
+
+  /**
+    * @return a Collection representing the collection represented by this collectionRange
+    */
+  def getCollection: Collection = collection
+
 
   /**
     * @params key a String representing a key, the method will return true if the key is inside the KeyRange of this
@@ -143,16 +149,14 @@ class CollectionRange(private var collection: Collection, private var range: Key
     */
   // TODO DA TESTARE
   override def compare(that: CollectionRange): Int = {
-    if( this.getCollectionName < that.getCollectionName)
-      -1
-    else{
-      if( this.getCollectionName > that.getCollectionName )
-        return 1
-      else{
-        return this.getKeyRange.compare(that.getKeyRange)
-      }
-    }
-    //return isSameCollection(that) && this.range compare(that.getKeyRange)
+    // first check if the collection is the same, if not return the collection compare
+    val comparedCollect = this.getCollection.compare(that.getCollection)
+    if( comparedCollect != 0)
+      // they are not the same collection, just return the compare between the two collections
+      comparedCollect
+    else
+      // they are the same collection, need to return the comparison between keyranges
+      this.getKeyRange.compare(that.getKeyRange)
   }
 
 }

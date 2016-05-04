@@ -40,18 +40,9 @@ import scala.math.Ordered.orderingToOrdered
 class KeyRange(private val minRange: String, private val maxRange: String) extends Ordered[KeyRange] {
   // TODO DECIDERE LA CHIAVE MAXXXX ( supermaxkey should be a costant outside class probably)
 
-
-  /*private val minRange: String = minR
-  private val maxRange: String = maxR
-*/
-
   def getMinRange: String = minRange
 
   def getMaxRange: String = maxRange
-
-  /*def setMinRange(range: String) = minRange = range
-
-  def setMaxRange(range: String) = maxRange = range
 */
   def contains(key: String): Boolean = (key >= minRange && key <= maxRange)
 
