@@ -77,8 +77,8 @@ class Storekeeper(private var manager: ActorRef,
       *
        */
     case getItem: GetItem  => {
-      sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
-      //sender ! Response(data.get(getItem.key).getOrElse("None").toString())
+      // sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
+      sender ! Response(data.get(getItem.key).getOrElse("None").toString())
     }
 
     /**

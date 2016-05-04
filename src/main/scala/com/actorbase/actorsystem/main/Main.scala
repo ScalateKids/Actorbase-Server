@@ -164,7 +164,7 @@ class Main extends Actor with ActorLogging {
       }
       if( !inserted ){
         log.info("item has not been inserted, must forward to siblings")
-        createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update) // STUB needed for stress-test
+        createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
         //item has not been inserted, must send the message to the brothers
         //TODO mandare agli altri main
       }
@@ -206,7 +206,9 @@ class Main extends Actor with ActorLogging {
       *
       */
     case GetItemFrom(collection, key) =>
-      sfMap.filterKeys(_.contains(key)).head._2 forward GetAllItem // STUB needed for stress-test
+      if (key.nonEmpty)
+        sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
+      else sfMap.filterKeys(_.getCollectionName == collection).foreach(kv => kv._2 forward GetAllItem)
       // TODO
 /*      if(key == "")
         sfMap.get(collection).get forward GetAllItem
