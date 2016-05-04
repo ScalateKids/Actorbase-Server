@@ -163,6 +163,8 @@ class Main extends Actor with ActorLogging {
         }
       }
       if( !inserted ){
+        log.info("item has not been inserted, must forward to siblings")
+        createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update) // STUB needed for stress-test
         //item has not been inserted, must send the message to the brothers
         //TODO mandare agli altri main
       }
@@ -203,13 +205,14 @@ class Main extends Actor with ActorLogging {
       * @param key a String representing the key to be retrieved
       *
       */
-    case GetItemFrom(collection, key) => {
+    case GetItemFrom(collection, key) =>
+      sfMap.filterKeys(_.contains(key)).head._2 forward GetAllItem // STUB needed for stress-test
       // TODO
 /*      if(key == "")
         sfMap.get(collection).get forward GetAllItem
       else
         sfMap.get(collection).get forward GetItem(key)
-  */  }
+ */
 
     /**
       * Remove item from collection  message, given a key of type String,
@@ -263,7 +266,7 @@ class Main extends Actor with ActorLogging {
     * @param name
     * @param owner
     */
-  private def createCollection(name: String, owner: String): ActorRef ={
+  private def createCollection(name: String, owner: String): ActorRef = {
     val sf =  context.actorOf(Storefinder.props( self, new ActorbaseCollection(name, owner ) ) )
     var newCollectionRange = new CollectionRange( new ActorbaseCollection(name, owner), new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     sfMap += (newCollectionRange -> sf)

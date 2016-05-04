@@ -75,7 +75,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           get {
             complete {
               //TODO controllare, se collection non esiste, inutile instradare
-              main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Array[Byte]]
+              main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[MapResponse] // Array[Byte] -> MapResponse for stress-test demo
             }
           } ~
             delete {
