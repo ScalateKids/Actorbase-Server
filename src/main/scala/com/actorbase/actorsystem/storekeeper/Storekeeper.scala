@@ -76,26 +76,22 @@ class Storekeeper(private var manager: ActorRef,
       * @param key a String representing the key of the item to be returned (sta roba sarà da cambiare)
       *
        */
-    case getItem: GetItem  => {
+    case getItem: GetItem  =>
       // sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
       sender ! Response(data.get(getItem.key).getOrElse("None").toString())
-    }
 
     /**
       * GetAllItem message, this actor will send back the collection name and all the collection.
        */
-    case GetAllItem => {
+    case GetAllItem =>
       val items = data
       sender ! MapResponse("collectionName", items) // need marshalling
-    }
 
     /**
       * RemoveItem message, when the actor receive this message it will erase the item associated with the
       * key in input. This method doesn't throw an exception if the item is not present.
       */
-    case rem: RemoveItem => {
-      data -= rem.key
-    }
+    case rem: RemoveItem => data -= rem.key
 
     /**
       * Insert message, insert a key/value into a designed collection
@@ -107,7 +103,7 @@ class Storekeeper(private var manager: ActorRef,
       * updating the value)
       *
       */
-    case ins: Insert => {
+    case ins: Insert =>
       log.info("SK: Insert")
       log.info("storekeeper range "+range)
       if(data.size < maxSize-1 ) {
@@ -133,7 +129,6 @@ class Storekeeper(private var manager: ActorRef,
         range = halfLeftKR
       }
       //sender ! Response("inserted")
-    }
       logAllItems
   }
 
