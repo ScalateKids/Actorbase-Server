@@ -199,9 +199,11 @@ class Storefinder(private val mainParent: ActorRef,
 
       // debug purposes
     case DebugMap => {
+      var i = 0
       for( (range, skRef) <- skMap){
-        log.info("StoreFinder "+range.toString)
-        skRef forward DebugMaa
+        log.info("DEBUG S-FINDER "+i+" "+range.toString)
+        skRef forward DebugMaa(i)
+        i += 1
       }
     }
   }

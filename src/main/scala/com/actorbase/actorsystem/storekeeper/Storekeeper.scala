@@ -132,9 +132,9 @@ class Storekeeper(private var manager: ActorRef,
      // logAllItems
 
     // debug
-    case DebugMaa =>
+    case DebugMaa(padre) =>
       for( (key, value) <- data){
-        log.info("StoreKeeper "+key+" -> "+value)
+        log.info("DEBUG S-KEEPER ("+padre+") "+key+" -> "+value)
       }
   }
 

@@ -277,7 +277,7 @@ class Main extends Actor with ActorLogging {
 
     case DebugMaps => // debug purposes
       for( (collRange, sfRef )<- sfMap){
-        log.info("main "+collRange.toString)
+        log.info("DEBUG MAIN "+collRange.toString)
         sfRef forward DebugMap
       }
   }
