@@ -15,3 +15,7 @@ libraryDependencies ++= Seq(
   "org.mindrot" % "jbcrypt" % "0.3m",
   "com.github.t3hnar" % "scala-bcrypt_2.10" % "2.6",
   "org.scala-lang.modules" %% "scala-pickling" % "0.10.1")
+
+// addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.3.5")
+
+// addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.1.0")
