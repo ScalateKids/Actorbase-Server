@@ -60,7 +60,7 @@ class Storekeeper(private var manager: ActorRef,
 
   /*private var manager : ActorRef = _
   private var range : KeyRange = _*/
-  private val maxSize: Int = 4  // this should be configurable, probably must read from file
+  private val maxSize: Int = 3  // this should be configurable, probably must read from file
 
   def receive = {
     /**
@@ -132,9 +132,9 @@ class Storekeeper(private var manager: ActorRef,
      // logAllItems
 
     // debug
-    case DebugMaa(padre) =>
+    case DebugMaa(mainRange, sfRange) =>
       for( (key, value) <- data){
-        log.info("DEBUG S-KEEPER ("+padre+") "+key+" -> "+value)
+        log.info("DEBUG S-KEEPER (main "+mainRange+") ["+sfRange+"] "+key+" -> "+value)
       }
   }
 

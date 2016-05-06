@@ -42,4 +42,4 @@ case class Insert(key: String, value: Any, update: Boolean = false)
 
 case class RemoveItem(key: String)
 
-case class DebugMaa(padre: Int)
+case class DebugMaa(mainRange: KeyRange, sfRange: KeyRange)

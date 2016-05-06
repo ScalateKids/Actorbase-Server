@@ -43,7 +43,11 @@ import scala.collection.immutable.TreeMap
 import scala.math.Ordered.orderingToOrdered
 
 object Storefinder {
+
   def props( mainParent: ActorRef, collection: ActorbaseCollection ) : Props = Props(new Storefinder( mainParent, collection ))
+
+  def props( mainParent: ActorRef, collection: ActorbaseCollection, map: TreeMap[KeyRange, ActorRef],
+             keyrange: KeyRange) : Props = Props(new Storefinder( mainParent, collection, map, keyrange ))
 }
 
 /**
@@ -56,13 +60,15 @@ object Storefinder {
 class Storefinder(private val mainParent: ActorRef,
                   private var collection: ActorbaseCollection,
                   private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
-                  private var range: KeyRange = new KeyRange("a", "z") ) extends Actor with ActorLogging {
+                  private var range: KeyRange = new KeyRange("a", "z")) extends Actor with ActorLogging {
 
   // collection name
 
   // initialize his manager
-  private val sfManager: ActorRef = context.actorOf(Manager.props())
+  //private val sfManager: ActorRef = context.actorOf(Manager.props())
+
   private val maxSize: Int = 4
+  private val sfManager: ActorRef = context.actorOf(Props(new Manager()), "Manager"+range.getMinRange)
 
   /**
     * Insert description here
@@ -123,9 +129,7 @@ class Storefinder(private val mainParent: ActorRef,
           log.info(range.toString)
         }
 
-        //x debug
-        val range2 = new KeyRange(range.getMinRange, range.getMaxRange)
-        sfManager ! DuplicationRequestSF( new CollectionRange(collection, range2), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
+        sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
 
         // update keyRangeId or himself and set the treemap to the first half
         skMap = halfLeft
@@ -203,11 +207,11 @@ class Storefinder(private val mainParent: ActorRef,
     }
 
       // debug purposes
-    case DebugMap => {
+    case DebugMap( mainRange ) => {
       var i = 0
       for( (range, skRef) <- skMap){
-        log.info("DEBUG S-FINDER "+i+" "+range.toString)
-        skRef forward DebugMaa(i)
+        log.info("DEBUG S-FINDER "+"(main"+mainRange+") "+range.toString)
+        skRef forward DebugMaa(mainRange, range)
         i += 1
       }
     }
