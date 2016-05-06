@@ -60,15 +60,14 @@ object Storefinder {
 class Storefinder(private val mainParent: ActorRef,
                   private var collection: ActorbaseCollection,
                   private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
-                  private var range: KeyRange = new KeyRange("a", "z")) extends Actor with ActorLogging {
+                  private var range: KeyRange = new KeyRange("a", "z") ) extends Actor with ActorLogging {
 
   // collection name
 
   // initialize his manager
   //private val sfManager: ActorRef = context.actorOf(Manager.props())
-
-  private val maxSize: Int = 4
   private val sfManager: ActorRef = context.actorOf(Props(new Manager()), "Manager"+range.getMinRange)
+  private val maxSize: Int = 4
 
   /**
     * Insert description here
