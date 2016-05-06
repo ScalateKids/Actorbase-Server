@@ -44,9 +44,9 @@ class KeyRange(private val minRange: String, private val maxRange: String) exten
 
   def getMaxRange: String = maxRange
 
-  def contains(key: String): Boolean = (key >= minRange && key <= maxRange)
+def contains(key: String): Boolean = (key >= minRange && key <= maxRange)
 
-  override def toString: String = "from "+ minRange + " to " + maxRange
+override def toString: String = "from "+ minRange + " to " + maxRange
 
-  override def compare(that: KeyRange): Int = (this.minRange, this.maxRange) compare (that.minRange, that.maxRange)
+override def compare(that: KeyRange): Int = (this.minRange, this.maxRange) compare (that.minRange, that.maxRange)
 }
