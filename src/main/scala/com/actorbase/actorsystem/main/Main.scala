@@ -156,13 +156,17 @@ class Main extends Actor with ActorLogging {
       // search if sfMap contains the collection i need, if it's present search the right keyrange
       var inserted: Boolean = false
       for( (collectionRange, sfRef) <- sfMap){
-        if( collectionRange.isSameCollection(name, owner) &&  collectionRange.getKeyRange.contains(key) ){
+        log.info("MAIN: checking where to forward the item; "+collectionRange.toString)
+        if( collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ){
           // right collection and right keyrange (right collectionRange), let's insert here
-          sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update)
+          log.info("inserting here "+collectionRange.toString)
           inserted = true
+          sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update )
+          // TODO uscire dal for
         }
       }
       if( !inserted ){
+        // TODO possibile problema futuro, al primo insert nessuno ha la collection e come si capisce chi deve crearla?
         log.info("item has not been inserted, must forward to siblings")
         createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
         //item has not been inserted, must send the message to the brothers
@@ -179,6 +183,24 @@ class Main extends Actor with ActorLogging {
         //sfMap += (collection -> sf)
         sf forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
       }*/
+    }
+
+    /**
+      *
+      */
+    case DuplicateSFNotify( oldCollRange, leftCollRange, newSf, rightCollRange ) => {
+      log.info("MAIN: duplicateSFnotify")
+      //TODO
+
+      // update sfMap due to a SF duplicate happened
+      //scorrere sfmap, trovare cosa aggiornare con leftcollrange
+      // get old sk actorRef
+      val tmpActorRef = sfMap.get(oldCollRange).get
+      // remove entry associated with that actorRef
+      sfMap = sfMap - oldCollRange // non so se sia meglio così o fare una specie di update key (che non c'è)
+      // add the entry with the oldSK and the new one
+      sfMap += (leftCollRange -> tmpActorRef)
+      sfMap += (rightCollRange -> newSf)
     }
 
     /**
@@ -253,14 +275,11 @@ class Main extends Actor with ActorLogging {
         // need controls
         ufRef ! RemoveCollectionFrom(username,permission,collection)
 
-    /**
-      *
-      */
-    case DuplicateSFNotify( oldKeyRange, leftRangeKR, map, rightRangeKR ) => {
-      log.info("MAIN: duplicateSFnotify")
-      //TODO
-
-    }
+    case DebugMaps => // debug purposes
+      for( (collRange, sfRef )<- sfMap){
+        log.info("main "+collRange.toString)
+        sfRef forward DebugMap
+      }
   }
 
   /**
@@ -269,7 +288,7 @@ class Main extends Actor with ActorLogging {
     * @param owner
     */
   private def createCollection(name: String, owner: String): ActorRef = {
-    val sf =  context.actorOf(Storefinder.props( self, new ActorbaseCollection(name, owner ) ) )
+    val sf = context.actorOf(Storefinder.props( self, new ActorbaseCollection(name, owner ) ) )
     var newCollectionRange = new CollectionRange( new ActorbaseCollection(name, owner), new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     sfMap += (newCollectionRange -> sf)
     sf

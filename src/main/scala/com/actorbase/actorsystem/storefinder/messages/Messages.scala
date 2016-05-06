@@ -45,3 +45,5 @@ case object GetAllItem
 case class RemoveItem(key: String)
 
 case class Insert(key: String, value: Any, update: Boolean = false)
+
+case object DebugMap

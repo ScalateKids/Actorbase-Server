@@ -104,8 +104,8 @@ class Storekeeper(private var manager: ActorRef,
       *
       */
     case ins: Insert =>
-      log.info("SK: Insert")
-      log.info("storekeeper range "+range)
+      log.info("SK: Insert "+ins.key)
+      //log.info("storekeeper range "+range)
       if(data.size < maxSize-1 ) {
         insertOrUpdate( ins.update, ins.key, ins.value)
       }
@@ -120,7 +120,7 @@ class Storekeeper(private var manager: ActorRef,
         // create new keyrange for the new storekeeper
         val halfRightKR = new KeyRange( halfLeft.lastKey+"aa", range.getMaxRange/*halfRight.lastKey*/ )
         // set the treemap to the first half
-        log.info("left key range "+halfLeftKR+" right key range "+halfRightKR)
+    //    log.info("left key range "+halfLeftKR+" right key range "+halfRightKR)
         data = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
@@ -129,7 +129,13 @@ class Storekeeper(private var manager: ActorRef,
         range = halfLeftKR
       }
       //sender ! Response("inserted")
-      logAllItems
+     // logAllItems
+
+    // debug
+    case DebugMaa =>
+      for( (key, value) <- data){
+        log.info("StoreKeeper "+key+" -> "+value)
+      }
   }
 
   /**

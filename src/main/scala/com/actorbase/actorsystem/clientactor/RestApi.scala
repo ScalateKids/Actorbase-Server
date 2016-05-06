@@ -39,6 +39,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 import com.actorbase.actorsystem.main.Main.{BinTest, Insert, GetItemFrom, RemoveItemFrom}
+import com.actorbase.actorsystem.main.messages._
 import com.actorbase.actorsystem.clientactor.messages._
 
 /**
@@ -81,10 +82,19 @@ trait RestApi extends HttpServiceBase with Authenticator {
       }
     } ~
     // test miniotta
-    path("actorbase" / "insert" / "\\S+".r / "\\S+".r / "\\S+".r) { (collection, key, value) =>
+    path("actorbase" / "insert" / "\\S+".r / "\\S+".r / "\\S+".r) { (collectionName, key, value) =>
       get {
         complete {
-          main.ask(Insert(collection, key, value, false))(5 seconds).mapTo[Response]
+          main.ask(Insert("", collectionName, key, value, false))(5 seconds).mapTo[Response]
+          "boh"
+        }
+      }
+    } ~
+    // test miniotta
+    path("actorbase" / "debugmaps") {
+      get {
+        complete {
+          main.ask(DebugMaps)(5 seconds).mapTo[Response]
           "boh"
         }
       }

@@ -84,7 +84,7 @@ class Storefinder(private val mainParent: ActorRef,
       *
       */
     case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {  //TODO CODICE MOLTO REPLICATO FROM SK
-      log.info("SF: DuplicateSFNotify")
+      log.info("SF: DuplicateSKNotify")
       // update skMap due to a SK duplicate happened
       //scorrere skmap, trovare cosa aggiorare con leftrange
       // get old sk actorRef
@@ -100,14 +100,26 @@ class Storefinder(private val mainParent: ActorRef,
         //TODO
         // half the collection
         var (halfLeft, halfRight) = skMap.splitAt( maxSize/2 )
+        log.info("SF duplication halfleft first key"+halfLeft.firstKey+" last key "+halfLeft.lastKey)
+        log.info("SF duplication halfright first key"+halfRight.firstKey+" last key "+halfRight.lastKey)
         // create new keyrange to be updated for SF
-        val halfLeftCollRange = new CollectionRange( collection, new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange+"a") )
+        val halfLeftCollRange = new CollectionRange( collection, new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange/*+"a"*/) )
         // create new keyrange for the new storekeeper
-        val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfLeft.lastKey.getMinRange+"aa", halfRight.lastKey.getMaxRange) )
+        // old was val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfLeft.lastKey.getMinRange/*+"aa"*/, halfRight.lastKey.getMaxRange) )
+        val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfRight.firstKey.getMinRange, halfRight.lastKey.getMaxRange) )
         // set the treemap to the first half
         skMap = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
+        log.info("left SF key range "+halfLeftCollRange+" right SF key range "+halfRightCollRange+" maps are below")
+        log.info("left is ")
+        for( (range, ref) <- halfLeft){
+          log.info(range.toString)
+        }
+        log.info("right is ")
+        for( (range, ref) <- halfRight){
+          log.info(range.toString)
+        }
 
         sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
         // update keyRangeId or himself
@@ -127,15 +139,15 @@ class Storefinder(private val mainParent: ActorRef,
       */
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
       log.info("SF: insert")
-      log.info("storefinder route "+range)
+      log.info("storefinder range "+range)
       skMap.size match {
         // empty TreeMap -> create SK and forward message to him
         case 0 => {
           val kr = new KeyRange("a", "z") // pensare se questo vabene nel caso di sdoppiamentooo
           val sk = context.actorOf(Storekeeper.props( sfManager, new TreeMap[String, Any](), kr ))
+          // update map
           skMap += (kr -> sk)
-          // init the storekeeper passing the manager ref
-          //sk ! com.actorbase.actorsystem.storekeeper.messages.Init( sfManager, kr )
+          // forward the request to the sk just created
           sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
         }
         // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
@@ -185,6 +197,13 @@ class Storefinder(private val mainParent: ActorRef,
       }
     }
 
+      // debug purposes
+    case DebugMap => {
+      for( (range, skRef) <- skMap){
+        log.info("StoreFinder "+range.toString)
+        skRef forward DebugMaa
+      }
+    }
   }
 
 }
