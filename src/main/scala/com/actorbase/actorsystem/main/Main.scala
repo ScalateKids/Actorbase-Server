@@ -189,9 +189,10 @@ class Main extends Actor with ActorLogging {
       *
       */
     case DuplicateSFNotify( oldCollRange, leftCollRange, newSf, rightCollRange ) => {
-      log.info("MAIN: duplicateSFnotify")
+      val asd = "oldCollRange "+oldCollRange+"\nleftCollRange "+leftCollRange+"\nrightCollRange "+rightCollRange
+      log.info("MAIN: duplicateSFnotify "+asd)
+     // sfMap.get()
       //TODO
-
       // update sfMap due to a SF duplicate happened
       //scorrere sfmap, trovare cosa aggiornare con leftcollrange
       // get old sk actorRef

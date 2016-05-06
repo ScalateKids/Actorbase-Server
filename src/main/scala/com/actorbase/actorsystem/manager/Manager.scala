@@ -84,7 +84,7 @@ class Manager extends Actor with ActorLogging {
       // create a SF with the map received and init him
       // TODO
       // create che storefinder with ( mainactor ref, actorbaseCollection, Map[KeyRange, skRef], KeyRange )
-      val newSf = context.actorOf(Props(new Storefinder(mainActor, oldCollRange.getCollection, map, leftCollRange.getKeyRange)))
+      val newSf = context.actorOf(Props(new Storefinder(mainActor, oldCollRange.getCollection, map, rightCollRange.getKeyRange)))
 
       mainActor ! DuplicateSFNotify( oldCollRange, leftCollRange, newSf, rightCollRange )
       // initialize the new Sk sending self
