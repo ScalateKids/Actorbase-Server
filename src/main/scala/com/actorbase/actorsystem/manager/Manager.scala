@@ -39,7 +39,9 @@ import com.actorbase.actorsystem.main.messages.DuplicateSFNotify
 import scala.collection.immutable.TreeMap
 
 object Manager {
-  def props() : Props = Props(new Manager())
+  //def props() : Props = Props(new Manager())
+
+  def props( sfRef: ActorRef ): Props = Props(new Manager( sfRef ))
 }
 
 /**
@@ -51,7 +53,7 @@ object Manager {
   */
 
 
-class Manager extends Actor with ActorLogging {
+class Manager( parentRef: ActorRef) extends Actor with ActorLogging {
 
   def receive = {
 
@@ -73,7 +75,8 @@ class Manager extends Actor with ActorLogging {
       val newSk = context.actorOf(Props(new Storekeeper( self, map, rightRange)))
 
       // should notify storefinder with new actorref and update of the keyrange
-      context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSk, rightRange)
+      //context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSk, rightRange)
+      parentRef ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSk, rightRange)
     }
 
     /**

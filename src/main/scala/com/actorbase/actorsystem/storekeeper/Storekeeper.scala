@@ -62,6 +62,8 @@ class Storekeeper(private var manager: ActorRef,
   private var range : KeyRange = _*/
   private val maxSize: Int = 3  // this should be configurable, probably must read from file
 
+  log.info("STOREKEEPER CREATED, HIS MANAGER IS "+manager.path.name)
+
   def receive = {
     /**
       * ???
@@ -136,6 +138,8 @@ class Storekeeper(private var manager: ActorRef,
       for( (key, value) <- data){
         log.info("DEBUG S-KEEPER (main "+mainRange+") ["+sfRange+"] "+key+" -> "+value)
       }
+
+    case UpdateManager( newManager ) => manager = newManager
   }
 
   /**

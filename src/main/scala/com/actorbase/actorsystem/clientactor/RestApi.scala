@@ -90,6 +90,20 @@ trait RestApi extends HttpServiceBase with Authenticator {
         }
       }
     } ~
+      // test miniotta
+      path("actorbase" / "multiinsert") {
+        get {
+          complete {
+            for( a <- 1 to 100){
+              var tmpkey = scala.util.Random.alphanumeric.take(10).mkString
+              val key = tmpkey.replaceAll("[0-9]", "x")
+              main.ask(Insert("", "customers", key , "value of "+key, false))(5 seconds).mapTo[Response]
+              Thread.sleep(150)
+            }
+            "multiinserted!"
+          }
+        }
+      } ~
     // test miniotta
     path("actorbase" / "debugmaps") {
       get {

@@ -66,8 +66,10 @@ class Storefinder(private val mainParent: ActorRef,
 
   // initialize his manager
   //private val sfManager: ActorRef = context.actorOf(Manager.props())
-  private val sfManager: ActorRef = context.actorOf(Props(new Manager()), "Manager"+range.getMinRange)
+  private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )), "Manager"+range.getMinRange)
   private val maxSize: Int = 4
+  log.info("STOREFINDER CREATED A MANAGER WITH NAME Manager"+range.getMinRange+"-"+range.getMaxRange  )
+  updateManagerOfSK()
 
   /**
     * Insert description here
@@ -213,6 +215,13 @@ class Storefinder(private val mainParent: ActorRef,
         skRef forward DebugMaa(mainRange, range)
         i += 1
       }
+    }
+  }
+
+  def updateManagerOfSK(): Unit = {
+    for((r, skref) <- skMap){
+      println("updating sk manager")
+      skref ! UpdateManager( sfManager )
     }
   }
 
