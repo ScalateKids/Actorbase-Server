@@ -70,7 +70,7 @@ class Manager( parentRef: ActorRef) extends Actor with ActorLogging {
       *
       */
     case DuplicationRequestSK(oldKeyRange, leftRange, map, rightRange) => {
-      log.info("Manager"+self.path.name+": Duplication request SK")
+      log.info("Manager "+self.path.name+": Duplication request SK")
       // create a SK with the map received and init him
       val newSk = context.actorOf(Props(new Storekeeper( self, map, rightRange)))
 
@@ -83,7 +83,7 @@ class Manager( parentRef: ActorRef) extends Actor with ActorLogging {
       *
        */
     case DuplicationRequestSF(oldCollRange, leftCollRange, map, rightCollRange, mainActor) => {
-      log.info("Manager"+self.path.name+": Duplication request SFFFFFFFFFFFFFFFFFFFFFFFFFFFF "+" oldCollRange "+oldCollRange.toString+" left "+leftCollRange+" right "+rightCollRange)
+      log.info("Manager "+self.path.name+": Duplication request SF "/*+" oldCollRange "+oldCollRange.toString+" left "+leftCollRange+" right "+rightCollRange*/)
       // create a SF with the map received and init him
       // TODO
       // create che storefinder with ( mainactor ref, actorbaseCollection, Map[KeyRange, skRef], KeyRange )

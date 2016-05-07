@@ -66,10 +66,11 @@ class Storefinder(private val mainParent: ActorRef,
 
   // initialize his manager
   //private val sfManager: ActorRef = context.actorOf(Manager.props())
+  // maybe move this things to a costructor or something like a init?
   private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )), "Manager"+range.getMinRange)
-  private val maxSize: Int = 4
-  log.info("STOREFINDER CREATED A MANAGER WITH NAME Manager"+range.getMinRange+"-"+range.getMaxRange  )
   updateManagerOfSK()
+  private val maxSize: Int = 4
+
 
   /**
     * Insert description here
@@ -91,7 +92,7 @@ class Storefinder(private val mainParent: ActorRef,
       *
       */
     case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {  //TODO CODICE MOLTO REPLICATO FROM SK
-      log.info("SF: DuplicateSKNotify "+" oldKeyRange "+oldKeyRange+" leftRange "+leftRange+" rightRange "+rightRange)
+      log.info("SF: DuplicateSKNotify "/*+" oldKeyRange "+oldKeyRange+" leftRange "+leftRange+" rightRange "+rightRange*/)
       for( (range, ref) <- skMap){
         log.info(range.toString)
       }
@@ -110,8 +111,8 @@ class Storefinder(private val mainParent: ActorRef,
         //TODO
         // half the collection
         var (halfLeft, halfRight) = skMap.splitAt( maxSize/2 )
-        log.info("SF duplication halfleft first key"+halfLeft.firstKey+" last key "+halfLeft.lastKey)
-        log.info("SF duplication halfright first key"+halfRight.firstKey+" last key "+halfRight.lastKey)
+  //      log.info("SF duplication halfleft first key"+halfLeft.firstKey+" last key "+halfLeft.lastKey)
+  //      log.info("SF duplication halfright first key"+halfRight.firstKey+" last key "+halfRight.lastKey)
         // create new keyrange to be updated for SF
         val halfLeftCollRange = new CollectionRange( collection, new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange/*+"a"*/) )
         // create new keyrange for the new storekeeper
@@ -120,7 +121,7 @@ class Storefinder(private val mainParent: ActorRef,
 
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
-        log.info("left SF key range "+halfLeftCollRange+" right SF key range "+halfRightCollRange+" maps are below")
+  /*      log.info("left SF key range "+halfLeftCollRange+" right SF key range "+halfRightCollRange+" maps are below")
         log.info("left is ")
         for( (range, ref) <- halfLeft){
           log.info(range.toString)
@@ -129,7 +130,7 @@ class Storefinder(private val mainParent: ActorRef,
         for( (range, ref) <- halfRight){
           log.info(range.toString)
         }
-
+  */
         sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
 
         // update keyRangeId or himself and set the treemap to the first half

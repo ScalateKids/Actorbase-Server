@@ -98,7 +98,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
               var tmpkey = scala.util.Random.alphanumeric.take(10).mkString
               val key = tmpkey.replaceAll("[0-9]", "x")
               main.ask(Insert("", "customers", key , "value of "+key, false))(5 seconds).mapTo[Response]
-              Thread.sleep(150)
+              Thread.sleep(150) // aspettando 150ms x ogni insert non ci sono problemi, altrimenti si
             }
             "multiinserted!"
           }

@@ -62,8 +62,6 @@ class Storekeeper(private var manager: ActorRef,
   private var range : KeyRange = _*/
   private val maxSize: Int = 3  // this should be configurable, probably must read from file
 
-  log.info("STOREKEEPER CREATED, HIS MANAGER IS "+manager.path.name)
-
   def receive = {
     /**
       * ???
@@ -106,7 +104,7 @@ class Storekeeper(private var manager: ActorRef,
       *
       */
     case ins: Insert =>
-      log.info("SK: Insert "+ins.key)
+      log.info("SK: Inserting "+ins.key+" this SK range is "+range.toString)
       //log.info("storekeeper range "+range)
       if(data.size < maxSize-1 ) {
         insertOrUpdate( ins.update, ins.key, ins.value)
@@ -133,13 +131,22 @@ class Storekeeper(private var manager: ActorRef,
       //sender ! Response("inserted")
      // logAllItems
 
+    /**
+      * UpdateManager message, used to update the storekeeper manager, this is usefull when the Storefinder duplicate
+      * himself, if the manager is not updated when this Storekeeper duplicates the manager ref is
+      * wrong and bad things happens
+      *
+      * @param newManager ActorRef pointing the to new right actor manager (the maganer responsible of
+      *                   the Storefinder mapping the range of this Storekeeper)
+      */
+    case UpdateManager( newManager ) => manager = newManager
+
     // debug
     case DebugMaa(mainRange, sfRange) =>
       for( (key, value) <- data){
         log.info("DEBUG S-KEEPER (main "+mainRange+") ["+sfRange+"] "+key+" -> "+value)
       }
 
-    case UpdateManager( newManager ) => manager = newManager
   }
 
   /**

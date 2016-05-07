@@ -156,10 +156,10 @@ class Main extends Actor with ActorLogging {
       // search if sfMap contains the collection i need, if it's present search the right keyrange
       var inserted: Boolean = false
       for( (collectionRange, sfRef) <- sfMap){
-        log.info("MAIN: checking where to forward the item; "+collectionRange.toString)
+        //log.info("MAIN: checking where to forward the item; "+collectionRange.toString)
         if( collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ){
           // right collection and right keyrange (right collectionRange), let's insert here
-          log.info("inserting here "+collectionRange.toString)
+          log.info("inserting in the range "+collectionRange.toString)
           inserted = true
           sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update )
           // TODO uscire dal for
@@ -189,8 +189,8 @@ class Main extends Actor with ActorLogging {
       *
       */
     case DuplicateSFNotify( oldCollRange, leftCollRange, newSf, rightCollRange ) => {
-      val asd = "oldCollRange "+oldCollRange+"\nleftCollRange "+leftCollRange+"\nrightCollRange "+rightCollRange
-      log.info("MAIN: duplicateSFnotify "+asd)
+      //val asd = "oldCollRange "+oldCollRange+"\nleftCollRange "+leftCollRange+"\nrightCollRange "+rightCollRange
+      log.info("MAIN: duplicateSFnotify "/*+asd*/)
      // sfMap.get()
       //TODO
       // update sfMap due to a SF duplicate happened
