@@ -83,9 +83,10 @@ class Storekeeper(private var manager: ActorRef,
     /**
       * GetAllItem message, this actor will send back the collection name and all the collection.
        */
-    case GetAllItem =>
-      val items = data
-      sender ! MapResponse("collectionName", items) // need marshalling
+    case GetAllItem(clientRef) =>
+      // TODO
+      val items = data  // non si può mandargli data?
+      //sender ! com.actorbase.actorsystem.storefinder.messages.TakeMyItems(clientRef, items)
 
     /**
       * RemoveItem message, when the actor receive this message it will erase the item associated with the

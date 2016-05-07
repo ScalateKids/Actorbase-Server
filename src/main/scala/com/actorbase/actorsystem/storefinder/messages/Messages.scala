@@ -31,7 +31,6 @@
 package com.actorbase.actorsystem.storefinder.messages
 
 import com.actorbase.actorsystem.utils.KeyRange
-
 import akka.actor.ActorRef
 
 case class Init(collName: String, manager: ActorRef, range: KeyRange)
@@ -40,7 +39,7 @@ case class DuplicateSKNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: 
 
 case class GetItem(key: String)
 
-case object GetAllItem
+case class GetAllItem(clientRef: ActorRef)
 
 case class RemoveItem(key: String)
 

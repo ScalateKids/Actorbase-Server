@@ -53,7 +53,7 @@ object Manager {
   */
 
 
-class Manager( parentRef: ActorRef) extends Actor with ActorLogging {
+class Manager(private val parentRef: ActorRef) extends Actor with ActorLogging {
 
   def receive = {
 

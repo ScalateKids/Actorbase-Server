@@ -32,14 +32,15 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
+
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSF
-import com.actorbase.actorsystem.utils.{KeyRange, ActorbaseCollection, CollectionRange}
+import com.actorbase.actorsystem.utils.{ActorbaseCollection, CollectionRange, KeyRange}
 
-import scala.collection.immutable.TreeMap
+import scala.collection.immutable.{TreeMap}
 import scala.math.Ordered.orderingToOrdered
 
 object Storefinder {
@@ -188,10 +189,10 @@ class Storefinder(private val mainParent: ActorRef,
     /**
       *
       */
-    case com.actorbase.actorsystem.storefinder.messages.GetAllItem => {
+    case com.actorbase.actorsystem.storefinder.messages.GetAllItem(clientRef) => {
       log.info("SF: getallitem")
       for ((keyRange, sk) <- skMap){
-        sk forward com.actorbase.actorsystem.storekeeper.messages.GetAllItem
+        sk ! com.actorbase.actorsystem.storekeeper.messages.GetAllItem( clientRef )
       }
     }
 

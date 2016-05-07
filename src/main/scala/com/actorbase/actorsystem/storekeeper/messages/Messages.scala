@@ -32,7 +32,7 @@ import akka.actor.ActorRef
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.utils.KeyRange
 
-case object GetAllItem
+case class GetAllItem(clientRef: ActorRef)
 
 case class Init(manager: ActorRef, range: KeyRange)
 

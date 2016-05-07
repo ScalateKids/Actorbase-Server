@@ -231,7 +231,7 @@ class Main extends Actor with ActorLogging {
     case GetItemFrom(collection, key) =>
       if (key.nonEmpty)
         sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
-      else sfMap.filterKeys(_.getCollectionName == collection).foreach(kv => kv._2 forward GetAllItem)
+      else sfMap.filterKeys(_.getCollectionName == collection).foreach(kv => kv._2 ! GetAllItem(sender))
       // TODO
 /*      if(key == "")
         sfMap.get(collection).get forward GetAllItem
