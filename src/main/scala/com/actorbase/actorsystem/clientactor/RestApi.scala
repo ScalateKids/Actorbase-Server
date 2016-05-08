@@ -91,14 +91,15 @@ trait RestApi extends HttpServiceBase with Authenticator {
       }
     } ~
       // test miniotta
-      path("actorbase" / "multiinsert") {
+      path("actorbase" / "multiinsert" / "\\S+".r / "\\S+".r ) { (numberOfItems, millisecs) =>
         get {
           complete {
-            for( a <- 1 to 100){
-              var tmpkey = scala.util.Random.alphanumeric.take(10).mkString
-              val key = tmpkey.replaceAll("[0-9]", "x")
+            for( a <- 1 to numberOfItems.toInt){
+              var tmpkey = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
+              tmpkey = tmpkey.replaceAll("[0-9]", "x")
+              val key = tmpkey.replaceAll("z", "y")
               main.ask(Insert("", "customers", key , "value of "+key, false))(5 seconds).mapTo[Response]
-              Thread.sleep(150) // aspettando 150ms x ogni insert non ci sono problemi, altrimenti si
+              Thread.sleep(millisecs.toInt) // aspettando 150ms x ogni insert non ci sono problemi, altrimenti si
             }
             "multiinserted!"
           }

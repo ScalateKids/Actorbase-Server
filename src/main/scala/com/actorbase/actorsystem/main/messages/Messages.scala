@@ -31,9 +31,9 @@ package com.actorbase.actorsystem.main.messages
 
 import akka.actor.ActorRef
 import com.actorbase.actorsystem.utils.CollectionRange
-
+import akka.dispatch.ControlMessage
 
 case class DuplicateSFNotify(oldCollRange: CollectionRange, leftCollRange: CollectionRange, newSf: ActorRef,
-                             rightCollRange: CollectionRange)
+                             rightCollRange: CollectionRange) extends ControlMessage
 
 case object DebugMaps

@@ -156,7 +156,9 @@ class Main extends Actor with ActorLogging {
       // search if sfMap contains the collection i need, if it's present search the right keyrange
       var inserted: Boolean = false
       for( (collectionRange, sfRef) <- sfMap){
-        //log.info("MAIN: checking where to forward the item; "+collectionRange.toString)
+        /*log.info("MAIN: checking where to forward the item in coll "+name+" with key "+key+"; "+collectionRange.toString)
+        log.info("MAIN coll "+collectionRange.toString+" and must insert "+name+owner+" "+key)
+        log.info(" same collection? "+collectionRange.isSameCollection(name, owner)+" && key conrains? "+collectionRange.getKeyRange.contains(key))*/
         if( collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ){
           // right collection and right keyrange (right collectionRange), let's insert here
           log.info("inserting in the range "+collectionRange.toString)
@@ -289,7 +291,7 @@ class Main extends Actor with ActorLogging {
     * @param owner
     */
   private def createCollection(name: String, owner: String): ActorRef = {
-    val sf = context.actorOf(Storefinder.props( self, new ActorbaseCollection(name, owner ) ) )
+    val sf = context.actorOf(Storefinder.props( self, new ActorbaseCollection(name, owner ) ).withDispatcher("control-aware-dispatcher"))
     var newCollectionRange = new CollectionRange( new ActorbaseCollection(name, owner), new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     sfMap += (newCollectionRange -> sf)
     sf

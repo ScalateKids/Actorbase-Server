@@ -70,7 +70,7 @@ class Storefinder(private val mainParent: ActorRef,
   // maybe move this things to a costructor or something like a init?
   private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )), "Manager"+range.getMinRange)
   updateManagerOfSK()
-  private val maxSize: Int = 4
+  private val maxSize: Int = 10
 
 
   /**
@@ -94,9 +94,9 @@ class Storefinder(private val mainParent: ActorRef,
       */
     case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {  //TODO CODICE MOLTO REPLICATO FROM SK
       log.info("SF: DuplicateSKNotify "/*+" oldKeyRange "+oldKeyRange+" leftRange "+leftRange+" rightRange "+rightRange*/)
-      for( (range, ref) <- skMap){
+     /* for( (range, ref) <- skMap){
         log.info(range.toString)
-      }
+      }*/
       // update skMap due to a SK duplicate happened
       //scorrere skmap, trovare cosa aggiorare con leftrange
       // get old sk actorRef
@@ -213,7 +213,7 @@ class Storefinder(private val mainParent: ActorRef,
     case DebugMap( mainRange ) => {
       var i = 0
       for( (range, skRef) <- skMap){
-        log.info("DEBUG S-FINDER "+"(main"+mainRange+") "+range.toString)
+        //log.info("DEBUG S-FINDER "+"(main"+mainRange+") "+range.toString/*+" size of this SF is "+skMap.size*/)
         skRef forward DebugMaa(mainRange, range)
         i += 1
       }

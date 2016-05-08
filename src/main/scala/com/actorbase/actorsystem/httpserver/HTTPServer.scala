@@ -76,5 +76,5 @@ class HTTPServer(main: ActorRef, listenPort: Int) extends Actor
 object HTTPServer extends App {
   implicit val system = ActorSystem("actorbase")
   val main = system.actorOf(Props[Main])
-  system.actorOf(Props(new HTTPServer(main, 9999)))
+  system.actorOf(Props(new HTTPServer(main, 9999)).withDispatcher("control-aware-dispatcher"))
 }

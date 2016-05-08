@@ -44,7 +44,7 @@ class KeyRange(private val minRange: String, private val maxRange: String) exten
 
   def getMaxRange: String = maxRange
 
-def contains(key: String): Boolean = (key >= minRange && key <= maxRange)
+def contains(key: String): Boolean = (key.toLowerCase >= minRange.toLowerCase && key.toLowerCase <= maxRange.toLowerCase)
 
 override def toString: String = "from "+ minRange + " to " + maxRange
 
