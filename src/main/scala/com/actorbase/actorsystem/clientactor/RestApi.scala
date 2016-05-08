@@ -99,7 +99,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
               tmpkey = tmpkey.replaceAll("[0-9]", "x")
               val key = tmpkey.replaceAll("z", "y")
               main.ask(Insert("", "customers", key , "value of "+key, false))(5 seconds).mapTo[Response]
-              Thread.sleep(millisecs.toInt) // aspettando 150ms x ogni insert non ci sono problemi, altrimenti si
+              Thread.sleep(millisecs.toInt) // aspettando 10ms x ogni insert non ci sono problemi, con meno spesso rompe tutto
             }
             "multiinserted!"
           }
