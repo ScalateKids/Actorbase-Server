@@ -70,7 +70,7 @@ class Storefinder(private var collection: ActorbaseCollection,
   private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )))*/
   updateOwnerOfSK()
 
-  private val maxSize: Int = 2
+  private val maxSize: Int = 4
 
 
   /**
