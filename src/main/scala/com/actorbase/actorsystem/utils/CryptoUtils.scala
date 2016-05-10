@@ -35,6 +35,9 @@ import javax.crypto.spec.SecretKeySpec
 
 import scala.collection.immutable.TreeMap
 
+/**
+  * Cryptography service object
+  */
 object CryptoUtils {
 
   /** configuration init */
@@ -42,21 +45,25 @@ object CryptoUtils {
   val Transformation = "AES"
 
   /**
-    * Insert description here
+    * Encryption method, currently uses AES algorithm
     *
-    * @param
+    * @param key represents a 16 bit key to generate the secret-key
+    * @param inputData a TreeMap[String, Any] representing a collection shard
+    * @param outputFile the file that will be encrypted and persisted to disk
     * @return
-    * @throws
+    * @throws NoSuchAlgorithmException, NoSuchPaddingException,
+    * InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
+    * IOException
     */
   def encrypt(key: String, inputData: TreeMap[String, Any], outputFile: File): Unit = {
 
     val cipherMode: Int = Cipher.ENCRYPT_MODE
 
     /**
-      * Insert description here
+      * Translate a map of String and Any to an array of bytes
       *
-      * @param
-      * @return
+      * @param o TreeMap object of type String and Any
+      * @return an array of bytes representing the object binarized
       * @throws
       */
     def binarize(o: TreeMap[String, Any]): Array[Byte] = {
@@ -94,11 +101,13 @@ object CryptoUtils {
   }
 
   /**
-    * Insert description here
+    * Decryption method, currently uses AES algorithm
     *
-    * @param
-    * @return
-    * @throws
+    * @param key a 16 bit key used to decrypt the content of the encrypted file
+    * @param inputFile a file read from filesystem
+    * @return a TreeMap of type String and Any
+    * @throws NoSuchAlgorithmException, NoSuchPaddingException,
+    * InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException
     */
   @throws(classOf[NoSuchAlgorithmException])
   @throws(classOf[NoSuchPaddingException])
