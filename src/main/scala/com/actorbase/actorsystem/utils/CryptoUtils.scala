@@ -48,25 +48,9 @@ object CryptoUtils {
     * @return
     * @throws
     */
-  def encrypt(key: String, inputData: TreeMap[String, Any], outputFile: File) = doCrypt(Cipher.ENCRYPT_MODE, key, inputData, outputFile)
+  def encrypt(key: String, inputData: TreeMap[String, Any], outputFile: File) = {
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def decrypt(key: String, inputData: TreeMap[String, Any], outputFile: File) = doCrypt(Cipher.DECRYPT_MODE, key, inputData, outputFile)
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def doCrypt(cipherMode: Int, key: String, inputData: TreeMap[String, Any], outputFile: File) = {
+    val cipherMode: Int = Cipher.ENCRYPT_MODE
 
     /**
       * Insert description here
@@ -106,5 +90,59 @@ object CryptoUtils {
       case ib: IllegalBlockSizeException => println(s"Error encrypting/decrypting file $ib")
       case io: IOException => println(s"Error encrypting/decrypting file $io")
     }
+
   }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def decrypt(key: String, inputData: TreeMap[String, Any], outputFile: File) = {
+
+    val cipherMode: Int = Cipher.DECRYPT_MODE
+
+    /**
+      * Insert description here
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    def binarize(o: TreeMap[String, Any]): Array[Byte] = {
+      val bos = new ByteArrayOutputStream()
+      var out = new ObjectOutputStream(bos)
+      out.writeObject(o);
+      val bytes = bos.toByteArray()
+      out.close();
+      bos.close();
+      bytes
+    }
+
+    try {
+
+      val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
+      val cipher = Cipher.getInstance(Transformation)
+      cipher.init(cipherMode, secretKey)
+
+      val outputBytes = cipher.doFinal(binarize(inputData))
+
+      val outputStream = new FileOutputStream(outputFile)
+      outputStream.write(outputBytes)
+
+      outputStream.close()
+
+    } catch {
+      case na: NoSuchAlgorithmException => println(s"Error encrypting/decrypting file $na")
+      case np: NoSuchPaddingException => println(s"Error encrypting/decrypting file $np")
+      case ik: InvalidKeyException => println(s"Error encrypting/decrypting file $ik")
+      case bp: BadPaddingException => println(s"Error encrypting/decrypting file $bp")
+      case ib: IllegalBlockSizeException => println(s"Error encrypting/decrypting file $ib")
+      case io: IOException => println(s"Error encrypting/decrypting file $io")
+    }
+
+  }
+
 }

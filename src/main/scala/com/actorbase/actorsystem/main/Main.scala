@@ -167,7 +167,7 @@ class Main extends Actor with ActorLogging with Stash {
               context.unbecome() // resets the latest 'become'
               unstashAll()
             case _ =>
-              //log.info("MAIN stashing")
+              log.info("MAIN stashing")
               stash()
           }, discardOld = false) // push on top instead of replace
         }
