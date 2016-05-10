@@ -111,6 +111,8 @@ class Main extends Actor with ActorLogging with Stash {
 
   private var counter = 0 // this is for debug purposes
 
+  private var getMap = new TreeMap[ActorRef, TreeMap[String, Any]]()
+
   /**
     * Insert description here
     *
