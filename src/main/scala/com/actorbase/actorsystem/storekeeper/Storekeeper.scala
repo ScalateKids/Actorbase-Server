@@ -59,7 +59,7 @@ object Storekeeper {
 class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
                   private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
-  private val maxSize: Int = 4  // this should be configurable, probably must read from file
+  private val maxSize: Int = 2  // this should be configurable, probably must read from file
 
   def receive = {
     /**
