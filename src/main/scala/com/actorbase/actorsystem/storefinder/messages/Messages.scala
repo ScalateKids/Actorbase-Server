@@ -49,4 +49,3 @@ case class DebugMap(range: KeyRange)
 
 case class DuplicationRequestSK(oldKeyRange: KeyRange, leftRange: KeyRange, map: TreeMap[String, Any],
                                 rightRange: KeyRange)// extends ControlMessage
-
