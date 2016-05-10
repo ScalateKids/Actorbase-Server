@@ -155,7 +155,7 @@ class Main extends Actor with ActorLogging with Stash {
       for( (collectionRange, sfRef) <- sfMap){
         if( collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ){
           // right collection and right keyrange (right collectionRange), let's insert here
-          log.info("inserting in the range "+collectionRange.toString)
+          log.info("inserting "+key+" in the range "+collectionRange.toString)
           inserted = true
           sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update )
           // TODO uscire dal for
@@ -166,8 +166,21 @@ class Main extends Actor with ActorLogging with Stash {
               log.info("MAIN: ack")
               context.unbecome() // resets the latest 'become'
               unstashAll()
+
+            case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) =>
+              log.info("MAIN: duplicateSFnotify "+oldCollRange+" leftcollrange "+leftCollRange+" rightcollrange "+rightCollRange)
+              // update sfMap due to a SF duplicate happened
+              val newSf = context.actorOf(Props(new Storefinder(oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher") )
+              // get old sk actorRef
+              val tmpActorRef = sfMap.get(oldCollRange).get
+              // remove entry associated with that actorRef
+              sfMap = sfMap - oldCollRange // non so se sia meglio così o fare una specie di update key (che non c'è)
+              // add the entry with the oldSK and the new one
+              sfMap += (leftCollRange -> tmpActorRef)
+              sfMap += (rightCollRange -> newSf)
+
             case _ =>
-              //log.info("MAIN stashing")
+              log.info("MAIN stashing")
               stash()
           }, discardOld = false) // push on top instead of replace
         }
@@ -184,8 +197,8 @@ class Main extends Actor with ActorLogging with Stash {
     /**
       *
       */
-    case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) => {
-      log.info("MAIN: duplicateSFnotify ")
+    /*case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) => {
+      log.info("MAIN: duplicateSFnotify "+oldCollRange+" leftcollrange "+leftCollRange+" rightcollrange "+rightCollRange)
       // update sfMap due to a SF duplicate happened
       val newSf = context.actorOf(Props(new Storefinder(oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher") )
       // get old sk actorRef
@@ -195,7 +208,7 @@ class Main extends Actor with ActorLogging with Stash {
       // add the entry with the oldSK and the new one
       sfMap += (leftCollRange -> tmpActorRef)
       sfMap += (rightCollRange -> newSf)
-    }
+    }*/
 
     /**
       *
