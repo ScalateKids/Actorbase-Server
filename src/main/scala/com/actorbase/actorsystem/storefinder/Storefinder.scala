@@ -67,8 +67,8 @@ class Storefinder(private var collection: ActorbaseCollection,
   // maybe move this things to a costructor or something like a init?
 
   /*
-  private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )))
-  updateManagerOfSK()*/
+  private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )))*/
+  updateOwnerOfSK()
 
   private val maxSize: Int = 2
 
@@ -105,7 +105,7 @@ class Storefinder(private var collection: ActorbaseCollection,
         // empty TreeMap -> create SK and forward message to him
         case 0 =>
           val kr = new KeyRange("a", "z") // pensare se questo vabene nel caso di sdoppiamentooo
-          val sk = context.actorOf(Storekeeper.props( /*sfManager, */new TreeMap[String, Any](), kr ).withDispatcher("control-aware-dispatcher"))
+          val sk = context.actorOf(Storekeeper.props( self, new TreeMap[String, Any](), kr ).withDispatcher("control-aware-dispatcher"))
           // update map
           skMap += (kr -> sk)
           // forward the request to the sk just created
@@ -214,12 +214,12 @@ class Storefinder(private var collection: ActorbaseCollection,
     }
   }
 
-  /*def updateManagerOfSK(): Unit = {
+  def updateOwnerOfSK(): Unit = {
     for((r, skref) <- skMap){
       println("updating sk manager")
-      skref ! UpdateManager( sfManager )
+      skref ! com.actorbase.actorsystem.storekeeper.messages.updateOwnerOfSK( self )
     }
-  }*/
+  }
 
   def cambiocontesto(): Unit = {
     // TEST ACKNOWLEDGE
@@ -234,7 +234,7 @@ class Storefinder(private var collection: ActorbaseCollection,
         log.info("SF: DuplicateSKNotify "+oldKeyRange+" left "+leftRange+" right "+rightRange)
         // need to update skMap due to a SK duplicate happened
 
-        val newSk = context.actorOf(Props(new Storekeeper( map, rightRange)).withDispatcher("control-aware-dispatcher") )
+        val newSk = context.actorOf(Props(new Storekeeper(self, map, rightRange)).withDispatcher("control-aware-dispatcher") )
 
         // get old sk actorRef
         val tmpActorRef = skMap.get(oldKeyRange).get
