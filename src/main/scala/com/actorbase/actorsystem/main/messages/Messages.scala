@@ -40,6 +40,6 @@ import scala.collection.immutable.TreeMap
 case class DuplicationRequestSF(oldCollRange: CollectionRange, leftCollRange: CollectionRange, map: TreeMap[KeyRange, ActorRef],
                                 rightCollRange: CollectionRange) extends ControlMessage
 
-case class Ack() extends ControlMessage
+case class Ack() //extends ControlMessage
 
 case object DebugMaps

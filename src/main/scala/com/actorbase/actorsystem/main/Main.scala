@@ -159,22 +159,41 @@ class Main extends Actor with ActorLogging with Stash {
           inserted = true
           sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update )
           // TODO uscire dal for
+          // TEST ACKNOWLEDGE
+          context.become({
+            case Ack =>
+              log.info("MAIN: ack")
+              context.unbecome() // resets the latest 'become'
+              unstashAll()
+
+            case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) =>
+              log.info("MAIN: duplicateSFnotify "+oldCollRange+" leftcollrange "+leftCollRange+" rightcollrange "+rightCollRange)
+              // update sfMap due to a SF duplicate happened
+              val newSf = context.actorOf(Props(new Storefinder(oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher") )
+              // get old sk actorRef
+              val tmpActorRef = sfMap.get(oldCollRange).get
+              // remove entry associated with that actorRef
+              sfMap = sfMap - oldCollRange // non so se sia meglio così o fare una specie di update key (che non c'è)
+              // add the entry with the oldSK and the new one
+              sfMap += (leftCollRange -> tmpActorRef)
+              sfMap += (rightCollRange -> newSf)
+
+            case _ =>
+              log.info("MAIN stashing")
+              stash()
+          }, discardOld = false) // push on top instead of replace
         }
       }
       if( !inserted ){
         // TODO possibile problema futuro, al primo insert nessuno ha la collection e come si capisce chi deve crearla?
         log.info("item has not been inserted, must forward to siblings")
         createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
-        //item has not been inserted, must send the message to the brothers
-        //TODO mandare agli altri main
-      }
-      if( inserted )
-      // TEST ACKNOWLEDGE
+        // TEST ACKNOWLEDGE
         context.become({
           case Ack =>
             log.info("MAIN: ack")
-            unstashAll()
             context.unbecome() // resets the latest 'become'
+            unstashAll()
 
           case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) =>
             log.info("MAIN: duplicateSFnotify "+oldCollRange+" leftcollrange "+leftCollRange+" rightcollrange "+rightCollRange)
@@ -192,6 +211,9 @@ class Main extends Actor with ActorLogging with Stash {
             log.info("MAIN stashing")
             stash()
         }, discardOld = false) // push on top instead of replace
+        //item has not been inserted, must send the message to the brothers
+        //TODO mandare agli altri main
+      }
     }
 
     /**
