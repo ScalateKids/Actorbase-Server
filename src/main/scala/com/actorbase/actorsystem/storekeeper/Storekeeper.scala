@@ -59,7 +59,7 @@ object Storekeeper {
 class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
                   private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
-  private val maxSize: Int = 18  // this should be configurable, probably must read from file
+  private val maxSize: Int = 4  // this should be configurable, probably must read from file
 
   def receive = {
     /**
@@ -109,7 +109,6 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       //log.info("storekeeper range "+range)
       if(data.size < maxSize-1 ) {
         insertOrUpdate( ins.update, ins.key, ins.value)
-        context.parent ! com.actorbase.actorsystem.main.messages.Ack
       }
       else {
         log.info("SK: Must duplicate")
@@ -125,11 +124,11 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
         data = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
-        context.parent ! com.actorbase.actorsystem.main.messages.Ack
         context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicationRequestSK(range, halfLeftKR, halfRight, halfRightKR)
         // update keyRangeId or himself
         range = halfLeftKR
       }
+      context.parent ! com.actorbase.actorsystem.main.messages.Ack
       //sender ! Response("inserted")
      // logAllItems
 
