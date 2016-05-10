@@ -44,9 +44,11 @@ import scala.collection.immutable.TreeMap
 import com.actorbase.actorsystem.warehouseman.Warehouseman
 
 object Storekeeper {
-  //def props() : Props = Props( new Storekeeper())
+
   def props( parentRef: ActorRef, data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper(parentRef, data, range))
+
   def props( parentRef: ActorRef) : Props = Props( new Storekeeper( parentRef))
+
 }
 
 /**
