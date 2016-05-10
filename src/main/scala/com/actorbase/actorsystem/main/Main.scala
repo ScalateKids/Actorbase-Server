@@ -109,6 +109,7 @@ class Main extends Actor with ActorLogging with Stash {
 
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
 
+  private var markyno = 0
   /**
     * Insert description here
     *
@@ -156,6 +157,7 @@ class Main extends Actor with ActorLogging with Stash {
         if( collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ){
           // right collection and right keyrange (right collectionRange), let's insert here
           log.info("inserting "+key+" in the range "+collectionRange.toString)
+          println("inserting "+key+" in the range "+collectionRange.toString)
           inserted = true
           sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update )
           // TODO uscire dal for
@@ -299,7 +301,11 @@ class Main extends Actor with ActorLogging with Stash {
         sfMap += (rightCollRange -> newSf)
 
       case _ =>
-        log.info("MAIN stashing")
+        markyno += 1
+        if( markyno / 500 == 0 ) {
+          println("MAIN stashing "+markyno)
+          markyno = 0
+        }
         stash()
     }, discardOld = false) // push on top instead of replace
   }

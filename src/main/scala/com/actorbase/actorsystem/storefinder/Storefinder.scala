@@ -215,7 +215,6 @@ class Storefinder(private var collection: ActorbaseCollection,
 
   def updateOwnerOfSK(): Unit = {
     for((r, skref) <- skMap){
-      println("updating sk manager")
       skref ! com.actorbase.actorsystem.storekeeper.messages.updateOwnerOfSK( self )
     }
   }
