@@ -109,7 +109,7 @@ class Main extends Actor with ActorLogging with Stash {
 
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
 
-  private var markyno = 0
+  
   /**
     * Insert description here
     *
@@ -301,11 +301,6 @@ class Main extends Actor with ActorLogging with Stash {
         sfMap += (rightCollRange -> newSf)
 
       case _ =>
-        markyno += 1
-        if( markyno / 500 == 1 ) {
-          println("MAIN stashing "+markyno)
-          markyno = 0
-        }
         stash()
     }, discardOld = false) // push on top instead of replace
   }
