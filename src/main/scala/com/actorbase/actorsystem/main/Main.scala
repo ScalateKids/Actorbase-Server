@@ -302,7 +302,7 @@ class Main extends Actor with ActorLogging with Stash {
 
       case _ =>
         markyno += 1
-        if( markyno / 500 == 0 ) {
+        if( markyno / 500 == 1 ) {
           println("MAIN stashing "+markyno)
           markyno = 0
         }
