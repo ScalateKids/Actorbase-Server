@@ -45,8 +45,8 @@ import com.actorbase.actorsystem.warehouseman.Warehouseman
 
 object Storekeeper {
   //def props() : Props = Props( new Storekeeper())
-  def props(data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper(data, range))
-  def props() : Props = Props( new Storekeeper())
+  def props( parentRef: ActorRef, data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper(parentRef, data, range))
+  def props( parentRef: ActorRef) : Props = Props( new Storekeeper( parentRef))
 }
 
 /**
@@ -56,10 +56,11 @@ object Storekeeper {
   * @param range
   * @param maxSize
   */
-class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
+class Storekeeper(private var parentRef: ActorRef,
+                  private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
                   private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
-  private val maxSize: Int = 2  // this should be configurable, probably must read from file
+  private val maxSize: Int = 4 // this should be configurable, probably must read from file
 
   def receive = {
     /**
@@ -124,11 +125,11 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
         data = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
-        context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicationRequestSK(range, halfLeftKR, halfRight, halfRightKR)
+        parentRef ! com.actorbase.actorsystem.storefinder.messages.DuplicationRequestSK(range, halfLeftKR, halfRight, halfRightKR)
         // update keyRangeId or himself
         range = halfLeftKR
       }
-      context.parent ! com.actorbase.actorsystem.main.messages.Ack
+      parentRef ! com.actorbase.actorsystem.main.messages.Ack
       //sender ! Response("inserted")
      // logAllItems
 
@@ -140,7 +141,9 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
       * @param newManager ActorRef pointing the to new right actor manager (the maganer responsible of
       *                   the Storefinder mapping the range of this Storekeeper)
       */
-    //case UpdateManager( newManager ) => manager = newManager
+    case updateOwnerOfSK( newParent ) =>
+      log.info("SK: updating owner")
+      parentRef = newParent
 
     // debug
     case DebugMaa(mainRange, sfRange) =>
