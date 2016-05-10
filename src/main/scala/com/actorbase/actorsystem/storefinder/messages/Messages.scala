@@ -30,13 +30,12 @@
 
 package com.actorbase.actorsystem.storefinder.messages
 
-import com.actorbase.actorsystem.utils.KeyRange
+import com.actorbase.actorsystem.utils.{KeyRange}
 import akka.dispatch.ControlMessage
 import akka.actor.ActorRef
+import scala.collection.immutable.TreeMap
 
 case class Init(collName: String, manager: ActorRef, range: KeyRange)
-
-case class DuplicateSKNotify(oldKeyRange: KeyRange, leftRange: KeyRange, newSk: ActorRef, rightRange: KeyRange) extends ControlMessage
 
 case class GetItem(key: String)
 
@@ -47,3 +46,7 @@ case class RemoveItem(key: String)
 case class Insert(key: String, value: Any, update: Boolean = false)
 
 case class DebugMap(range: KeyRange)
+
+case class DuplicationRequestSK(oldKeyRange: KeyRange, leftRange: KeyRange, map: TreeMap[String, Any],
+                                rightRange: KeyRange) extends ControlMessage
+

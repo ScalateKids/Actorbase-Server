@@ -26,7 +26,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.manager
+/*package com.actorbase.actorsystem.manager
 
 import akka.actor.{Props, Actor, ActorLogging, ActorRef}
 
@@ -91,3 +91,4 @@ class Manager(private val parentRef: ActorRef) extends Actor with ActorLogging {
     }
   }
 }
+*/

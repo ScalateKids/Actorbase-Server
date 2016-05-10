@@ -30,9 +30,9 @@ package com.actorbase.actorsystem.storekeeper
 
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 
-import com.actorbase.actorsystem.manager.Manager
+/*import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
-
+*/
 import com.actorbase.actorsystem.storekeeper.messages._
 
 import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
@@ -45,8 +45,8 @@ import com.actorbase.actorsystem.warehouseman.Warehouseman
 
 object Storekeeper {
   //def props() : Props = Props( new Storekeeper())
-  def props( manager: ActorRef, data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper( manager, data, range))
-  def props( manager: ActorRef ) : Props = Props( new Storekeeper( manager ))
+  def props(data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper(data, range))
+  def props() : Props = Props( new Storekeeper())
 }
 
 /**
@@ -56,8 +56,7 @@ object Storekeeper {
   * @param range
   * @param maxSize
   */
-class Storekeeper(private var manager: ActorRef,
-                  private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
+class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
                   private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
   private val maxSize: Int = 18  // this should be configurable, probably must read from file
@@ -110,6 +109,7 @@ class Storekeeper(private var manager: ActorRef,
       //log.info("storekeeper range "+range)
       if(data.size < maxSize-1 ) {
         insertOrUpdate( ins.update, ins.key, ins.value)
+        context.parent ! com.actorbase.actorsystem.main.messages.Ack
       }
       else {
         log.info("SK: Must duplicate")
@@ -125,11 +125,11 @@ class Storekeeper(private var manager: ActorRef,
         data = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
-        manager ! DuplicationRequestSK(range, halfLeftKR, halfRight, halfRightKR)
+        context.parent ! com.actorbase.actorsystem.main.messages.Ack
+        context.parent ! com.actorbase.actorsystem.storefinder.messages.DuplicationRequestSK(range, halfLeftKR, halfRight, halfRightKR)
         // update keyRangeId or himself
         range = halfLeftKR
       }
-      context.actorOf(Warehouseman.props("test")) ! com.actorbase.actorsystem.warehouseman.messages.Save(data)
       //sender ! Response("inserted")
      // logAllItems
 
@@ -141,7 +141,7 @@ class Storekeeper(private var manager: ActorRef,
       * @param newManager ActorRef pointing the to new right actor manager (the maganer responsible of
       *                   the Storefinder mapping the range of this Storekeeper)
       */
-    case UpdateManager( newManager ) => manager = newManager
+    //case UpdateManager( newManager ) => manager = newManager
 
     // debug
     case DebugMaa(mainRange, sfRange) =>

@@ -26,7 +26,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.manager.messages
+/*package com.actorbase.actorsystem.manager.messages
 
 import akka.actor.ActorRef
 
@@ -34,8 +34,4 @@ import scala.collection.immutable.TreeMap
 
 import com.actorbase.actorsystem.utils.{KeyRange, CollectionRange}
 
-case class DuplicationRequestSK(oldKeyRange: KeyRange, leftRange: KeyRange, map: TreeMap[String, Any],
-                                rightRange: KeyRange)
-
-case class DuplicationRequestSF(oldCollRange: CollectionRange, leftCollRange: CollectionRange, map: TreeMap[KeyRange, ActorRef],
-                                rightCollRange: CollectionRange, mainActor: ActorRef)
+*/

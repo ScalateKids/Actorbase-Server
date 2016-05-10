@@ -30,12 +30,16 @@
 package com.actorbase.actorsystem.main.messages
 
 import akka.actor.ActorRef
-import com.actorbase.actorsystem.utils.CollectionRange
+import com.actorbase.actorsystem.utils.{CollectionRange, KeyRange}
 import akka.dispatch.ControlMessage
+import scala.collection.immutable.TreeMap
 
-case class DuplicateSFNotify(oldCollRange: CollectionRange, leftCollRange: CollectionRange, newSf: ActorRef,
-                             rightCollRange: CollectionRange) extends ControlMessage
+//case class DuplicateSFNotify(oldCollRange: CollectionRange, leftCollRange: CollectionRange, newSf: ActorRef,
+//                             rightCollRange: CollectionRange) extends ControlMessage
 
-case object Ack
+case class DuplicationRequestSF(oldCollRange: CollectionRange, leftCollRange: CollectionRange, map: TreeMap[KeyRange, ActorRef],
+                                rightCollRange: CollectionRange) extends ControlMessage
+
+case class Ack() extends ControlMessage
 
 case object DebugMaps

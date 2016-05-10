@@ -29,22 +29,16 @@
 
 package com.actorbase.actorsystem.main
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import spray.json.DefaultJsonProtocol._
-import scala.collection.immutable.TreeMap
 
+import scala.collection.immutable.TreeMap
 import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.storefinder.messages._
-
 import com.actorbase.actorsystem.userfinder.Userfinder
 import com.actorbase.actorsystem.userfinder.messages._
-
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
-
-//impor per testing di ninja
-import com.actorbase.actorsystem.ninja.Ninja
-import com.actorbase.actorsystem.ninja.messages._
 
 import com.actorbase.actorsystem.main.messages._
 
@@ -52,6 +46,7 @@ import com.actorbase.actorsystem.utils.{KeyRange, ActorbaseCollection, Collectio
 
 import com.github.t3hnar.bcrypt._
 import org.mindrot.jbcrypt.BCrypt
+import akka.actor.Stash
 
 import java.io._
 
@@ -107,7 +102,7 @@ object Main {
   * @return
   * @throws
   */
-class Main extends Actor with ActorLogging {
+class Main extends Actor with ActorLogging with Stash {
   import Main._
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
@@ -166,11 +161,13 @@ class Main extends Actor with ActorLogging {
           // TODO uscire dal for
 
           // TEST ACKNOWLEDGE
-          /*context.become({
+          context.become({
             case Ack =>
               log.info("MAIN: ack")
               context.unbecome() // resets the latest 'become'
-          }, discardOld = false) // push on top instead of replace*/
+              unstashAll()
+            case _ => log.info("MAIN stashing"); stash()
+          }, discardOld = false) // push on top instead of replace
         }
       }
       if( !inserted ){
@@ -185,10 +182,10 @@ class Main extends Actor with ActorLogging {
     /**
       *
       */
-    case DuplicateSFNotify( oldCollRange, leftCollRange, newSf, rightCollRange ) => {
+    case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) => {
       log.info("MAIN: duplicateSFnotify ")
       // update sfMap due to a SF duplicate happened
-
+      val newSf = context.actorOf(Props(new Storefinder(oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher") )
       // get old sk actorRef
       val tmpActorRef = sfMap.get(oldCollRange).get
       // remove entry associated with that actorRef
@@ -282,7 +279,7 @@ class Main extends Actor with ActorLogging {
     * @param owner
     */
   private def createCollection(name: String, owner: String): ActorRef = {
-    val sf = context.actorOf(Storefinder.props( self, new ActorbaseCollection(name, owner ) ).withDispatcher("control-aware-dispatcher"))
+    val sf = context.actorOf(Storefinder.props( new ActorbaseCollection(name, owner ) ).withDispatcher("control-aware-dispatcher") )
     var newCollectionRange = new CollectionRange( new ActorbaseCollection(name, owner), new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     sfMap += (newCollectionRange -> sf)
     sf

@@ -32,23 +32,21 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
+import akka.actor.Stash
 
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
-import com.actorbase.actorsystem.manager.Manager
-import com.actorbase.actorsystem.manager.messages.DuplicationRequestSF
 import com.actorbase.actorsystem.utils.{ActorbaseCollection, CollectionRange, KeyRange}
 
 import scala.collection.immutable.{TreeMap}
-import scala.math.Ordered.orderingToOrdered
 
 object Storefinder {
 
-  def props( mainParent: ActorRef, collection: ActorbaseCollection ) : Props = Props(new Storefinder( mainParent, collection ))
+  def props( collection: ActorbaseCollection ) : Props = Props(new Storefinder( collection ))
 
-  def props( mainParent: ActorRef, collection: ActorbaseCollection, map: TreeMap[KeyRange, ActorRef],
-             keyrange: KeyRange) : Props = Props(new Storefinder( mainParent, collection, map, keyrange ))
+  def props( collection: ActorbaseCollection, map: TreeMap[KeyRange, ActorRef],
+             keyrange: KeyRange) : Props = Props(new Storefinder( collection, map, keyrange ))
 }
 
 /**
@@ -56,20 +54,22 @@ object Storefinder {
   * @param skMap TreeMap[KeyRange, ActorRef]. This collection represent a map from keyranges to an ActorRef of a
   *              Storekeeper
   * @param range String that represent the range of the keys mappable in this storefinder
-  * @param sfManager
+  * @param
   */
-class Storefinder(private val mainParent: ActorRef,
-                  private var collection: ActorbaseCollection,
+class Storefinder(private var collection: ActorbaseCollection,
                   private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
-                  private var range: KeyRange = new KeyRange("a", "z") ) extends Actor with ActorLogging {
+                  private var range: KeyRange = new KeyRange("a", "z") ) extends Actor with ActorLogging with Stash{
 
   // collection name
 
   // initialize his manager
   //private val sfManager: ActorRef = context.actorOf(Manager.props())
   // maybe move this things to a costructor or something like a init?
+
+  /*
   private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )))
-  updateManagerOfSK()
+  updateManagerOfSK()*/
+
   private val maxSize: Int = 18
 
 
@@ -90,11 +90,56 @@ class Storefinder(private val mainParent: ActorRef,
     }
 
     /**
+      * Insert message, insert a key/value into a designed collection
+      *
+      * @param key a String representing the new key to be inserted
+      * @param value a Any object type representing the value to be inserted
+      * with associated key, default to Array[Byte] type
+      * @param update a Boolean flag, define the insert behavior (with or without
+      * updating the value)
       *
       */
-    case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {  //TODO CODICE MOLTO REPLICATO FROM SK
+    case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
+      log.info("SF: inserting "+ins.key+" - KeyRange of this SF is "+range)
+      skMap.size match {
+        // empty TreeMap -> create SK and forward message to him
+        case 0 => {
+          val kr = new KeyRange("a", "z") // pensare se questo vabene nel caso di sdoppiamentooo
+          val sk = context.actorOf(Storekeeper.props( /*sfManager, */new TreeMap[String, Any](), kr ).withDispatcher("control-aware-dispatcher"))
+          // update map
+          skMap += (kr -> sk)
+          // forward the request to the sk just created
+          sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
+        }
+        // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
+        case _ => {
+          for ((keyRange, sk) <- skMap){
+            //log.info (keyRange.toString())
+            if( keyRange.contains( ins.key ) ) {
+              sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
+              // TEST ACKNOWLEDGE
+              context.become({
+                case com.actorbase.actorsystem.main.messages.Ack =>
+                  log.info("SF: ack")
+                  context.unbecome() // resets the latest 'become'
+                  unstashAll()
+                  context.parent ! com.actorbase.actorsystem.main.messages.Ack
+                case _ => log.info("SF stashing"); stash()
+              }, discardOld = false) // push on top instead of replace
+            }
+          }
+        }
+      }
+    }
+
+    /**
+      *
+      */
+    case DuplicationRequestSK(oldKeyRange, leftRange, map, rightRange) => {  //TODO CODICE MOLTO REPLICATO FROM SK
       log.info("SF: DuplicateSKNotify ")
       // need to update skMap due to a SK duplicate happened
+
+      val newSk = context.actorOf(Props(new Storekeeper( map, rightRange)).withDispatcher("control-aware-dispatcher") )
 
       // get old sk actorRef
       val tmpActorRef = skMap.get(oldKeyRange).get
@@ -118,51 +163,13 @@ class Storefinder(private val mainParent: ActorRef,
         // send the request at manager with the old CollectionRange (the one who's duplicating), the new
         // collectionrange, the treemap of the new SF to be created, the collectionRange of the SF to be created
         // and the main parent reference
-        sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
+//        sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
 
+        context.parent ! com.actorbase.actorsystem.main.messages.Ack
+        context.parent ! com.actorbase.actorsystem.main.messages.DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange)
         // update keyRangeId or himself and set the treemap to the first half
         skMap = halfLeft
         range = new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange/*+"a"*/)
-      }
-    }
-
-    /**
-      * Insert message, insert a key/value into a designed collection
-      *
-      * @param key a String representing the new key to be inserted
-      * @param value a Any object type representing the value to be inserted
-      * with associated key, default to Array[Byte] type
-      * @param update a Boolean flag, define the insert behavior (with or without
-      * updating the value)
-      *
-      */
-    case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
-      log.info("SF: inserting "+ins.key+" - KeyRange of this SF is "+range)
-      skMap.size match {
-        // empty TreeMap -> create SK and forward message to him
-        case 0 => {
-          val kr = new KeyRange("a", "z") // pensare se questo vabene nel caso di sdoppiamentooo
-          val sk = context.actorOf(Storekeeper.props( sfManager, new TreeMap[String, Any](), kr ))
-          // update map
-          skMap += (kr -> sk)
-          // forward the request to the sk just created
-          sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
-        }
-        // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
-        case _ => {
-          for ((keyRange, sk) <- skMap){
-            //log.info (keyRange.toString())
-            if( keyRange.contains( ins.key ) ) {
-              sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
-              // TEST ACKNOWLEDGE
-             /* context.become({
-                case com.actorbase.actorsystem.main.messages.Ack =>
-                  log.info("MAIN: ack")
-                  context.unbecome() // resets the latest 'become'
-              }, discardOld = false) // push on top instead of replace*/
-            }
-          }
-        }
       }
     }
 
@@ -213,11 +220,11 @@ class Storefinder(private val mainParent: ActorRef,
     }
   }
 
-  def updateManagerOfSK(): Unit = {
+  /*def updateManagerOfSK(): Unit = {
     for((r, skref) <- skMap){
       println("updating sk manager")
       skref ! UpdateManager( sfManager )
     }
-  }
+  }*/
 
 }
