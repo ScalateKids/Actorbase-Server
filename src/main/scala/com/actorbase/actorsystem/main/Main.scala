@@ -84,6 +84,8 @@ object Main {
 
   case class GetItemFrom(collection: String, key: String = "")
 
+  // manca getcollection?
+
   case class RemoveItemFrom(collection: String, key: String)
 
   case class AddContributor(username: String, permission: Boolean = false , collection: String)
@@ -153,12 +155,9 @@ class Main extends Actor with ActorLogging {
       *
       */
     case Insert(owner, name, key, value, update) => {
-      // search if sfMap contains the collection i need, if it's present search the right keyrange
+      // search if sfMap contains the collection I need, if it's present search for the right keyrange
       var inserted: Boolean = false
       for( (collectionRange, sfRef) <- sfMap){
-        /*log.info("MAIN: checking where to forward the item in coll "+name+" with key "+key+"; "+collectionRange.toString)
-        log.info("MAIN coll "+collectionRange.toString+" and must insert "+name+owner+" "+key)
-        log.info(" same collection? "+collectionRange.isSameCollection(name, owner)+" && key conrains? "+collectionRange.getKeyRange.contains(key))*/
         if( collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ){
           // right collection and right keyrange (right collectionRange), let's insert here
           log.info("inserting in the range "+collectionRange.toString)
@@ -174,29 +173,15 @@ class Main extends Actor with ActorLogging {
         //item has not been inserted, must send the message to the brothers
         //TODO mandare agli altri main
       }
-
-      /* old code
-      if(sfMap.contains(collection))
-        sfMap.get(collection).get forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
-      else {
-        //TODO usare createCollection
-        val sf = createCollection( name, )
-        //val sf =  context.actorOf(Storefinder.props( self ) )
-        //sfMap += (collection -> sf)
-        sf forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
-      }*/
     }
 
     /**
       *
       */
     case DuplicateSFNotify( oldCollRange, leftCollRange, newSf, rightCollRange ) => {
-      //val asd = "oldCollRange "+oldCollRange+"\nleftCollRange "+leftCollRange+"\nrightCollRange "+rightCollRange
-      log.info("MAIN: duplicateSFnotify "/*+asd*/)
-     // sfMap.get()
-      //TODO
+      log.info("MAIN: duplicateSFnotify ")
       // update sfMap due to a SF duplicate happened
-      //scorrere sfmap, trovare cosa aggiornare con leftcollrange
+
       // get old sk actorRef
       val tmpActorRef = sfMap.get(oldCollRange).get
       // remove entry associated with that actorRef
@@ -219,7 +204,6 @@ class Main extends Actor with ActorLogging {
       */
     case RemoveCollection(name, owner) => {
       //TODO da implementare
-      //for( collectionRange)
     }
 
     /**

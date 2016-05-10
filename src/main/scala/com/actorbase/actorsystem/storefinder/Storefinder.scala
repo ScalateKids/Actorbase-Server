@@ -68,7 +68,7 @@ class Storefinder(private val mainParent: ActorRef,
   // initialize his manager
   //private val sfManager: ActorRef = context.actorOf(Manager.props())
   // maybe move this things to a costructor or something like a init?
-  private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )), "Manager"+range.getMinRange)
+  private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )))
   updateManagerOfSK()
   private val maxSize: Int = 10
 
@@ -93,12 +93,9 @@ class Storefinder(private val mainParent: ActorRef,
       *
       */
     case DuplicateSKNotify(oldKeyRange, leftRange, newSk, rightRange) => {  //TODO CODICE MOLTO REPLICATO FROM SK
-      log.info("SF: DuplicateSKNotify "/*+" oldKeyRange "+oldKeyRange+" leftRange "+leftRange+" rightRange "+rightRange*/)
-     /* for( (range, ref) <- skMap){
-        log.info(range.toString)
-      }*/
-      // update skMap due to a SK duplicate happened
-      //scorrere skmap, trovare cosa aggiorare con leftrange
+      log.info("SF: DuplicateSKNotify ")
+      // need to update skMap due to a SK duplicate happened
+
       // get old sk actorRef
       val tmpActorRef = skMap.get(oldKeyRange).get
       // remove entry associated with that actorRef
@@ -107,31 +104,20 @@ class Storefinder(private val mainParent: ActorRef,
       skMap += (leftRange -> tmpActorRef)
       skMap += (rightRange -> newSk)
 
+      // if I'm close to the max size i should duplicate
       if(skMap.size == maxSize-1 ){
         log.info("SF: Must duplicate")
-        //TODO
         // half the collection
         var (halfLeft, halfRight) = skMap.splitAt( maxSize/2 )
-  //      log.info("SF duplication halfleft first key"+halfLeft.firstKey+" last key "+halfLeft.lastKey)
-  //      log.info("SF duplication halfright first key"+halfRight.firstKey+" last key "+halfRight.lastKey)
+
         // create new keyrange to be updated for SF
         val halfLeftCollRange = new CollectionRange( collection, new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange/*+"a"*/) )
-        // create new keyrange for the new storekeeper
-        // old was val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfLeft.lastKey.getMinRange/*+"aa"*/, halfRight.lastKey.getMaxRange) )
+        // create new keyrange for the new storefinder
         val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfRight.firstKey.getMinRange, halfRight.lastKey.getMaxRange) )
 
-        // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
-        // keyrange of the new sk
-  /*      log.info("left SF key range "+halfLeftCollRange+" right SF key range "+halfRightCollRange+" maps are below")
-        log.info("left is ")
-        for( (range, ref) <- halfLeft){
-          log.info(range.toString)
-        }
-        log.info("right is ")
-        for( (range, ref) <- halfRight){
-          log.info(range.toString)
-        }
-  */
+        // send the request at manager with the old CollectionRange (the one who's duplicating), the new
+        // collectionrange, the treemap of the new SF to be created, the collectionRange of the SF to be created
+        // and the main parent reference
         sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
 
         // update keyRangeId or himself and set the treemap to the first half

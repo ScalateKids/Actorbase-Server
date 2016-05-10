@@ -41,6 +41,8 @@ import com.actorbase.actorsystem.utils.KeyRange
 
 import scala.collection.immutable.TreeMap
 
+import com.actorbase.actorsystem.warehouseman.Warehouseman
+
 object Storekeeper {
   //def props() : Props = Props( new Storekeeper())
   def props( manager: ActorRef, data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper( manager, data, range))
@@ -58,8 +60,6 @@ class Storekeeper(private var manager: ActorRef,
                   private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
                   private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
-  /*private var manager : ActorRef = _
-  private var range : KeyRange = _*/
   private val maxSize: Int = 10  // this should be configurable, probably must read from file
 
   def receive = {
@@ -85,8 +85,9 @@ class Storekeeper(private var manager: ActorRef,
        */
     case GetAllItem(clientRef) =>
       // TODO
+      log.info("SK GetAlLItems")
       val items = data  // non si può mandargli data?
-      //sender ! com.actorbase.actorsystem.storefinder.messages.TakeMyItems(clientRef, items)
+      sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse("customers", items)//com.actorbase.actorsystem.storefinder.messages.TakeMyItems(clientRef, items)
 
     /**
       * RemoveItem message, when the actor receive this message it will erase the item associated with the
@@ -121,7 +122,6 @@ class Storekeeper(private var manager: ActorRef,
         // create new keyrange for the new storekeeper
         val halfRightKR = new KeyRange( halfLeft.lastKey+"aa", range.getMaxRange/*halfRight.lastKey*/ )
         // set the treemap to the first half
-    //    log.info("left key range "+halfLeftKR+" right key range "+halfRightKR)
         data = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
@@ -129,6 +129,7 @@ class Storekeeper(private var manager: ActorRef,
         // update keyRangeId or himself
         range = halfLeftKR
       }
+      context.actorOf(Warehouseman.props("test")) ! com.actorbase.actorsystem.warehouseman.messages.Save(data)
       //sender ! Response("inserted")
      // logAllItems
 
