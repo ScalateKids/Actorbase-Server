@@ -75,7 +75,8 @@ class Storefinder(private var collection: ActorbaseCollection,
   def receive = waitingForRequests
 
   /**
-    *
+    * Method that update the owner of all the Storekeepers mapped by this Storefinder, used when a Storefinder
+    * is created due to a duplication
     */
   private def updateOwnerOfSK(): Unit = {
     for((r, skref) <- skMap){
@@ -85,9 +86,10 @@ class Storefinder(private var collection: ActorbaseCollection,
 
 
   /**
-    *
+    * This method defines the type of messages that this actor can receive while in waitingForRequests status
     */
   private def waitingForRequests(): Actor.Receive = {
+
     /**
       *
       */
@@ -130,7 +132,7 @@ class Storefinder(private var collection: ActorbaseCollection,
     }
 
     /**
-      *
+      * Message that search for a given key
       */
     case get: com.actorbase.actorsystem.storefinder.messages.GetItem => { //TODO implementare diversi tipi di getItem
       log.info(s"SF: getItem of key -> ${get.key}")
@@ -143,7 +145,7 @@ class Storefinder(private var collection: ActorbaseCollection,
     }
 
     /**
-      *
+      * Message that returns the entire collection mapped by this Storefinder
       */
     case com.actorbase.actorsystem.storefinder.messages.GetAllItem(clientRef) => {
       log.info("SF: getallitem")
@@ -153,7 +155,9 @@ class Storefinder(private var collection: ActorbaseCollection,
     }
 
     /**
+      * Message that removes an item with the given key
       *
+      * @param key a String representing the key of the item to be removed
       */
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem => {
       log.info("SF: remove")
@@ -177,12 +181,13 @@ class Storefinder(private var collection: ActorbaseCollection,
   }
 
   /**
-    *
+    * This method defines the type of messages that this actor can receive while in processingRequest status
     */
   private def processingRequest(): Actor.Receive = {
 
       /**
-        *
+        * Ack (Acknowledge) message represent received when a blocking request has finished and the actor can
+        * return to the waitingForRequests state
         */
       case com.actorbase.actorsystem.main.messages.Ack =>
         log.info("SF: ack")
@@ -190,8 +195,16 @@ class Storefinder(private var collection: ActorbaseCollection,
         context.become(waitingForRequests) // resets the latest 'become'
         context.parent ! com.actorbase.actorsystem.main.messages.Ack
 
+
       /**
+        * A message that means that a Storekeeper must duplicate.
         *
+        * @param oldKeyRange a KeyRange representing the KeyRange that needs to be duplicated
+        * @param leftKeyRange a KeyRange representing the new KeyRange of the duplicated one
+        * @param map a TreeMap[String, Any] that contains the data that needs to be used by the
+        *            Storekeeper that needs to be created
+        * @param rightKeyRange a KeyRange representing the KeyRange of the Storekeeper that needs to
+        *                       be created
         */
       case DuplicationRequestSK(oldKeyRange, leftRange, map, rightRange) =>  //TODO CODICE MOLTO REPLICATO FROM SK
         log.info("SF: DuplicateSKNotify "+oldKeyRange+" left "+leftRange+" right "+rightRange)
@@ -203,11 +216,11 @@ class Storefinder(private var collection: ActorbaseCollection,
         val tmpActorRef = skMap.get(oldKeyRange).get
         // remove entry associated with that actorRef
         skMap = skMap - oldKeyRange // non so se sia meglio così o fare una specie di update key (che non c'è)
-                                    // add the entry with the oldSK and the new one
+        // add the entry with the oldSK and the new one
         skMap += (leftRange -> tmpActorRef)
         skMap += (rightRange -> newSk)
 
-        // if I'm close to the max size i should duplicate
+        // if I'm at max size i should duplicate
         if(skMap.size == maxSize ){
           log.info("SF: Must duplicate")
           // half the collection
@@ -218,11 +231,6 @@ class Storefinder(private var collection: ActorbaseCollection,
           // create new keyrange for the new storefinder
           val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfRight.firstKey.getMinRange, halfRight.lastKey.getMaxRange) )
 
-          // send the request at manager with the old CollectionRange (the one who's duplicating), the new
-          // collectionrange, the treemap of the new SF to be created, the collectionRange of the SF to be created
-          // and the main parent reference
-          // sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
-
           context.parent ! com.actorbase.actorsystem.main.messages.DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange)
           // update keyRangeId or himself and set the treemap to the first half
           skMap = halfLeft
@@ -232,7 +240,7 @@ class Storefinder(private var collection: ActorbaseCollection,
         }
 
       /**
-        *
+        * Any other message can't be processed while in this state so we just stash it
         */
       case _ =>
         log.info("SF stashing")

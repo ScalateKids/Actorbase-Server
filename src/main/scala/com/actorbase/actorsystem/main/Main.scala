@@ -121,9 +121,11 @@ class Main extends Actor with ActorLogging with Stash {
   def receive = waitingForRequests()  // start in this state
 
   /**
+    * Method that create a collection in Actorbase.
     *
-    * @param name
-    * @param owner
+    * @param name the name of the collection
+    * @param owner the owner of the collection
+    * @return an ActorRef pointing to the Storefinder just created that maps the collection
     */
   private def createCollection(name: String, owner: String): ActorRef = {
     val sf = context.actorOf(Storefinder.props( new ActorbaseCollection(name, owner ) ).withDispatcher("control-aware-dispatcher") )
@@ -138,11 +140,15 @@ class Main extends Actor with ActorLogging with Stash {
   private def waitingForRequests(): Actor.Receive = {
 
     /**
+      * Login message, this is received when a user tries to authenticate into the system.
       *
+      * @param username the username inserted to authenticate
       */
     case Login(username) => ufRef forward GetPasswordOf(username)
 
-    /** This message will probably populate username/password after disk read */
+    /**
+      * This message will probably populate username/password after disk read
+      */
     case InitUsers =>
       ufRef ! InsertTo("user", "pass")
       ufRef ! InsertTo("user2", "pass2")
@@ -160,13 +166,13 @@ class Main extends Actor with ActorLogging with Stash {
     /**
       * Insert message, insert a key/value into a designed collection
       *
-      * @param collection a String representing the collection name
+      * @param owner a String representing the owner of the collection
+      * @param name a String representing the collection name
       * @param key a String representing the new key to be inserted
       * @param value a Any object type representing the value to be inserted
       * with associated key, default to Array[Byte] type
       * @param update a Boolean flag, define the insert behavior (with or without
       * updating the value)
-      *
       */
     case Insert(owner, name, key, value, update) => {
       // search if sfMap contains the collection I need, if it's present search for the right keyrange
@@ -175,17 +181,19 @@ class Main extends Actor with ActorLogging with Stash {
         if( collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ){
           // right collection and right keyrange (right collectionRange), let's insert here
           log.info("inserting "+key+" in the range "+collectionRange.toString)
+
           counter += 1
           if(counter == 1000){
             println("inserting "+key+" in the range "+collectionRange.toString)
             counter = 0
           }
-          // println("inserting "+key+" in the range "+collectionRange.toString)
+
           inserted = true
           sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update )
+
           // TODO uscire dal for
 
-          // change context
+          // change context because of an Insert is happening
           context.become(processingRequest())
         }
       }
@@ -194,7 +202,7 @@ class Main extends Actor with ActorLogging with Stash {
         log.info("item has not been inserted, must forward to siblings")
         createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
 
-        // change context
+        // change context of an Insert is happening
         context.become(processingRequest)
         //item has not been inserted, must send the message to the brothers
         //TODO mandare agli altri main
@@ -202,7 +210,10 @@ class Main extends Actor with ActorLogging with Stash {
     }
 
     /**
+      * Create a collection in the system
       *
+      * @param name a String representing the name of the collection
+      * @param owner a String representing the owner of the collection
       */
     case CreateCollection(name, owner) => {
       createCollection(name, owner)
@@ -210,19 +221,21 @@ class Main extends Actor with ActorLogging with Stash {
     }
 
     /**
+      * Remove a collection from the system
       *
+      * @param name a String representing the name of the collection
+      * @param owner a String representing the owner of the collection
       */
     case RemoveCollection(name, owner) => {
       //TODO da implementare
     }
 
     /**
-      * Get item from collection  message, given a key of type String, retrieve
+      * Get item from collection message, given a key of type String, retrieve
       * a value from a specified collection
       *
       * @param collection a String representing the collection name
       * @param key a String representing the key to be retrieved
-      *
       */
     case GetItemFrom(collection, key) =>
       if (key.nonEmpty)
@@ -248,7 +261,7 @@ class Main extends Actor with ActorLogging with Stash {
     //sfMap.get(collection).get forward RemoveItem(key)
 
     /**
-      * Add Contributor from collection , given username of Contributor and read
+      * Add Contributor from collection, given username of Contributor and read
       * ore readWrite permission
       *
       * @param username a String to identify the contributor to add
@@ -261,7 +274,7 @@ class Main extends Actor with ActorLogging with Stash {
       ufRef ! AddCollectionTo(username,permission,collection)
 
     /**
-      * Remove Contributor from collection , given username of Contributor , and permission
+      * Remove Contributor from collection, given username of Contributor , and permission
       *
       * @param username a String to identify the contributor to remove
       * @param permission a boolean representing the permission : (true = readWrite , false = readOnly)
@@ -285,7 +298,8 @@ class Main extends Actor with ActorLogging with Stash {
   private def processingRequest(): Actor.Receive = {
 
     /**
-      *
+      * Ack (Acknowledge) message represent received when a blocking request has finished and the actor can
+      * return to the waitingForRequests state
       */
     case Ack =>
       log.info("MAIN: ack")
@@ -293,7 +307,14 @@ class Main extends Actor with ActorLogging with Stash {
       context.become(waitingForRequests)
 
     /**
+      * A message that means that a Storefinder must duplicate.
       *
+      * @param oldCollRange a CollectionRange representing the CollectionRange that needs to be duplicated
+      * @param leftCollRange a CollectionRange representing the new CollectionRange of the duplicated one
+      * @param map a TreeMap[KeyRange, ActorRef] that contains the data that needs to be used by the
+      *            Storefinder that needs to be created
+      * @param rightCollRange a CollectionRange representing the CollectionRange of the Storefinder that needs to
+      *                       be created
       */
     case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) =>
       log.info("MAIN: duplicateSFnotify "+oldCollRange+" leftcollrange "+leftCollRange+" rightcollrange "+rightCollRange)
@@ -308,7 +329,7 @@ class Main extends Actor with ActorLogging with Stash {
       sfMap += (rightCollRange -> newSf)
 
     /**
-      *
+      * Any other message can't be processed while in this state so we just stash it
       */
     case _ =>
       stash()
