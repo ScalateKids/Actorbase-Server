@@ -60,6 +60,11 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
       val encryptedShardFile = new File(collectionShard)
       CryptoUtils.encrypt(key, map, encryptedShardFile)
       sender ! 0 // ok reply
-  }
 
+    case Read(f) =>
+      log.info("warehouseman: read")
+      val key = "Dummy implicit k"
+      val m = CryptoUtils.decrypt(key, f)
+      sender ! m // ok reply
+  }
 }

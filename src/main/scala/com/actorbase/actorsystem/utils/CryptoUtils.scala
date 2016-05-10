@@ -28,7 +28,7 @@
 
 package com.actorbase.actorsystem.utils
 
-import java.io.{File, ByteArrayOutputStream, FileOutputStream, IOException, ObjectOutputStream}
+import java.io.{File, ByteArrayInputStream, ByteArrayOutputStream, FileInputStream, FileOutputStream, IOException, ObjectInputStream, ObjectOutputStream}
 import java.security.{InvalidKeyException, NoSuchAlgorithmException}
 import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoSuchPaddingException}
 import javax.crypto.spec.SecretKeySpec
@@ -48,25 +48,9 @@ object CryptoUtils {
     * @return
     * @throws
     */
-  def encrypt(key: String, inputData: TreeMap[String, Any], outputFile: File) = doCrypt(Cipher.ENCRYPT_MODE, key, inputData, outputFile)
+  def encrypt(key: String, inputData: TreeMap[String, Any], outputFile: File): Unit = {
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def decrypt(key: String, inputData: TreeMap[String, Any], outputFile: File) = doCrypt(Cipher.DECRYPT_MODE, key, inputData, outputFile)
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def doCrypt(cipherMode: Int, key: String, inputData: TreeMap[String, Any], outputFile: File) = {
+    val cipherMode: Int = Cipher.ENCRYPT_MODE
 
     /**
       * Insert description here
@@ -106,5 +90,40 @@ object CryptoUtils {
       case ib: IllegalBlockSizeException => println(s"Error encrypting/decrypting file $ib")
       case io: IOException => println(s"Error encrypting/decrypting file $io")
     }
+
   }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  @throws(classOf[NoSuchAlgorithmException])
+  @throws(classOf[NoSuchPaddingException])
+  @throws(classOf[BadPaddingException])
+  @throws(classOf[InvalidKeyException])
+  @throws(classOf[IllegalBlockSizeException])
+  @throws(classOf[IOException])
+  def decrypt(key: String, inputFile: File): TreeMap[String, Any] = {
+
+    val cipherMode: Int = Cipher.DECRYPT_MODE
+    val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
+    val cipher = Cipher.getInstance(Transformation)
+    cipher.init(cipherMode, secretKey)
+
+    val inputStream = new FileInputStream(inputFile);
+    val inputBytes = new Array[Byte](inputFile.length().toInt);
+    inputStream.read(inputBytes);
+
+    val outputBytes = cipher.doFinal(inputBytes)
+
+    inputStream.close()
+
+    val in = new ObjectInputStream(new ByteArrayInputStream(outputBytes))
+    in.readObject().asInstanceOf[TreeMap[String, Any]]
+
+  }
+
 }

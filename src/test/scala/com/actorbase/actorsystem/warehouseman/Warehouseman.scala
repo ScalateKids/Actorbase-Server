@@ -51,18 +51,26 @@ class WarehousemanSpec extends ActorSystemUnitSpec {
   override def afterAll() : Unit = system.shutdown
 
   /**
-    * User credentials tests
+    * Write and read test
     */
   "A warehouseman" should {
+    val warehouseman = system.actorOf(Warehouseman.props("shard"))
     "save encrypted data" in {
 
       var map: TreeMap[String, Any] = new TreeMap[String, Any]()
       map += ("key0" -> "zero")
       map += ("key1" -> "one")
       map += ("key2" -> "two")
-      val warehouseman = system.actorOf(Warehouseman.props("shard"))
       Await.result(warehouseman.ask(Save(map))(5 seconds).mapTo[Int], Duration.Inf)
       new File("shard").exists should be(true)
+
+    }
+
+    "decrypt encrypted data" in {
+
+      val f = new File("shard")
+      val map = Await.result(warehouseman.ask(Read(f))(5 seconds).mapTo[TreeMap[String, Any]], Duration.Inf)
+      map should have size 3
 
     }
   }

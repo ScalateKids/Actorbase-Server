@@ -174,21 +174,21 @@ class Main extends Actor with ActorLogging with Stash {
       }
     }
 
-    /**
-      *
-      */
-    /*case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) => {
-      log.info("MAIN: duplicateSFnotify "+oldCollRange+" leftcollrange "+leftCollRange+" rightcollrange "+rightCollRange)
-      // update sfMap due to a SF duplicate happened
-      val newSf = context.actorOf(Props(new Storefinder(oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher") )
-      // get old sk actorRef
-      val tmpActorRef = sfMap.get(oldCollRange).get
-      // remove entry associated with that actorRef
-      sfMap = sfMap - oldCollRange // non so se sia meglio così o fare una specie di update key (che non c'è)
-      // add the entry with the oldSK and the new one
-      sfMap += (leftCollRange -> tmpActorRef)
-      sfMap += (rightCollRange -> newSf)
-    }*/
+      /**
+        *
+        */
+      /*case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) => {
+       log.info("MAIN: duplicateSFnotify "+oldCollRange+" leftcollrange "+leftCollRange+" rightcollrange "+rightCollRange)
+       // update sfMap due to a SF duplicate happened
+       val newSf = context.actorOf(Props(new Storefinder(oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher") )
+       // get old sk actorRef
+       val tmpActorRef = sfMap.get(oldCollRange).get
+       // remove entry associated with that actorRef
+       sfMap = sfMap - oldCollRange // non so se sia meglio così o fare una specie di update key (che non c'è)
+       // add the entry with the oldSK and the new one
+       sfMap += (leftCollRange -> tmpActorRef)
+       sfMap += (rightCollRange -> newSf)
+       }*/
 
     /**
       *
@@ -218,11 +218,11 @@ class Main extends Actor with ActorLogging with Stash {
         sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
       else sfMap.filterKeys(_.getCollectionName == collection).foreach(kv => kv._2 ! GetAllItem(sender))
       // TODO
-/*      if(key == "")
-        sfMap.get(collection).get forward GetAllItem
-      else
-        sfMap.get(collection).get forward GetItem(key)
- */
+      /*      if(key == "")
+       sfMap.get(collection).get forward GetAllItem
+       else
+       sfMap.get(collection).get forward GetItem(key)
+       */
 
     /**
       * Remove item from collection  message, given a key of type String,

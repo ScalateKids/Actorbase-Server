@@ -32,6 +32,10 @@ package com.actorbase.actorsystem.warehouseman.messages
 import akka.actor.ActorRef
 import scala.collection.immutable.TreeMap
 
+import java.io.File
+
 case class Init() //class because it will have parameters
 
 case class Save(map: TreeMap[String, Any]) //class because it will have parameters
+
+case class Read(file: File)
