@@ -110,17 +110,6 @@ class Storefinder(private var collection: ActorbaseCollection,
           skMap += (kr -> sk)
           // forward the request to the sk just created
           sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
-          // TEST ACKNOWLEDGE
-          context.become({
-            case com.actorbase.actorsystem.main.messages.Ack =>
-              log.info("SF: ack")
-              context.unbecome() // resets the latest 'become'
-              unstashAll()
-              context.parent ! com.actorbase.actorsystem.main.messages.Ack
-            case _ =>
-              log.info("SF stashing")
-              stash()
-          }, discardOld = false) // push on top instead of replace
         }
         // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
         case _ => {
@@ -132,8 +121,8 @@ class Storefinder(private var collection: ActorbaseCollection,
               context.become({
                 case com.actorbase.actorsystem.main.messages.Ack =>
                   log.info("SF: ack")
-                  context.unbecome() // resets the latest 'become'
                   unstashAll()
+                  context.unbecome() // resets the latest 'become'
                   context.parent ! com.actorbase.actorsystem.main.messages.Ack
 
                 case DuplicationRequestSK(oldKeyRange, leftRange, map, rightRange) =>  //TODO CODICE MOLTO REPLICATO FROM SK
