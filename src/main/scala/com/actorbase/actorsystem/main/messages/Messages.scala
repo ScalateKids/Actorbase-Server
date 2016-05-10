@@ -36,4 +36,6 @@ import akka.dispatch.ControlMessage
 case class DuplicateSFNotify(oldCollRange: CollectionRange, leftCollRange: CollectionRange, newSf: ActorRef,
                              rightCollRange: CollectionRange) extends ControlMessage
 
+case object Ack
+
 case object DebugMaps

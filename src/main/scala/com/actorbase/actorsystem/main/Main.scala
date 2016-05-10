@@ -164,6 +164,13 @@ class Main extends Actor with ActorLogging {
           inserted = true
           sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update )
           // TODO uscire dal for
+
+          // TEST ACKNOWLEDGE
+          /*context.become({
+            case Ack =>
+              log.info("MAIN: ack")
+              context.unbecome() // resets the latest 'become'
+          }, discardOld = false) // push on top instead of replace*/
         }
       }
       if( !inserted ){
@@ -259,8 +266,8 @@ class Main extends Actor with ActorLogging {
       *
       */
     case RemoveContributor(username,permission,collection) =>
-        // need controls
-        ufRef ! RemoveCollectionFrom(username,permission,collection)
+      // need controls
+      ufRef ! RemoveCollectionFrom(username,permission,collection)
 
     case DebugMaps => // debug purposes
       for( (collRange, sfRef )<- sfMap){

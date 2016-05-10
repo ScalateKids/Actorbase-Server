@@ -70,7 +70,7 @@ class Storefinder(private val mainParent: ActorRef,
   // maybe move this things to a costructor or something like a init?
   private val sfManager: ActorRef = context.actorOf(Props(new Manager( self )))
   updateManagerOfSK()
-  private val maxSize: Int = 10
+  private val maxSize: Int = 18
 
 
   /**
@@ -152,8 +152,15 @@ class Storefinder(private val mainParent: ActorRef,
         case _ => {
           for ((keyRange, sk) <- skMap){
             //log.info (keyRange.toString())
-            if( keyRange.contains( ins.key ) )
+            if( keyRange.contains( ins.key ) ) {
               sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
+              // TEST ACKNOWLEDGE
+             /* context.become({
+                case com.actorbase.actorsystem.main.messages.Ack =>
+                  log.info("MAIN: ack")
+                  context.unbecome() // resets the latest 'become'
+              }, discardOld = false) // push on top instead of replace*/
+            }
           }
         }
       }
