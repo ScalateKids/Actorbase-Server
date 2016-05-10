@@ -107,7 +107,7 @@ class Storekeeper(private var data: TreeMap[String, Any] = new TreeMap[String, A
     case ins: Insert =>
       log.info("SK: Inserting "+ins.key+" this SK range is "+range.toString)
       //log.info("storekeeper range "+range)
-      if(data.size < maxSize-1 ) {
+      if(data.size < maxSize ) {
         insertOrUpdate( ins.update, ins.key, ins.value)
       }
       else {

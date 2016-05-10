@@ -100,10 +100,10 @@ class Storefinder(private var collection: ActorbaseCollection,
       *
       */
     case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
-      log.info("SF: inserting "+ins.key+" - KeyRange of this SF is "+range)
+      log.info("SF: inserting "+ins.key+" - KeyRange of this SF is "+range+" size of this SF is "+skMap.size)
       skMap.size match {
         // empty TreeMap -> create SK and forward message to him
-        case 0 => {
+        case 0 =>
           val kr = new KeyRange("a", "z") // pensare se questo vabene nel caso di sdoppiamentooo
           val sk = context.actorOf(Storekeeper.props( /*sfManager, */new TreeMap[String, Any](), kr ).withDispatcher("control-aware-dispatcher"))
           // update map
@@ -160,9 +160,9 @@ class Storefinder(private var collection: ActorbaseCollection,
               log.info("SF stashing")
               stash()
           }, discardOld = false) // push on top instead of replace
-        }
+
         // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
-        case _ => {
+        case _ =>
           for ((keyRange, sk) <- skMap){
             //log.info (keyRange.toString())
             if( keyRange.contains( ins.key ) ) {
@@ -190,7 +190,7 @@ class Storefinder(private var collection: ActorbaseCollection,
                   skMap += (rightRange -> newSk)
 
                   // if I'm close to the max size i should duplicate
-                  if(skMap.size == maxSize-1 ){
+                  if(skMap.size == maxSize ){
                     log.info("SF: Must duplicate")
                     // half the collection
                     var (halfLeft, halfRight) = skMap.splitAt( maxSize/2 )
@@ -203,14 +203,15 @@ class Storefinder(private var collection: ActorbaseCollection,
                     // send the request at manager with the old CollectionRange (the one who's duplicating), the new
                     // collectionrange, the treemap of the new SF to be created, the collectionRange of the SF to be created
                     // and the main parent reference
-                    //        sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
+                    // sfManager ! DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange, mainParent )
 
                     context.parent ! com.actorbase.actorsystem.main.messages.DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange)
                     // update keyRangeId or himself and set the treemap to the first half
                     skMap = halfLeft
                     range = new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange/*+"a"*/)
+
+                    context.parent ! com.actorbase.actorsystem.main.messages.Ack
                   }
-                  context.parent ! com.actorbase.actorsystem.main.messages.Ack
 
                 case _ =>
                   log.info("SF stashing")
@@ -218,7 +219,6 @@ class Storefinder(private var collection: ActorbaseCollection,
               }, discardOld = false) // push on top instead of replace
             }
           }
-        }
       }
     }
 
