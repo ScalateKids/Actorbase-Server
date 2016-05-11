@@ -73,6 +73,15 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
       val filePath = new File(rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"+range.getMinRange+"-"+range.getMaxRange+".actb").delete()
 
     /**
+      * Delete a folder of a Storefinder, usefull when a Storefinder duplicates
+      *
+      * @param sfRange a KeyRange representing the range of the storefinder that has to be deleted
+      */
+    case RemoveSfFolder(sfRange) =>
+      val f = rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"
+      removeAll(f)
+
+    /**
       * Read a file from filesystem and decrypt the content
       * extracting the map shard contained
       *
@@ -83,5 +92,17 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
       val key = "Dummy implicit k"
       val m = CryptoUtils.decrypt(key, f)
       sender ! m // ok reply
+  }
+
+  /**
+    *
+    * @param path
+    */
+  private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
+    def getRecursively(f: File): Seq[File] =
+      f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+    getRecursively(new File(path)).foreach{f =>
+      f.delete() }
+    val dir = new File(path).delete()
   }
 }

@@ -40,4 +40,6 @@ case class Save( sfRange:KeyRange, range: KeyRange, map: TreeMap[String, Any]) /
 
 case class Clean( sfRange: KeyRange, range: KeyRange)
 
+case class RemoveSfFolder( sfRange: KeyRange )
+
 case class Read(file: File)

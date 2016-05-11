@@ -37,6 +37,8 @@ import akka.actor.Stash
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.storekeeper.Storekeeper
+import com.actorbase.actorsystem.warehouseman.Warehouseman
+import com.actorbase.actorsystem.warehouseman.messages.RemoveSfFolder
 import com.actorbase.actorsystem.utils.{ActorbaseCollection, CollectionRange, KeyRange}
 
 import scala.collection.immutable.{TreeMap}
@@ -232,13 +234,16 @@ class Storefinder(private var collection: ActorbaseCollection,
           val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfRight.firstKey.getMinRange, halfRight.lastKey.getMaxRange) )
 
           context.parent ! com.actorbase.actorsystem.main.messages.DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange)
+
+          // Create a warehouseman just to remove the old folder
+          context.actorOf(Warehouseman.props( collection.getName+"-"+collection.getOwner )) ! RemoveSfFolder( range )
+
           // update keyRangeId or himself and set the treemap to the first half
           skMap = halfLeft
           range = new KeyRange( halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange )
 
           // updateownerofSK is useful to delete all the junky files created by previous saves.
           updateOwnerOfSK
-          //TODO needs to delete the old folder relative of the SF just duplicated
 
           context.parent ! com.actorbase.actorsystem.main.messages.Ack
         }
