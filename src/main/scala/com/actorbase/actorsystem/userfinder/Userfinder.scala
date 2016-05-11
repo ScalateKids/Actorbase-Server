@@ -33,10 +33,8 @@ import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 import com.actorbase.actorsystem.userfinder.messages._
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper._
-// import com.actorbase.actorsystem.manager.Manager
 
 import scala.collection.immutable.TreeMap
-// import scala.math.Ordered.orderingToOrdered
 
 object Userfinder {
   def props() : Props = Props(new Userfinder())
@@ -142,6 +140,17 @@ class Userfinder extends Actor with ActorLogging {
       if(ukMap.contains(username))
         ukMap.get(username).get forward AddCollection(read, collection)
       else log.info(s"$username not found can't add collection")
+
+    /**
+      * Insert description here
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    case UpdateCollectionSizeTo(collection, increment) =>
+      log.info("UF: increment size")
+      ukMap.find(_._1 == collection.getOwner).head._2 ! UpdateCollectionSize(collection, increment)
   }
 
 }

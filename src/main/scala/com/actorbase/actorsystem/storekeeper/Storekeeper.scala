@@ -35,17 +35,14 @@ import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.storekeeper.messages._
-
 import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
-
 import com.actorbase.actorsystem.utils.KeyRange
+import com.actorbase.actorsystem.warehouseman.Warehouseman
+import com.actorbase.actorsystem.warehouseman.messages._
+import com.actorbase.actorsystem.storefinder.messages.{GetAllItemResponse, UpdateCollectionSize}
 
 import scala.collection.immutable.TreeMap
 import scala.concurrent.duration._
-
-import com.actorbase.actorsystem.warehouseman.Warehouseman
-
-import com.actorbase.actorsystem.warehouseman.messages._
 
 object Storekeeper {
 
@@ -128,15 +125,17 @@ class Storekeeper (private var parentRef: ActorRef,
       */
     case GetAllItem(clientRef) =>
       // TODO
-      log.info("SK GetAlLItems")
+      log.info("SK GetAllItems")
       val items = data  // non si può mandargli data?
-      sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse("customers", items)//com.actorbase.actorsystem.storefinder.messages.TakeMyItems(clientRef, items)
+      sender ! GetAllItemResponse(clientRef, items)//com.actorbase.actorsystem.storefinder.messages.TakeMyItems(clientRef, items)
 
     /**
       * RemoveItem message, when the actor receive this message it will erase the item associated with the
       * key in input. This method doesn't throw an exception if the item is not present.
       */
-    case rem: RemoveItem => data -= rem.key
+    case rem: RemoveItem =>
+      data -= rem.key
+      parentRef ! UpdateCollectionSize(false)
 
     /**
       * Insert message, insert a key/value into a designed collection
@@ -150,20 +149,15 @@ class Storekeeper (private var parentRef: ActorRef,
       */
     case ins: Insert =>
       log.info("SK: Inserting "+ins.key+" this SK range is "+range.toString)
-      //log.info("storekeeper range "+range)
-      if(data.size < maxSize-1 ) {
-        insertOrUpdate( ins.update, ins.key, ins.value)
-      }
-      else {
+      insertOrUpdate(ins.update, ins.key, ins.value)
+      if (data.size == maxSize - 1) {
         log.info("SK: Must duplicate")
-        // insert the item, then we will duplicate
-        insertOrUpdate( ins.update, ins.key, ins.value)
         // half the collection
-        var (halfLeft, halfRight) = data.splitAt( maxSize/2 )
+        var (halfLeft, halfRight) = data.splitAt( maxSize / 2 )
         // create new keyrange to be updated for SF
-        val halfLeftKR = new KeyRange( range.getMinRange, halfLeft.lastKey+"a" )
+        val halfLeftKR = new KeyRange( range.getMinRange, halfLeft.lastKey + "a" )
         // create new keyrange for the new storekeeper
-        val halfRightKR = new KeyRange( halfLeft.lastKey+"aa", range.getMaxRange/*halfRight.lastKey*/ )
+        val halfRightKR = new KeyRange( halfLeft.lastKey + "aa", range.getMaxRange )
         // set the treemap to the first half
         data = halfLeft
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
@@ -177,6 +171,7 @@ class Storekeeper (private var parentRef: ActorRef,
         range = halfLeftKR
       }
       parentRef ! com.actorbase.actorsystem.main.messages.Ack
+      parentRef ! UpdateCollectionSize(true)
       //sender ! Response("inserted")
       // logAllItems
 
