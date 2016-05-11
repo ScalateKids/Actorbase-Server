@@ -140,21 +140,26 @@ class Storefinder(private var collection: ActorbaseCollection,
     case get: com.actorbase.actorsystem.storefinder.messages.GetItem => { //TODO implementare diversi tipi di getItem
       log.info(s"SF: getItem of key -> ${get.key}")
       // search for the right KeyRange to get the ActorRef of the needed SK
-      for ((keyRange, sk) <- skMap){
-        //log.info (keyRange.toString())
-        if( keyRange.contains( get.key ) )
-          sk forward com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
+      skMap.find(_._1.contains(get.key)) match {
+        case Some(sk) => sk._2 forward com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
+        case None => log.info("SF: getItem failed")
       }
+      // for ((keyRange, sk) <- skMap){
+      //   //log.info (keyRange.toString())
+      //   if( keyRange.contains( get.key ) )
+      //     sk forward com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
+      // }
     }
 
     /**
       * Message that returns the entire collection mapped by this Storefinder
       */
-    case com.actorbase.actorsystem.storefinder.messages.GetAllItem(clientRef) =>
+    case com.actorbase.actorsystem.storefinder.messages.GetAllItem =>
       log.info("SF: getallitem")
-      for ((keyRange, sk) <- skMap) {
-        sk ! com.actorbase.actorsystem.storekeeper.messages.GetAllItem( clientRef )
-      }
+      skMap.foreach(kv => kv._2 forward com.actorbase.actorsystem.storekeeper.messages.GetAllItem)
+      // for ((keyRange, sk) <- skMap) {
+      //   sk ! com.actorbase.actorsystem.storekeeper.messages.GetAllItem( clientRef )
+      // }
 
     /**
       * Message that removes an item with the given key
@@ -164,11 +169,12 @@ class Storefinder(private var collection: ActorbaseCollection,
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem =>
       log.info("SF: remove")
       // search for the right KeyRange to get the ActorRef of the needed SK
-      for ((keyRange, sk) <- skMap) {
-        //log.info (keyRange.toString())
-        if( keyRange.contains( rem.key ) )
-          sk forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
-      }
+      skMap.filterKeys(_.contains(rem.key)).foreach(kv => kv._2 forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key))
+      // for ((keyRange, sk) <- skMap) {
+      //   //log.info (keyRange.toString())
+      //   if( keyRange.contains( rem.key ) )
+      //     sk forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
+      // }
 
     /**
       *

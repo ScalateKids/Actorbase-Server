@@ -112,7 +112,7 @@ class Main extends Actor with ActorLogging with Stash {
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
   private var counter = 0 // this is for debug purposes
   private var getMap = new TreeMap[ActorRef, TreeMap[String, Any]]()
-  private var requestMap = new TreeMap[ActorRef, Map[ActorbaseCollection, Map[String, Any]]]() // a bit clunky
+  private var requestMap = new TreeMap[ActorRef, Map[ActorbaseCollection, Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
     * Insert description here
@@ -257,11 +257,19 @@ class Main extends Actor with ActorLogging with Stash {
       if (key.nonEmpty)
         sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
       else {
-        var collectionMap = Map[ActorbaseCollection, Map[String, Any]]()
-        var items = Map[String, Any]()
-        collectionMap += (collection -> items)
-        requestMap += (sender -> collectionMap)
-        sfMap.filterKeys(_.getCollectionName == collection.getName).foreach(kv => kv._2 ! GetAllItem(sender))
+        requestMap.find(_._1 == sender) match {
+          case Some(cRef) => cRef._2 += (collection -> Map[String, Any]())
+          case None =>
+            var collectionMap = Map[ActorbaseCollection, Map[String, Any]]()
+            var items = Map[String, Any]()
+            collectionMap += (collection -> items)
+            requestMap += (sender -> collectionMap)
+        }
+        // var collectionMap = Map[ActorbaseCollection, Map[String, Any]]()
+        // var items = Map[String, Any]()
+        // collectionMap += (collection -> items)
+        // requestMap += (sender -> collectionMap)
+        sfMap.filterKeys(_.getCollectionName == collection.getName).foreach(kv => kv._2 forward GetAllItem)
       }
 
     /**
@@ -288,8 +296,10 @@ class Main extends Actor with ActorLogging with Stash {
               items.foreach(kv => colMap._2 += (kv._1 -> kv._2))
               refPair._2.+(collection -> colMap._2)
               log.info(s"GetItemFromResponse: ${colMap._2.size} - ${collection.getSize}")
-              if (colMap._2.size == collection.getSize)
+              if (colMap._2.size == collection.getSize) {
                 clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+                refPair._2 -= collection
+              }
             case None => log.info("GetItemFromResponse: collectionMap not found")
           }
         case None => log.info("GetItemFromResponse: refPair not found")

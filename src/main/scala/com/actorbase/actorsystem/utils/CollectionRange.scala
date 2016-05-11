@@ -30,8 +30,6 @@ package com.actorbase.actorsystem.utils
 
 import scala.math.Ordered.orderingToOrdered
 
-import com.actorbase.actorsystem.utils.{ActorbaseCollection, KeyRange}
-
 /**
   * Class representing a piece of an actorbase collection. Used by MainActors.
   * More precisely it represents the range of Keys of one collection mapped on a StoreFinder
@@ -39,7 +37,7 @@ import com.actorbase.actorsystem.utils.{ActorbaseCollection, KeyRange}
   * @param collection. A Collection type representing the actorbase collection
   * @param range. A KeyRange representing the upper and lower bounds of keys possible in this CollectionRange
   */
-class CollectionRange(private var collection: ActorbaseCollection, private var range: KeyRange) extends Ordered[CollectionRange]{
+class CollectionRange(private var collection: ActorbaseCollection, private var range: KeyRange) extends Ordered[CollectionRange] {
 
   /**
     * @return a String representing the collection name

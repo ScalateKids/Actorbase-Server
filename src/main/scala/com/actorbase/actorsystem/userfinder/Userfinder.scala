@@ -42,8 +42,7 @@ object Userfinder {
 
 class Userfinder extends Actor with ActorLogging {
 
-  // ukMap maps username of String-typed to the uk reference
-  private var ukMap = new TreeMap[String, ActorRef]()
+  def receive = running(TreeMap[String, ActorRef]().empty)
 
   /**
     * Insert description here
@@ -52,7 +51,7 @@ class Userfinder extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def receive = {
+  def running(ukMap: TreeMap[String, ActorRef]): Receive = {
 
     /**
       * Insert message, create an actor of type Userkeeper initializing it with
@@ -65,10 +64,9 @@ class Userfinder extends Actor with ActorLogging {
       */
     case InsertTo(username, password) =>
       log.info("UF: insert user into userkeeper")
-      if(!ukMap.contains(username)) {
-        val uk = context.actorOf(Userkeeper.props(username, password))
-        ukMap += (username -> uk)
-      } else
+      if(!ukMap.contains(username))
+        context become running(ukMap + (username -> context.actorOf(Userkeeper.props(username, password))))
+      else
         log.info(s"Duplicate insert for username $username: already exists")
 
     /**
