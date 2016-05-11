@@ -31,6 +31,8 @@ package com.actorbase.actorsystem.userkeeper
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 import scala.collection.mutable.ListBuffer
 
+import com.actorbase.actorsystem.utils.ActorbaseCollection
+
 import java.util.UUID
 
 object Userkeeper {
@@ -43,11 +45,13 @@ object Userkeeper {
 
   case class ChangePassword(newPassword: String)
 
-  case class RemoveCollection(read: Boolean, collection: String)
+  case class RemoveCollection(read: Boolean, collection: ActorbaseCollection)
 
-  case class AddCollection(read: Boolean, collection: String)
+  case class AddCollection(read: Boolean, collection: ActorbaseCollection)
 
   case class BindClient(client: ActorRef)
+
+  case class UpdateCollectionSize(collection: ActorbaseCollection, increment: Boolean = true)
 
 }
 
@@ -65,10 +69,10 @@ class Userkeeper private (var username: String = "user",
   import Userkeeper._
 
   /** read-write collections list */
-  private var collections: ListBuffer[String] = new ListBuffer[String]
+  private var collections: ListBuffer[ActorbaseCollection] = new ListBuffer[ActorbaseCollection]()
 
   /** read-only collections list */
-  private var readCollections: ListBuffer[String] = new ListBuffer[String]
+  private var readCollections: ListBuffer[ActorbaseCollection] = new ListBuffer[ActorbaseCollection]()
 
   /** client ActorRef associated */
   private var client: ActorRef = _
@@ -117,11 +121,24 @@ class Userkeeper private (var username: String = "user",
       else
         collections -= collection
 
-    case BindClient(assoc) => {
+    case BindClient(assoc) =>
       client = assoc
       val toRet = Array(collections, readCollections)
       sender ! Some(toRet)
-    }
+
+    case UpdateCollectionSize(collection, increment) =>
+      log.info(s"increment, collection size: ${collection.getOwner}")
+      for (coll <- collections) {
+        if (collection.compare(coll) == 0)
+          if (increment) {
+            log.info(s"increment, collection size: ${coll.size}")
+            coll.incrementSize
+          }
+          else {
+            log.info(s"decrement, collection size: ${coll.size}")
+            coll.decrementSize
+          }
+      }
 
   }
 

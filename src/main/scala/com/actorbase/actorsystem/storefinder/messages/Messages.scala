@@ -35,11 +35,15 @@ import akka.dispatch.ControlMessage
 import akka.actor.ActorRef
 import scala.collection.immutable.TreeMap
 
+case class UpdateCollectionSize(increment: Boolean = true)
+
 case class Init(collName: String, manager: ActorRef, range: KeyRange)
 
 case class GetItem(key: String)
 
 case class GetAllItem(clientRef: ActorRef)
+
+case class GetAllItemResponse(clientRef: ActorRef, items: TreeMap[String, Any])
 
 case class RemoveItem(key: String)
 

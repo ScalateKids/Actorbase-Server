@@ -30,6 +30,8 @@
 
 package com.actorbase.actorsystem.userfinder.messages
 
+import com.actorbase.actorsystem.utils.ActorbaseCollection
+
 case class InsertTo(username: String, password: String)
 
 case class GetPasswordOf(username: String)
@@ -38,6 +40,8 @@ case class GetCollectionsOf(username: String, read: Boolean)
 
 case class ChangePasswordOf(username: String, newPassword: String)
 
-case class RemoveCollectionFrom(username: String, read: Boolean, collection: String)
+case class RemoveCollectionFrom(username: String, read: Boolean, collection: ActorbaseCollection)
 
-case class AddCollectionTo(username: String, read: Boolean, collection: String)
+case class AddCollectionTo(username: String, read: Boolean, collection: ActorbaseCollection)
+
+case class UpdateCollectionSizeTo(collection: ActorbaseCollection, increment: Boolean = true)

@@ -30,7 +30,7 @@
 package com.actorbase.actorsystem.main.messages
 
 import akka.actor.ActorRef
-import com.actorbase.actorsystem.utils.{CollectionRange, KeyRange}
+import com.actorbase.actorsystem.utils.{ActorbaseCollection, CollectionRange, KeyRange}
 import akka.dispatch.ControlMessage
 import scala.collection.immutable.TreeMap
 
@@ -38,5 +38,7 @@ case class DuplicationRequestSF(oldCollRange: CollectionRange, leftCollRange: Co
                                 rightCollRange: CollectionRange) extends ControlMessage
 
 case class Ack() extends ControlMessage // TODO vedere se c'è differenza con i control message
+
+case class UpdateCollectionSize(collectionName: ActorbaseCollection, increment: Boolean = true)
 
 case object DebugMaps

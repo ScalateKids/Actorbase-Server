@@ -31,6 +31,7 @@ package com.actorbase.actorsystem.main
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import spray.json.DefaultJsonProtocol._
+import scala.collection.mutable.Map
 
 import scala.collection.immutable.TreeMap
 import com.actorbase.actorsystem.storefinder.Storefinder
@@ -39,9 +40,7 @@ import com.actorbase.actorsystem.userfinder.Userfinder
 import com.actorbase.actorsystem.userfinder.messages._
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
-
 import com.actorbase.actorsystem.main.messages._
-
 import com.actorbase.actorsystem.utils.{KeyRange, ActorbaseCollection, CollectionRange}
 
 import com.github.t3hnar.bcrypt._
@@ -77,7 +76,9 @@ object Main {
 
   case class Insert(owner: String, name: String, key: String, value: Any, update: Boolean = false)
 
-  case class GetItemFrom(collection: String, key: String = "")
+  case class GetItemFrom(collection: ActorbaseCollection, key: String = "")
+
+  case class GetItemFromResponse(clientRef: ActorRef, collection: ActorbaseCollection, items: TreeMap[String, Any])
 
   // manca getcollection?
 
@@ -90,6 +91,8 @@ object Main {
   case class CreateCollection(name: String, owner: String) // basta così al momento
 
   case class RemoveCollection( name: String, owner: String)
+
+  // case class UpdateCollectionSize(collection: ActorbaseCollection, increment: Boolean = true)
 
   case object InitUsers
 
@@ -106,12 +109,10 @@ class Main extends Actor with ActorLogging with Stash {
   import Main._
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
-
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
-
   private var counter = 0 // this is for debug purposes
-
   private var getMap = new TreeMap[ActorRef, TreeMap[String, Any]]()
+  private var requestMap = new TreeMap[ActorRef, Map[ActorbaseCollection, Map[String, Any]]]() // a bit clunky
 
   /**
     * Insert description here
@@ -130,8 +131,12 @@ class Main extends Actor with ActorLogging with Stash {
     * @return an ActorRef pointing to the Storefinder just created that maps the collection
     */
   private def createCollection(name: String, owner: String): ActorRef = {
-    val sf = context.actorOf(Storefinder.props( new ActorbaseCollection(name, owner ) ).withDispatcher("control-aware-dispatcher") )
-    var newCollectionRange = new CollectionRange( new ActorbaseCollection(name, owner), new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
+    log.info(s"creating for $owner")
+    ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
+    var collection = new ActorbaseCollection(name, owner)
+    val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher") )
+    var newCollectionRange = new CollectionRange(collection, new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
+    ufRef ! AddCollectionTo(owner, false, collection)
     sfMap += (newCollectionRange -> sf)
     sf
   }
@@ -166,7 +171,9 @@ class Main extends Actor with ActorLogging with Stash {
     case AddUser(username, password) => ufRef ! InsertTo(username, password.bcrypt(generateSalt))
 
     /**
-      * Insert message, insert a key/value into a designed collection
+      * Insert message, insert a key/value into a designed collection, searching
+      * if sfMap contains the collection I need, if it's present search for the
+      * right keyrange
       *
       * @param owner a String representing the owner of the collection
       * @param name a String representing the collection name
@@ -176,40 +183,47 @@ class Main extends Actor with ActorLogging with Stash {
       * @param update a Boolean flag, define the insert behavior (with or without
       * updating the value)
       */
-    case Insert(owner, name, key, value, update) => {
-      // search if sfMap contains the collection I need, if it's present search for the right keyrange
-      var inserted: Boolean = false
-      for( (collectionRange, sfRef) <- sfMap){
-        if( collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ){
-          // right collection and right keyrange (right collectionRange), let's insert here
-          log.info("inserting "+key+" in the range "+collectionRange.toString)
-
-          counter += 1
-          if(counter == 1000){
-            println("inserting "+key+" in the range "+collectionRange.toString)
-            counter = 0
-          }
-
-          inserted = true
-          sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert( key, value, update )
-
-          // TODO uscire dal for
-
-          // change context because of an Insert is happening
-          context.become(processingRequest())
-        }
+    case Insert(owner, name, key, value, update) =>
+      val rangeRef = sfMap.find(x => (x._1.isSameCollection(name, owner) && x._1.getKeyRange.contains(key)))
+      rangeRef match {
+        case Some(t) =>
+          t._2 forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
+          context.become(processingRequest)
+        case None =>
+          log.info("MAIN: collection range not found, creating collection..")
+          createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
+          context.become(processingRequest)
       }
-      if( !inserted ){
-        // TODO possibile problema futuro, al primo insert nessuno ha la collection e come si capisce chi deve crearla?
-        log.info("item has not been inserted, must forward to siblings")
-        createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
+      // var inserted: Boolean = false
+      // for ((collectionRange, sfRef) <- sfMap) {
+      //   if (collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ) {
+      //     // right collection and right keyrange (right collectionRange), let's insert here
+      //     log.info("inserting "+key+" in the range "+collectionRange.toString)
 
-        // change context of an Insert is happening
-        context.become(processingRequest)
-        //item has not been inserted, must send the message to the brothers
-        //TODO mandare agli altri main
-      }
-    }
+      //     counter += 1
+      //     if (counter == 1000) {
+      //       println("inserting " + key + " in the range " + collectionRange.toString)
+      //       counter = 0
+      //     }
+
+      //     inserted = true
+      //     sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
+
+      //     // TODO uscire dal for
+
+      //     // change context because of an Insert is happening
+      //     context.become(processingRequest())
+      //   }
+      // }
+      // if (!inserted) {
+      //   // TODO possibile problema futuro, al primo insert nessuno ha la collection e come si capisce chi deve crearla?
+      //   log.info("item has not been inserted, must forward to siblings")
+      //   createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
+      //                                                                                                                   // change context of an Insert is happening
+      //   context.become(processingRequest)
+      //   //item has not been inserted, must send the message to the brothers
+      //   //TODO mandare agli altri main
+      // }
 
     /**
       * Create a collection in the system
@@ -217,10 +231,9 @@ class Main extends Actor with ActorLogging with Stash {
       * @param name a String representing the name of the collection
       * @param owner a String representing the owner of the collection
       */
-    case CreateCollection(name, owner) => {
+    case CreateCollection(name, owner) =>
       createCollection(name, owner)
       // TODO avvisare lo userkeeper che a sua volta deve avvisare il client
-    }
 
     /**
       * Remove a collection from the system
@@ -228,11 +241,8 @@ class Main extends Actor with ActorLogging with Stash {
       * @param name a String representing the name of the collection
       * @param owner a String representing the owner of the collection
       */
-    case RemoveCollection(name, owner) => {
-      //TODO da implementare
-
+    case RemoveCollection(name, owner) =>
       //TODO questo messaggio dovrà rimuovere i file relativi agli storefinder tramite uso di warehouseman
-    }
 
     /**
       * Get item from collection message, given a key of type String, retrieve
@@ -244,13 +254,44 @@ class Main extends Actor with ActorLogging with Stash {
     case GetItemFrom(collection, key) =>
       if (key.nonEmpty)
         sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
-      else sfMap.filterKeys(_.getCollectionName == collection).foreach(kv => kv._2 ! GetAllItem(sender))
-    // TODO
-    /*      if(key == "")
-     sfMap.get(collection).get forward GetAllItem
-     else
-     sfMap.get(collection).get forward GetItem(key)
-     */
+      else {
+        var collectionMap = Map[ActorbaseCollection, Map[String, Any]]()
+        var items = Map[String, Any]()
+        collectionMap += (collection -> items)
+        requestMap += (sender -> collectionMap)
+        sfMap.filterKeys(_.getCollectionName == collection.getName).foreach(kv => kv._2 ! GetAllItem(sender))
+      }
+
+    /**
+      * Await for storefinder response of all storekeeper, expecting
+      * a given number of response, equals to the number of key-value pairs
+      * of the collection requested
+      *
+      * @param clientRef the reference of the client demanding the collection
+      * @param collection an ActorbaseCollection item containing the number of response
+      * expected for the requested collection at the current state
+      * @param items a TreeMap[String, Any] representing a shard of the requested collection, represent a storekeeper payload
+      * @return
+      * @throws
+      */
+    case GetItemFromResponse(clientRef, collection, items) =>
+      val clientMapPair = requestMap.find(_._1 == clientRef)
+      clientMapPair match {
+        case Some(refPair) =>
+          log.info("GetItemFromResponse: refPairFound")
+          refPair._2.find(_._1.compare(collection) == 0) match {
+            case Some(colMap) =>
+              log.info("GetItemFromResponse: collectionMapFound")
+              refPair._2 -= collection
+              items.foreach(kv => colMap._2 += (kv._1 -> kv._2))
+              refPair._2.+(collection -> colMap._2)
+              log.info(s"GetItemFromResponse: ${colMap._2.size} - ${collection.getSize}")
+              if (colMap._2.size == collection.getSize)
+                clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+            case None => log.info("GetItemFromResponse: collectionMap not found")
+          }
+        case None => log.info("GetItemFromResponse: refPair not found")
+      }
 
     /**
       * Remove item from collection  message, given a key of type String,
@@ -261,8 +302,8 @@ class Main extends Actor with ActorLogging with Stash {
       *
       */
     case RemoveItemFrom(collection, key) =>
-    // TODO
-    //sfMap.get(collection).get forward RemoveItem(key)
+      // TODO
+      //sfMap.get(collection).get forward RemoveItem(key)
 
     /**
       * Add Contributor from collection, given username of Contributor and read
@@ -275,7 +316,7 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case AddContributor(username , permission, collection) =>
       // need controls
-      ufRef ! AddCollectionTo(username,permission,collection)
+      ufRef ! AddCollectionTo(username, permission, new ActorbaseCollection(collection, username))
 
     /**
       * Remove Contributor from collection, given username of Contributor , and permission
@@ -285,12 +326,16 @@ class Main extends Actor with ActorLogging with Stash {
       * @param collection a String representing the collection name
       *
       */
-    case RemoveContributor(username,permission,collection) =>
+    case RemoveContributor(username, permission, collection) =>
       // need controls
-      ufRef ! RemoveCollectionFrom(username,permission,collection)
+      ufRef ! RemoveCollectionFrom(username, permission, new ActorbaseCollection(collection, username))
+
+    case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
+      log.info(s"MAIN: Update size ${collection.getOwner}")
+      ufRef ! UpdateCollectionSizeTo(collection, increment)
 
     case DebugMaps => // debug purposes
-      for( (collRange, sfRef )<- sfMap){
+      for( (collRange, sfRef )<- sfMap) {
         log.info("DEBUG MAIN "+collRange.toString)
         sfRef forward DebugMap( collRange.getKeyRange )
       }
@@ -325,10 +370,10 @@ class Main extends Actor with ActorLogging with Stash {
       // update sfMap due to a SF duplicate happened
       val newSf = context.actorOf(Props(new Storefinder(oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher") )
       // get old sk actorRef
-      val tmpActorRef = sfMap.get(oldCollRange).get
-      // remove entry associated with that actorRef
-      sfMap = sfMap - oldCollRange // non so se sia meglio così o fare una specie di update key (che non c'è)
-      // add the entry with the oldSK and the new one
+      val tmpActorRef = sfMap.get(oldCollRange).get // refactor to getOrElse or match case
+                                                    // remove entry associated with that actorRef
+      sfMap -= oldCollRange // non so se sia meglio così o fare una specie di update key (che non c'è)
+                            // add the entry with the oldSK and the new one
       sfMap += (leftCollRange -> tmpActorRef)
       sfMap += (rightCollRange -> newSf)
 

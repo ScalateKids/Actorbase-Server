@@ -41,6 +41,7 @@ import scala.concurrent.duration._
 import com.actorbase.actorsystem.main.Main.{BinTest, Insert, GetItemFrom, RemoveItemFrom}
 import com.actorbase.actorsystem.main.messages._
 import com.actorbase.actorsystem.clientactor.messages._
+import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 /**
   * Insert description here
@@ -77,7 +78,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
     path("actorbase" / "find" / "\\S+".r / "\\S+".r ) { (collection, key) =>
       get {
         complete {
-          main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Response]
+          main.ask(GetItemFrom(new ActorbaseCollection(collection, "user"), key))(5 seconds).mapTo[Response]
         }
       }
     } ~
@@ -98,7 +99,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
               var tmpkey = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
               tmpkey = tmpkey.replaceAll("[0-9]", "x") // tolgo i numeri, non si possono ancora mettere nelle chiavi
               val key = tmpkey.replaceAll("z", "y") // tolgo le z, se sono come prime lettere spacca tutto
-              main.ask(Insert("", "customers", key , "value of "+key, false))(30000 seconds).mapTo[Response]
+              main.ask(Insert("user", "customers", key , "value of "+key, false))(30000 seconds).mapTo[Response]
               Thread.sleep(millisecs.toInt) // aspettando 10ms x ogni insert non ci sono problemi, con meno spesso rompe tutto
             }
             "multiinserted!"
@@ -123,4 +124,3 @@ trait RestApi extends HttpServiceBase with Authenticator {
     }
   }
 }
-

@@ -36,9 +36,11 @@ import scala.math.Ordered.orderingToOrdered
   * @param name a String representing the name of the collection
   * @param owner a String representing the username of the owner of this collection
   */
-class ActorbaseCollection( private var name: String,
-                  private var owner: String ) extends Ordered[ActorbaseCollection]{
+class ActorbaseCollection(private var name: String,
+  private var owner: String) extends Ordered[ActorbaseCollection] {
   //TODO mettere uuid anche qui?
+
+  var size = 0
 
   /**
     * @return a String representing the name of the collection
@@ -50,7 +52,50 @@ class ActorbaseCollection( private var name: String,
     */
   def getOwner: String = owner
 
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def getSize: Int = size
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def setSize(newSize: Int): Unit = size = newSize
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def incrementSize = size += 1
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def decrementSize = size -= 1
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
   override def compare(that: ActorbaseCollection): Int = {
-    (this.name+this.owner) compare (that.name + that.owner)
+    (this.name + this.owner) compare (that.name + that.owner)
   }
 }

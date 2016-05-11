@@ -9,8 +9,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
+import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.main.Main.{Insert, GetItemFrom, RemoveItemFrom, CreateCollection, RemoveCollection}
-
 import com.actorbase.actorsystem.clientactor.messages._
 
 trait CollectionApi extends HttpServiceBase with Authenticator {
@@ -29,6 +29,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     *
     */
   def collections(main: ActorRef, owner: String): Route = {
+
     /**
       * Collections route, manage all collection related operations, based
       * on the request received in the form of:
@@ -53,7 +54,9 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       pathEndOrSingleSlash {
         get {
           complete {
-            main.ask(GetItemFrom(collection))(5 seconds).mapTo[MapResponse]
+            var coll = new ActorbaseCollection(collection, "user")
+            coll.setSize(100)
+            main.ask(GetItemFrom(coll))(5 seconds).mapTo[MapResponse]
           }
         } ~
         post {
@@ -75,7 +78,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           get {
             complete {
               //TODO controllare, se collection non esiste, inutile instradare
-              main.ask(GetItemFrom(collection, key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
+              main.ask(GetItemFrom(new ActorbaseCollection(collection, "user"), key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
             }
           } ~
             delete {
