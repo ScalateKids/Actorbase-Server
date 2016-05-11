@@ -1,5 +1,5 @@
-https://127.0.0.1:9999/collections/dummy/chiave5
-https://127.0.0.1:9999/collections/dummy/chiave5
-https://127.0.0.1:9999/collections/dummy/chiave5
-https://127.0.0.1:9999/collections/dummy/chiave5
-https://127.0.0.1:9999/collections/dummy/chiave5
+https://127.0.0.1:9999/collections/customers
+https://127.0.0.1:9999/collections/customers
+https://127.0.0.1:9999/collections/customers
+https://127.0.0.1:9999/collections/customers
+https://127.0.0.1:9999/collections/customers
