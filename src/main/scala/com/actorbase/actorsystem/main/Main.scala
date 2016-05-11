@@ -230,6 +230,8 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case RemoveCollection(name, owner) => {
       //TODO da implementare
+
+      //TODO questo messaggio dovrà rimuovere i file relativi agli storefinder tramite uso di warehouseman
     }
 
     /**

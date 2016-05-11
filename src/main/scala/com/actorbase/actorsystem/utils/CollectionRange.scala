@@ -92,7 +92,6 @@ class CollectionRange(private var collection: ActorbaseCollection, private var r
     * @return Boolean. True if the collection represented by the CollectionRange passed as param is the same
     *         as the collection represented by this object
     */
-  // TODO DA TESTARE
   def isSameCollection(that: CollectionRange): Boolean = {
     (this.getCollectionName + this.getCollectionOwner == that.getCollectionName + that.getCollectionOwner)
   }
@@ -105,7 +104,6 @@ class CollectionRange(private var collection: ActorbaseCollection, private var r
     * @return Boolean. True if the collection represented by the Collection passed as param is the same
     *         as the collection represented by this object
     */
-  // TODO DA TESTARE
   def isSameCollection(coll: ActorbaseCollection): Boolean = {
     (this.getCollectionName + this.getCollectionOwner == coll.getName + coll.getOwner)
   }
@@ -119,7 +117,6 @@ class CollectionRange(private var collection: ActorbaseCollection, private var r
     * @return Boolean. True if the collection represented by the input parameters is the same as the collection
     *         represented by this object
     */
-  // TODO DA TESTARE
   def isSameCollection(name: String, owner: String): Boolean ={
     (this.getCollectionName == name && this.getCollectionOwner == owner)
   }
@@ -131,7 +128,6 @@ class CollectionRange(private var collection: ActorbaseCollection, private var r
     * @return Int. -1 if this KeyRange is < of the param one. 0 if they are the same. +1 if this KeyRange is > of
     *         the param one
     */
-  // TODO DA TESTARE
   def compareKeyRanges(that: CollectionRange): Int = {
     this.getKeyRange.compare(that.getKeyRange)
   }
@@ -147,7 +143,6 @@ class CollectionRange(private var collection: ActorbaseCollection, private var r
     *         +1 if the this.collectionName is > of that.collectionName OR if the collections are the same
     *         but this.KeyRange > that.KeyRange
     */
-  // TODO DA TESTARE
   override def compare(that: CollectionRange): Int = {
     // first check if the collection is the same, if not return the collection compare
     val comparedCollect = this.getCollection.compare(that.getCollection)
