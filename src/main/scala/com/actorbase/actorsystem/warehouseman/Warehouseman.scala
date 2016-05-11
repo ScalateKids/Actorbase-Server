@@ -44,6 +44,8 @@ object Warehouseman {
 
 class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLogging {
 
+  private val rootFolder = "actorbasedata/"
+
   def receive = {
 
     case Init => log.info("warehouseman: init")
@@ -54,12 +56,21 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
       *
       * @param map a TreeMap representing Storekeeper data
       */
-    case Save(map) =>
+    case Save(sfRange, range, map) =>
       log.info("warehouseman: save")
       val key = "Dummy implicit k"
-      val encryptedShardFile = new File(collectionShard)
+      val encryptedShardFile = new File(rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"+range.getMinRange+"-"+range.getMaxRange+".actb")
+      encryptedShardFile.getParentFile.mkdirs
       CryptoUtils.encrypt(key, map, encryptedShardFile)
       sender ! 0 // ok reply
+
+    /**
+      * Delete a file with the Range with the keys passed in
+      *
+      * @param range a KeyRange representing the range of the file to delete
+      */
+    case Clean(sfRange, range) =>
+      val filePath = new File(rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"+range.getMinRange+"-"+range.getMaxRange+".actb").delete()
 
     /**
       * Read a file from filesystem and decrypt the content

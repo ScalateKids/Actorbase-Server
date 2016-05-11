@@ -28,11 +28,12 @@
 
 package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Actor, ActorRef, ActorLogging, Cancellable, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, Props}
+import com.actorbase.actorsystem.utils.ActorbaseCollection
 
-/*import com.actorbase.actorsystem.manager.Manager
- import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
- */
+import scala.concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
+
 import com.actorbase.actorsystem.storekeeper.messages._
 
 import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
@@ -48,9 +49,9 @@ import com.actorbase.actorsystem.warehouseman.messages._
 
 object Storekeeper {
 
-  def props( parentRef: ActorRef, data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper(parentRef, data, range))
+  def props( parentRef: ActorRef, collection: ActorbaseCollection, parentRange: KeyRange, data: TreeMap[String, Any], range: KeyRange ) : Props = Props( new Storekeeper(parentRef, collection, parentRange, data, range))
 
-  def props( parentRef: ActorRef) : Props = Props( new Storekeeper( parentRef))
+  def props( parentRef: ActorRef, collection: ActorbaseCollection, parentRange: KeyRange ) : Props = Props( new Storekeeper( parentRef, collection, parentRange ))
 
 }
 
@@ -62,10 +63,14 @@ object Storekeeper {
   * @param maxSize
   */
 class Storekeeper (private var parentRef: ActorRef,
-  private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
-  private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
+                   private val collection: ActorbaseCollection,
+                   private var parentRange: KeyRange,
+                   private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
+                   private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
-  private val maxSize: Int = 64 // this should be configurable, probably must read from file
+  private val maxSize: Int = 16 // this should be configurable, probably must read from file
+  // create the warehouseman of this SK
+  private val warehouseman: ActorRef = context.actorOf(Warehouseman.props( collection.getName+"-"+collection.getOwner ))
 
   private val initDelay = 30 seconds     // delay for the first persistence message to be sent
   private val intervalDelay = 1 minutes  // interval in-between each persistence message has to be sent
@@ -80,12 +85,13 @@ class Storekeeper (private var parentRef: ActorRef,
     * @throws
     */
   override def preStart(): Unit = {
-    // scheduler = context.system.scheduler.schedule(
-    //   initialDelay = initDelay,
-    //   interval = intervalDelay,
-    //   receiver = self,
-    //   message = Persist
-    // )
+    log.info("SK prestarted")
+     scheduler = context.system.scheduler.schedule(
+       initialDelay = initDelay,
+       interval = intervalDelay,
+       receiver = self,
+       message = Persist
+     )
   }
 
   /**
@@ -163,6 +169,10 @@ class Storekeeper (private var parentRef: ActorRef,
         // send the request at manager with the treemap, old keyrangeId, new keyrange, collection of the new SK and
         // keyrange of the new sk
         parentRef ! com.actorbase.actorsystem.storefinder.messages.DuplicationRequestSK(range, halfLeftKR, halfRight, halfRightKR)
+
+        // tell the warehouseman to delete the old entry assiciated with your data
+        warehouseman ! com.actorbase.actorsystem.warehouseman.messages.Clean( parentRange, range )
+
         // update keyRangeId or himself
         range = halfLeftKR
       }
@@ -178,9 +188,10 @@ class Storekeeper (private var parentRef: ActorRef,
       * @param newManager ActorRef pointing the to new right actor manager (the maganer responsible of
       *                   the Storefinder mapping the range of this Storekeeper)
       */
-    case updateOwnerOfSK( newParent ) =>
+    case updateOwnerOfSK( newParent, newRange ) =>
       log.info("SK: updating owner")
       parentRef = newParent
+      parentRange = newRange
 
     // debug
     case DebugMaa(mainRange, sfRange) =>
@@ -192,7 +203,7 @@ class Storekeeper (private var parentRef: ActorRef,
     /**
       * Persist data to disk
       */
-    case Persist => context.actorOf(Warehouseman.props("shard:interval:boh")) ! Save(data)
+    case Persist => warehouseman ! Save( parentRange, range, data)
 
   }
 

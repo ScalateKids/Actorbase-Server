@@ -29,13 +29,15 @@
 
 package com.actorbase.actorsystem.warehouseman.messages
 
-import akka.actor.ActorRef
+import com.actorbase.actorsystem.utils.KeyRange
 import scala.collection.immutable.TreeMap
 
 import java.io.File
 
 case class Init() //class because it will have parameters
 
-case class Save(map: TreeMap[String, Any]) //class because it will have parameters
+case class Save( sfRange:KeyRange, range: KeyRange, map: TreeMap[String, Any]) //class because it will have parameters
+
+case class Clean( sfRange: KeyRange, range: KeyRange)
 
 case class Read(file: File)

@@ -63,7 +63,7 @@ class Storefinder(private var collection: ActorbaseCollection,
   // firstly we need to update the owner of the SK of his map, this is necessary when the SF is created due
   // to a duplication
   updateOwnerOfSK()
-  private val maxSize: Int = 128
+  private val maxSize: Int = 24
 
   /**
     * Insert description here
@@ -80,7 +80,7 @@ class Storefinder(private var collection: ActorbaseCollection,
     */
   private def updateOwnerOfSK(): Unit = {
     for((r, skref) <- skMap){
-      skref ! com.actorbase.actorsystem.storekeeper.messages.updateOwnerOfSK( self )
+      skref ! com.actorbase.actorsystem.storekeeper.messages.updateOwnerOfSK( self, range )
     }
   }
 
@@ -112,8 +112,8 @@ class Storefinder(private var collection: ActorbaseCollection,
       skMap.size match {
         // empty TreeMap -> create SK and forward message to him
         case 0 =>
-          val kr = new KeyRange("a", "z") // pensare se questo vabene nel caso di sdoppiamentooo
-        val sk = context.actorOf(Storekeeper.props( self, new TreeMap[String, Any](), kr ).withDispatcher("control-aware-dispatcher"))
+          val kr = new KeyRange("a", "z")
+        val sk = context.actorOf(Storekeeper.props( self, collection, range, new TreeMap[String, Any](), kr ).withDispatcher("control-aware-dispatcher"))
           // update map
           skMap += (kr -> sk)
           // forward the request to the sk just created
@@ -210,7 +210,7 @@ class Storefinder(private var collection: ActorbaseCollection,
         log.info("SF: DuplicateSKNotify "+oldKeyRange+" left "+leftRange+" right "+rightRange)
         // need to update skMap due to a SK duplicate happened
 
-        val newSk = context.actorOf(Props(new Storekeeper(self, map, rightRange)).withDispatcher("control-aware-dispatcher") )
+        val newSk = context.actorOf(Props(new Storekeeper(self, collection, range, map, rightRange)).withDispatcher("control-aware-dispatcher") )
 
         // get old sk actorRef
         val tmpActorRef = skMap.get(oldKeyRange).get
@@ -227,14 +227,18 @@ class Storefinder(private var collection: ActorbaseCollection,
           var (halfLeft, halfRight) = skMap.splitAt( maxSize/2 )
 
           // create new keyrange to be updated for SF
-          val halfLeftCollRange = new CollectionRange( collection, new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange/*+"a"*/) )
+          val halfLeftCollRange = new CollectionRange( collection, new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange) )
           // create new keyrange for the new storefinder
           val halfRightCollRange = new CollectionRange( collection, new KeyRange(halfRight.firstKey.getMinRange, halfRight.lastKey.getMaxRange) )
 
           context.parent ! com.actorbase.actorsystem.main.messages.DuplicationRequestSF( new CollectionRange(collection, range), halfLeftCollRange, halfRight, halfRightCollRange)
           // update keyRangeId or himself and set the treemap to the first half
           skMap = halfLeft
-          range = new KeyRange(halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange/*+"a"*/)
+          range = new KeyRange( halfLeft.firstKey.getMinRange, halfLeft.lastKey.getMaxRange )
+
+          // updateownerofSK is useful to delete all the junky files created by previous saves.
+          updateOwnerOfSK
+          //TODO needs to delete the old folder relative of the SF just duplicated
 
           context.parent ! com.actorbase.actorsystem.main.messages.Ack
         }
