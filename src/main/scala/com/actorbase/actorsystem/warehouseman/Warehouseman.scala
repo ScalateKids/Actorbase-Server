@@ -29,8 +29,7 @@
 
 package com.actorbase.actorsystem.warehouseman
 
-import akka.actor.{Actor, ActorLogging, Props}
-
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import java.io._
 
 import com.actorbase.actorsystem.warehouseman.messages._
@@ -80,6 +79,7 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
     case RemoveSfFolder(sfRange) =>
       val f = rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"
       removeAll(f)
+      self ! PoisonPill
 
     /**
       * Read a file from filesystem and decrypt the content
@@ -107,4 +107,5 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
       val dir = new File(path).delete()
     }
   }
+
 }
