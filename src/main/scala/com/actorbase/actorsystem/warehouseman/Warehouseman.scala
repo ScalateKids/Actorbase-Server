@@ -100,19 +100,11 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
     */
   private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
     def getRecursively(f: File): Seq[File] =
-      f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+        f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
 
     getRecursively(new File(path)).foreach{f =>
-      try {
         f.delete()
-      } catch {
-        case e: Exception => println("Catched exc during removing inner files in warehouseman")
-      }
-    }
-    try {
       val dir = new File(path).delete()
-    } catch {
-      case e: Exception => println("Catched exc while trying to remove folder of a duplicated SF")
     }
   }
 }
