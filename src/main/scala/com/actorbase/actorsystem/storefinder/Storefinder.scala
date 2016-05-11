@@ -95,9 +95,9 @@ class Storefinder(private var collection: ActorbaseCollection,
     /**
       *
       */
-    case com.actorbase.actorsystem.storefinder.messages.Init(name, manager, range) => {
+    case com.actorbase.actorsystem.storefinder.messages.Init(name, manager, range) =>
       log.info("SF: init")
-    }
+
 
     /**
       * Insert message, insert a key/value into a designed collection
@@ -109,7 +109,7 @@ class Storefinder(private var collection: ActorbaseCollection,
       * updating the value)
       *
       */
-    case ins: com.actorbase.actorsystem.storefinder.messages.Insert => {
+    case ins: com.actorbase.actorsystem.storefinder.messages.Insert =>
       log.info("SF: inserting "+ins.key+" - KeyRange of this SF is "+range+" size of this SF is "+skMap.size)
       skMap.size match {
         // empty TreeMap -> create SK and forward message to him
@@ -131,7 +131,7 @@ class Storefinder(private var collection: ActorbaseCollection,
             }
           }
       }
-    }
+
 
     /**
       * Message that search for a given key
@@ -149,19 +149,19 @@ class Storefinder(private var collection: ActorbaseCollection,
     /**
       * Message that returns the entire collection mapped by this Storefinder
       */
-    case com.actorbase.actorsystem.storefinder.messages.GetAllItem(clientRef) => {
+    case com.actorbase.actorsystem.storefinder.messages.GetAllItem(clientRef) =>
       log.info("SF: getallitem")
       for ((keyRange, sk) <- skMap){
         sk ! com.actorbase.actorsystem.storekeeper.messages.GetAllItem( clientRef )
       }
-    }
+
 
     /**
       * Message that removes an item with the given key
       *
       * @param key a String representing the key of the item to be removed
       */
-    case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem => {
+    case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem =>
       log.info("SF: remove")
       // search for the right KeyRange to get the ActorRef of the needed SK
       for ((keyRange, sk) <- skMap){
@@ -169,17 +169,17 @@ class Storefinder(private var collection: ActorbaseCollection,
         if( keyRange.contains( rem.key ) )
           sk forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
       }
-    }
+
 
     // debug purposes
-    case DebugMap( mainRange ) => {
+    case DebugMap( mainRange ) =>
       var i = 0
       for( (range, skRef) <- skMap){
         //log.info("DEBUG S-FINDER "+"(main"+mainRange+") "+range.toString/*+" size of this SF is "+skMap.size*/)
         skRef forward DebugMaa(mainRange, range)
         i += 1
       }
-    }
+
   }
 
   /**

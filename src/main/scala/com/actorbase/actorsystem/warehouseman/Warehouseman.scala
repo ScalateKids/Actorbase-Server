@@ -102,10 +102,9 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
     def getRecursively(f: File): Seq[File] =
         f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
 
-    getRecursively(new File(path)).foreach{f =>
-        f.delete()
-      val dir = new File(path).delete()
-    }
+    getRecursively(new File(path)).foreach{f =>f.delete()}
+
+    val dir = new File(path).delete()
   }
 
 }

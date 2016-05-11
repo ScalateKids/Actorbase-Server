@@ -176,7 +176,7 @@ class Main extends Actor with ActorLogging with Stash {
       * @param update a Boolean flag, define the insert behavior (with or without
       * updating the value)
       */
-    case Insert(owner, name, key, value, update) => {
+    case Insert(owner, name, key, value, update) =>
       // search if sfMap contains the collection I need, if it's present search for the right keyrange
       var inserted: Boolean = false
       for( (collectionRange, sfRef) <- sfMap){
@@ -209,7 +209,7 @@ class Main extends Actor with ActorLogging with Stash {
         //item has not been inserted, must send the message to the brothers
         //TODO mandare agli altri main
       }
-    }
+
 
     /**
       * Create a collection in the system
@@ -217,10 +217,10 @@ class Main extends Actor with ActorLogging with Stash {
       * @param name a String representing the name of the collection
       * @param owner a String representing the owner of the collection
       */
-    case CreateCollection(name, owner) => {
+    case CreateCollection(name, owner) =>
       createCollection(name, owner)
       // TODO avvisare lo userkeeper che a sua volta deve avvisare il client
-    }
+
 
     /**
       * Remove a collection from the system
@@ -228,11 +228,11 @@ class Main extends Actor with ActorLogging with Stash {
       * @param name a String representing the name of the collection
       * @param owner a String representing the owner of the collection
       */
-    case RemoveCollection(name, owner) => {
+    case RemoveCollection(name, owner) =>
       //TODO da implementare
 
       //TODO questo messaggio dovrà rimuovere i file relativi agli storefinder tramite uso di warehouseman
-    }
+
 
     /**
       * Get item from collection message, given a key of type String, retrieve
