@@ -45,3 +45,5 @@ case class RemoveItem(key: String)
 case class updateOwnerOfSK( newParent: ActorRef )
 
 case class DebugMaa(mainRange: KeyRange, sfRange: KeyRange)
+
+case object Persist

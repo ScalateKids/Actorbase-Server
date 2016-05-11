@@ -28,11 +28,11 @@
 
 package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Actor, ActorRef, ActorLogging, Props}
+import akka.actor.{Actor, ActorRef, ActorLogging, Cancellable, Props}
 
 /*import com.actorbase.actorsystem.manager.Manager
-import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
-*/
+ import com.actorbase.actorsystem.manager.messages.DuplicationRequestSK
+ */
 import com.actorbase.actorsystem.storekeeper.messages._
 
 import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
@@ -40,8 +40,11 @@ import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
 import com.actorbase.actorsystem.utils.KeyRange
 
 import scala.collection.immutable.TreeMap
+import scala.concurrent.duration._
 
 import com.actorbase.actorsystem.warehouseman.Warehouseman
+
+import com.actorbase.actorsystem.warehouseman.messages._
 
 object Storekeeper {
 
@@ -58,17 +61,49 @@ object Storekeeper {
   * @param range
   * @param maxSize
   */
-class Storekeeper(private var parentRef: ActorRef,
-                  private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
-                  private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
+class Storekeeper (private var parentRef: ActorRef,
+  private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
+  private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
   private val maxSize: Int = 64 // this should be configurable, probably must read from file
 
+  private val initDelay = 30 seconds     // delay for the first persistence message to be sent
+  private val intervalDelay = 1 minutes  // interval in-between each persistence message has to be sent
+  private var scheduler: Cancellable = _ // akka scheduler used to track time
+
+  /**
+    * Actor lifecycle method, initialize a scheduler to persist data after some time
+    * and continously based on a fixed interval
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  override def preStart(): Unit = {
+    // scheduler = context.system.scheduler.schedule(
+    //   initialDelay = initDelay,
+    //   interval = intervalDelay,
+    //   receiver = self,
+    //   message = Persist
+    // )
+  }
+
+  /**
+    * Actor lifecycle method, cancel the scheduler in order to not send persistence
+    * messages to the void
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  // override def postStop(): Unit = scheduler.cancel()
+
   def receive = {
+
     /**
       * ???
       */
-    case Init => {
+    case com.actorbase.actorsystem.storekeeper.messages.Init => {
       log.info("SK: init")
     }
 
@@ -77,14 +112,14 @@ class Storekeeper(private var parentRef: ActorRef,
       *
       * @param key a String representing the key of the item to be returned (sta roba sarà da cambiare)
       *
-       */
+      */
     case getItem: GetItem  =>
       // sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
       sender ! Response(data.get(getItem.key).getOrElse("None").toString())
 
     /**
       * GetAllItem message, this actor will send back the collection name and all the collection.
-       */
+      */
     case GetAllItem(clientRef) =>
       // TODO
       log.info("SK GetAlLItems")
@@ -133,7 +168,7 @@ class Storekeeper(private var parentRef: ActorRef,
       }
       parentRef ! com.actorbase.actorsystem.main.messages.Ack
       //sender ! Response("inserted")
-     // logAllItems
+      // logAllItems
 
     /**
       * UpdateManager message, used to update the storekeeper manager, this is usefull when the Storefinder duplicate
@@ -150,9 +185,14 @@ class Storekeeper(private var parentRef: ActorRef,
     // debug
     case DebugMaa(mainRange, sfRange) =>
       /*for( (key, value) <- data){
-        log.info("DEBUG S-KEEPER (main "+mainRange+") ["+sfRange+"] "+key+" -> "+value+" size of this SK is "+data.size)
-      }*/
+       log.info("DEBUG S-KEEPER (main "+mainRange+") ["+sfRange+"] "+key+" -> "+value+" size of this SK is "+data.size)
+       }*/
       log.info("SK size is "+data.size)
+
+    /**
+      * Persist data to disk
+      */
+    case Persist => context.actorOf(Warehouseman.props("shard:interval:boh")) ! Save(data)
 
   }
 
