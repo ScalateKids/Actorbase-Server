@@ -60,13 +60,13 @@ object Storekeeper {
   * @param maxSize
   */
 class Storekeeper (private var parentRef: ActorRef,
-                   private val collection: ActorbaseCollection,
-                   private var parentRange: KeyRange,
-                   private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
-                   private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
+  private val collection: ActorbaseCollection,
+  private var parentRange: KeyRange,
+  private var data: TreeMap[String, Any] = new TreeMap[String, Any](),
+  private var range: KeyRange = new KeyRange("a","z")) extends Actor with ActorLogging {
 
   private val maxSize: Int = 16 // this should be configurable, probably must read from file
-  // create the warehouseman of this SK
+                                // create the warehouseman of this SK
   private val warehouseman: ActorRef = context.actorOf(Warehouseman.props( collection.getName+"-"+collection.getOwner ))
 
   private val initDelay = 30 seconds     // delay for the first persistence message to be sent
@@ -83,12 +83,12 @@ class Storekeeper (private var parentRef: ActorRef,
     */
   override def preStart(): Unit = {
     log.info("SK prestarted")
-     scheduler = context.system.scheduler.schedule(
-       initialDelay = initDelay,
-       interval = intervalDelay,
-       receiver = self,
-       message = Persist
-     )
+    scheduler = context.system.scheduler.schedule(
+      initialDelay = initDelay,
+      interval = intervalDelay,
+      receiver = self,
+      message = Persist
+    )
   }
 
   /**

@@ -147,7 +147,7 @@ class Userfinder extends Actor with ActorLogging {
       * @throws
       */
     case UpdateCollectionSizeTo(collection, increment) =>
-      log.info("UF: increment size")
+      // log.info("UF: increment size")
       ukMap.find(_._1 == collection.getOwner).head._2 ! UpdateCollectionSize(collection, increment)
   }
 

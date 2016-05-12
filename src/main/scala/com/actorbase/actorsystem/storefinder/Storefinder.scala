@@ -124,8 +124,13 @@ class Storefinder(private var collection: ActorbaseCollection,
           context.become(processingRequest)
         // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
         case _ =>
-          skMap.find(_._1.contains(ins.key)).head._2 forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
-          context.become(processingRequest)
+          skMap.find(_._1.contains(ins.key)) match {
+            case Some(sk) => {
+              sk._2 forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
+              context.become(processingRequest)
+            }
+            case None => log.info("KeyRange not found")
+          }
           // for ((keyRange, sk) <- skMap){
           //   //log.info (keyRange.toString())
           //   if( keyRange.contains( ins.key ) ) {
@@ -181,7 +186,7 @@ class Storefinder(private var collection: ActorbaseCollection,
       *
       */
     case UpdateCollectionSize(increment) =>
-      log.info(s"SF: Update size ${collection.getOwner}")
+      // log.info(s"SF: Update size ${collection.getOwner}")
       context.parent ! com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment)
 
     /**

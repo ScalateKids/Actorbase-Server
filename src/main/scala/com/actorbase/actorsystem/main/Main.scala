@@ -282,10 +282,10 @@ class Main extends Actor with ActorLogging with Stash {
       val clientMapPair = requestMap.find(_._1 == clientRef)
       clientMapPair match {
         case Some(refPair) =>
-          log.info("GetItemFromResponse: refPairFound")
+          // log.info("GetItemFromResponse: refPairFound")
           refPair._2.find(_._1.compare(collection) == 0) match {
             case Some(colMap) =>
-              log.info("GetItemFromResponse: collectionMapFound")
+              // log.info("GetItemFromResponse: collectionMapFound")
               refPair._2 -= collection
               items.foreach(kv => colMap._2 += (kv._1 -> kv._2))
               refPair._2.+(collection -> colMap._2)
@@ -337,7 +337,7 @@ class Main extends Actor with ActorLogging with Stash {
       ufRef ! RemoveCollectionFrom(username, permission, new ActorbaseCollection(collection, username))
 
     case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
-      log.info(s"MAIN: Update size ${collection.getOwner}")
+      // log.info(s"MAIN: Update size ${collection.getOwner}")
       ufRef ! UpdateCollectionSizeTo(collection, increment)
 
     case DebugMaps => // debug purposes
