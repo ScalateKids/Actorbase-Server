@@ -111,7 +111,7 @@ class Main extends Actor with ActorLogging with Stash {
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
   private var counter = 0 // this is for debug purposes
-  private var getMap = new TreeMap[ActorRef, TreeMap[String, Any]]()
+  //private var getMap = new TreeMap[ActorRef, TreeMap[String, Any]]()
   private var requestMap = new TreeMap[ActorRef, Map[ActorbaseCollection, Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
