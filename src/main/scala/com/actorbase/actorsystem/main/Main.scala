@@ -66,13 +66,7 @@ object Main {
 
   case class AddUser(username: String, password: String)
 
-  case class Testsk()
-
   case class Login(username: String)
-
-  case class Testsf(key: String)
-
-  case object BinTest
 
   case class Insert(owner: String, name: String, key: String, value: Any, update: Boolean = false)
 
