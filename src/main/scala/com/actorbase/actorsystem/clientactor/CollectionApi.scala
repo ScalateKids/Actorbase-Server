@@ -55,7 +55,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         get {
           complete {
             var coll = new ActorbaseCollection(collection, "user")
-            coll.setSize(100)
+            // coll.setSize(100)
             main.ask(GetItemFrom(coll))(5 seconds).mapTo[MapResponse]
           }
         } ~

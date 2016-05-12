@@ -54,10 +54,11 @@ object Storefinder {
 
 /**
   *
+  * @param collection ActorbaseCollection that represent the name of the collection
   * @param skMap TreeMap[KeyRange, ActorRef]. This collection represent a map from keyranges to an ActorRef of a
   *              Storekeeper
-  * @param range String that represent the range of the keys mappable in this storefinder
-  * @param
+  * @param range represent the range of the keys mappable in this storefinder
+  * @param maxSize represent the max size of the collection
   */
 class Storefinder(private var collection: ActorbaseCollection,
   private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
