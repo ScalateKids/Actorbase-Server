@@ -31,6 +31,8 @@ package com.actorbase.actorsystem.clientactor.messages
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
+case class GetCollectionResponse(map: Map[String, Any])
+
 case class Response(response: String)
 
 case object Response {

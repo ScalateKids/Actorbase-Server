@@ -35,7 +35,13 @@ import akka.util.Timeout
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 
+import spray.http.HttpResponse
+import spray.http._
+import spray.util._
+
 import scala.collection.mutable.ListBuffer
+
+import com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse
 
 /**
   * Insert description here
@@ -51,6 +57,10 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
   private var collections: ListBuffer[String] = new ListBuffer[String]
   /** read-only collections list */
   private var readCollections: ListBuffer[String] = new ListBuffer[String]
+
+  private var request = Map[String, Any]()
+
+  private var client: ActorRef = _
 
   /**
     * Insert description here
@@ -77,6 +87,19 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
       }
     }
   }
-  def receive = runRoute(collections(main, "user")~route(main)~login) //lol must be the name of the logged user
+
+  def handleResponses: Receive = {
+    case m:GetCollectionResponse =>
+      request ++= m.map
+      if (request.size == 10)
+        client ! HttpResponse(entity = HttpEntity(com.actorbase.actorsystem.clientactor.messages.MapResponse("customers", request).toString()))
+  }
+
+  def httpReceive: Receive = {
+    client = sender
+    runRoute(collections(main, "user") ~ route(main) ~ login)
+  }
+
+  def receive = handleResponses orElse httpReceive
 
 }

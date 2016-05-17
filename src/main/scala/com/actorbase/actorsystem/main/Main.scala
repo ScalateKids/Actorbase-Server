@@ -265,7 +265,8 @@ class Main extends Actor with ActorLogging with Stash {
               case Some(p) =>
                 if(p._2.size > 0) {
                   log.info("req > 0")
-                  sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, p._2.toMap)
+                  // sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, p._2.toMap)
+                  sender ! com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse(p._2.toMap)
                 }
                 else {
                   log.info("req < 0")
@@ -312,7 +313,8 @@ class Main extends Actor with ActorLogging with Stash {
               items.foreach(kv => colMap._2 += (kv._1 -> kv._2))
               refPair._2.+(collection -> colMap._2)
               if (colMap._2.size == collection.getSize) {
-                clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+                // clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+                clientRef ! com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse(colMap._2.toMap)
                 // refPair._2 -= collection
                 // requestMap -= clientRef
               }
