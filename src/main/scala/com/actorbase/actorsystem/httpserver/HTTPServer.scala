@@ -28,7 +28,7 @@
 
 package com.actorbase.actorsystem.httpserver
 
-import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, Deploy, Props}
 import akka.io.IO
 import spray.can.Http
 import akka.event.LoggingReceive
@@ -80,12 +80,12 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
   */
 object HTTPServer extends App {
   val config = ConfigFactory.load()
-  implicit val system = ActorSystem("actorbase", config)
+  implicit val system = ActorSystem(config getString "name", config)
   Cluster(system).registerOnMemberUp {
     val roundRobinPool = RoundRobinPool(nrOfInstances = 10)
     val clusterRoutingSettings = ClusterRouterPoolSettings(totalInstances = 10, maxInstancesPerNode = 5, allowLocalRoutees = true, useRole = None)
     val clusterPool = ClusterRouterPool(roundRobinPool, clusterRoutingSettings)
-    val main = system.actorOf(clusterPool.props(Props[Main].withDispatcher("control-aware-dispatcher")))
-    system.actorOf(Props(new HTTPServer(main, config getString "listen-on", config getInt "exposed-port")) )
+    val main = system.actorOf(clusterPool.props(Props[Main].withDispatcher("control-aware-dispatcher").withDeploy(Deploy.local)), name = "mainrouter")
+    system.actorOf(Props(new HTTPServer(main, config getString "listen-on", config getInt "exposed-port")))
   }
 }

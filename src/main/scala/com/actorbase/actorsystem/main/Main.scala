@@ -102,7 +102,7 @@ object Main {
 class Main extends Actor with ActorLogging with Stash {
   import Main._
 
-  private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
+  private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
   private var counter = 0 // this is for debug purposes
                           //private var getMap = new TreeMap[ActorRef, TreeMap[String, Any]]()
@@ -128,7 +128,7 @@ class Main extends Actor with ActorLogging with Stash {
     log.info(s"creating for $owner")
     ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
     var collection = new ActorbaseCollection(name, owner)
-    val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher") )
+    val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher"), name = owner + ":" + name)
     var newCollectionRange = new CollectionRange(collection, new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     ufRef ! AddCollectionTo(owner, false, collection)
     sfMap += (newCollectionRange -> sf)
@@ -183,6 +183,8 @@ class Main extends Actor with ActorLogging with Stash {
 
       rangeRef map (_._2 forward Insert(key, value, update)) getOrElse (
         createCollection(name, owner) forward Insert(key, value, update))
+      // rangeRef map (_._2 forward Insert(key, value, update)) getOrElse (
+      //   context.actorSelection("/user/mainactor") forward com.actorbase.actorsystem.main.Main.Insert(owner, name, key, value, update))
 
       context.become(processingRequest)
 

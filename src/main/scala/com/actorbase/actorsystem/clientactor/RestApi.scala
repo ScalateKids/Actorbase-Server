@@ -38,7 +38,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.main.Main.{ Insert, GetItemFrom, RemoveItemFrom}
+import com.actorbase.actorsystem.main.Main.{CreateCollection, Insert, GetItemFrom, RemoveItemFrom}
 import com.actorbase.actorsystem.main.messages._
 import com.actorbase.actorsystem.clientactor.messages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
@@ -96,7 +96,8 @@ trait RestApi extends HttpServiceBase with Authenticator {
       path("actorbase" / "multiinsert" / "\\S+".r / "\\S+".r ) { (numberOfItems, millisecs) =>
         get {
           complete {
-            for( a <- 1 to numberOfItems.toInt){
+            main ! CreateCollection("customers", "user")
+            for( a <- 1 to numberOfItems.toInt) {
               var tmpkey = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
               tmpkey = tmpkey.replaceAll("[0-9]", "x") // tolgo i numeri, non si possono ancora mettere nelle chiavi
               val key = tmpkey.replaceAll("z", "y") // tolgo le z, se sono come prime lettere spacca tutto
