@@ -48,11 +48,11 @@ import com.actorbase.actorsystem.main.Main
   * @return
   * @throws
   */
-class HTTPServer(main: ActorRef, listenPort: Int) extends Actor
+class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
     with ActorLogging with SslConfiguration {
 
   implicit val system = context.system
-  IO(Http)(system) ! Http.Bind(self, interface = "192.168.43.39", port = listenPort)
+  IO(Http)(system) ! Http.Bind(self, interface = address, port = listenPort)
 
   /**
     * Receive method, handle connection from outside, registering it to a
@@ -86,6 +86,6 @@ object HTTPServer extends App {
     val clusterRoutingSettings = ClusterRouterPoolSettings(totalInstances = 10, maxInstancesPerNode = 5, allowLocalRoutees = true, useRole = None)
     val clusterPool = ClusterRouterPool(roundRobinPool, clusterRoutingSettings)
     val main = system.actorOf(clusterPool.props(Props[Main].withDispatcher("control-aware-dispatcher")))
-    system.actorOf(Props(new HTTPServer(main, config getInt "exposed-port")) )
+    system.actorOf(Props(new HTTPServer(main, config getString "listen-on", config getInt "exposed-port")) )
   }
 }
