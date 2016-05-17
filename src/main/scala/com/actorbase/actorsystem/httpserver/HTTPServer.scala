@@ -33,6 +33,11 @@ import akka.io.IO
 import spray.can.Http
 import akka.event.LoggingReceive
 
+import akka.routing._
+import akka.cluster._
+import akka.cluster.routing._
+import com.typesafe.config.ConfigFactory
+
 import com.actorbase.actorsystem.clientactor.ClientActor
 import com.actorbase.actorsystem.main.Main
 
@@ -47,7 +52,7 @@ class HTTPServer(main: ActorRef, listenPort: Int) extends Actor
     with ActorLogging with SslConfiguration {
 
   implicit val system = context.system
-  IO(Http)(system) ! Http.Bind(self, interface = "127.0.0.1", port = listenPort)
+  IO(Http)(system) ! Http.Bind(self, interface = "192.168.43.39", port = listenPort)
 
   /**
     * Receive method, handle connection from outside, registering it to a
@@ -74,7 +79,13 @@ class HTTPServer(main: ActorRef, listenPort: Int) extends Actor
   * @throws
   */
 object HTTPServer extends App {
-  implicit val system = ActorSystem("actorbase")
-  val main = system.actorOf(Props[Main].withDispatcher("control-aware-dispatcher"))
-  system.actorOf(Props(new HTTPServer(main, 9999)) )
+  val config = ConfigFactory.load()
+  implicit val system = ActorSystem("actorbase", config)
+  Cluster(system).registerOnMemberUp {
+    val roundRobinPool = RoundRobinPool(nrOfInstances = 10)
+    val clusterRoutingSettings = ClusterRouterPoolSettings(totalInstances = 10, maxInstancesPerNode = 5, allowLocalRoutees = true, useRole = None)
+    val clusterPool = ClusterRouterPool(roundRobinPool, clusterRoutingSettings)
+    val main = system.actorOf(clusterPool.props(Props[Main].withDispatcher("control-aware-dispatcher")))
+    system.actorOf(Props(new HTTPServer(main, config getInt "exposed-port")) )
+  }
 }

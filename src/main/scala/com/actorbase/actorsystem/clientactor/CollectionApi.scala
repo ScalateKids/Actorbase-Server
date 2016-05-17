@@ -4,6 +4,7 @@ import akka.actor.ActorRef
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
+import akka.routing.Broadcast
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -56,7 +57,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           complete {
             var coll = new ActorbaseCollection(collection, "user")
             // coll.setSize(100)
-            main.ask(GetItemFrom(coll))(5 seconds).mapTo[MapResponse]
+            main.ask(Broadcast(GetItemFrom(coll)))(5 seconds).mapTo[MapResponse]
           }
         } ~
         post {
