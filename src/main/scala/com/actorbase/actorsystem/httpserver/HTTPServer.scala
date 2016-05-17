@@ -85,7 +85,8 @@ object HTTPServer extends App {
     val roundRobinPool = RoundRobinPool(nrOfInstances = 10)
     val clusterRoutingSettings = ClusterRouterPoolSettings(totalInstances = 10, maxInstancesPerNode = 5, allowLocalRoutees = true, useRole = None)
     val clusterPool = ClusterRouterPool(roundRobinPool, clusterRoutingSettings)
-    val main = system.actorOf(clusterPool.props(Props[Main].withDispatcher("control-aware-dispatcher").withDeploy(Deploy.local)), name = "mainrouter")
+    val main = system.actorOf(clusterPool.props(Props[Main].withDispatcher("control-aware-dispatcher")), name = "mainrouter")
+    // val main = system.actorOf(Props[Main].withRouter(FromConfig()), name = "main")
     system.actorOf(Props(new HTTPServer(main, config getString "listen-on", config getInt "exposed-port")))
   }
 }

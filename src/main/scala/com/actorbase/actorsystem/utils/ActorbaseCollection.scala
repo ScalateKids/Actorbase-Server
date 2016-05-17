@@ -36,11 +36,11 @@ import scala.math.Ordered.orderingToOrdered
   * @param name a String representing the name of the collection
   * @param owner a String representing the username of the owner of this collection
   */
-class ActorbaseCollection(private var name: String,
-  private var owner: String) extends Ordered[ActorbaseCollection] {
+class ActorbaseCollection(@transient private var name: String,
+  @transient private var owner: String) extends Ordered[ActorbaseCollection] with Serializable {
   //TODO mettere uuid anche qui?
 
-  var size = 0
+  @transient var size = 0
 
   /**
     * @return a String representing the name of the collection
