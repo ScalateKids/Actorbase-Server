@@ -182,10 +182,8 @@ class Main extends Actor with ActorLogging with Stash {
     case Insert(owner, name, key, value, update) =>
       import com.actorbase.actorsystem.storefinder.messages.Insert
       val rangeRef = sfMap.find(x => (x._1.isSameCollection(name, owner) && x._1.getKeyRange.contains(key)))
-
       rangeRef map (_._2 forward Insert(key, value, update)) getOrElse (
         createCollection(name, owner) forward Insert(key, value, update))
-
       context.become(processingRequest)
 
       // rangeRef match {
