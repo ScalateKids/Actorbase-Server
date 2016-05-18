@@ -127,7 +127,7 @@ class Main extends Actor with ActorLogging with Stash {
     log.info(s"creating for $owner")
     ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
     var collection = new ActorbaseCollection(name, owner)
-    val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher"), name = owner + ":" + name)
+    val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher"))
     var newCollectionRange = new CollectionRange(collection, new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     ufRef ! AddCollectionTo(owner, false, collection)
     sfMap += (newCollectionRange -> sf)
