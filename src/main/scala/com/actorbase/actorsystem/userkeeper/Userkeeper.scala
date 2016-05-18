@@ -127,15 +127,15 @@ class Userkeeper private (var username: String = "user",
       sender ! Some(toRet)
 
     case UpdateCollectionSize(collection, increment) =>
-      log.info(s"increment, collection size: ${collection.getOwner}")
+      // log.info(s"increment, collection size: ${collection.getOwner}")
       for (coll <- collections) {
         if (collection.compare(coll) == 0)
           if (increment) {
-            log.info(s"increment, collection size: ${coll.size}")
+            // log.info(s"increment, collection size: ${coll.size}")
             coll.incrementSize
           }
           else {
-            log.info(s"decrement, collection size: ${coll.size}")
+            // log.info(s"decrement, collection size: ${coll.size}")
             coll.decrementSize
           }
       }

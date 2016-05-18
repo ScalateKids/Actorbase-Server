@@ -29,10 +29,11 @@
 package com.actorbase.actorsystem.storekeeper.messages
 
 import akka.actor.ActorRef
-import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.utils.KeyRange
 
-case class GetAllItem(clientRef: ActorRef)
+case object Persist
+
+case object GetAllItem
 
 case class Init(manager: ActorRef, range: KeyRange)
 
@@ -45,5 +46,3 @@ case class RemoveItem(key: String)
 case class updateOwnerOfSK( newParent: ActorRef, newRange: KeyRange )
 
 case class DebugMaa(mainRange: KeyRange, sfRange: KeyRange)
-
-case object Persist

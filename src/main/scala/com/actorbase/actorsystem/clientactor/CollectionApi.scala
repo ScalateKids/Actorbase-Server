@@ -55,7 +55,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         get {
           complete {
             var coll = new ActorbaseCollection(collection, "user")
-            coll.setSize(100)
+            // coll.setSize(100)
             main.ask(GetItemFrom(coll))(5 seconds).mapTo[MapResponse]
           }
         } ~
@@ -74,47 +74,47 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           }
         }
       } ~
-        pathSuffix("\\S+".r) { key =>
-          get {
-            complete {
-              //TODO controllare, se collection non esiste, inutile instradare
-              main.ask(GetItemFrom(new ActorbaseCollection(collection, "user"), key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
-            }
-          } ~
-            delete {
-              complete {
-                //TODO controllare, se collection non esiste, inutile instradare
-                main ! RemoveItemFrom(collection, key)
-                "Remove complete"
-              }
-            } ~
-            post {
-              decompressRequest() {
-                entity(as[Array[Byte]]) { value =>
-                  detach() {
-                    complete {
-                      //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                      main ! Insert(owner, collection, key, value)
-                      "Insert complete"
-                    }
-                  }
-                }
-              }
-            } ~
-            put {
-              decompressRequest() {
-                entity(as[Array[Byte]]) { value =>
-                  detach() {
-                    complete {
-                      //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                      main ! Insert(owner, collection, key, value, true)
-                      "Update complete"
-                    }
-                  }
+      pathSuffix("\\S+".r) { key =>
+        get {
+          complete {
+            //TODO controllare, se collection non esiste, inutile instradare
+            main.ask(GetItemFrom(new ActorbaseCollection(collection, "user"), key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
+          }
+        } ~
+        delete {
+          complete {
+            //TODO controllare, se collection non esiste, inutile instradare
+            main ! RemoveItemFrom(collection, key)
+            "Remove complete"
+          }
+        } ~
+        post {
+          decompressRequest() {
+            entity(as[Array[Byte]]) { value =>
+              detach() {
+                complete {
+                  //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
+                  main ! Insert(owner, collection, key, value)
+                  "Insert complete"
                 }
               }
             }
+          }
+        } ~
+        put {
+          decompressRequest() {
+            entity(as[Array[Byte]]) { value =>
+              detach() {
+                complete {
+                  //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
+                  main ! Insert(owner, collection, key, value, true)
+                  "Update complete"
+                }
+              }
+            }
+          }
         }
+      }
     }
   }
 }
