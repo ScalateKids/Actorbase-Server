@@ -331,7 +331,8 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case RemoveItemFrom(collection, key) =>
       // TODO
-      //sfMap.get(collection).get forward RemoveItem(key)
+      if (key.nonEmpty)
+        sfMap.filterKeys(_.contains(key)).head._2 forward RemoveItem(key)
 
     /**
       * Add Contributor from collection, given username of Contributor and read
