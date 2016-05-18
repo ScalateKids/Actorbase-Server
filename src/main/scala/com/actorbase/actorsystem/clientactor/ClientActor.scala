@@ -60,7 +60,7 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
 
   private var request = Map[String, Any]()
 
-  private var client: ActorRef = _
+  private var client: Option[ActorRef] = None
 
   /**
     * Insert description here
@@ -92,11 +92,11 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
     case m:GetCollectionResponse =>
       request ++= m.map
       if (request.size == 10)
-        client ! HttpResponse(entity = HttpEntity(com.actorbase.actorsystem.clientactor.messages.MapResponse("customers", request).toString()))
+        client.get ! HttpResponse(entity = HttpEntity(com.actorbase.actorsystem.clientactor.messages.MapResponse("customers", request).toString()))
   }
 
   def httpReceive: Receive = {
-    client = sender
+    client = Some(sender)
     runRoute(collections(main, "user") ~ route(main) ~ login)
   }
 
