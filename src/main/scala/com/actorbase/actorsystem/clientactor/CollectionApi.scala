@@ -53,13 +53,13 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       */
     pathPrefix("collections" / "\\S+".r) { collection =>
       pathEndOrSingleSlash {
-        get {
-          complete {
-            var coll = new ActorbaseCollection(collection, "user")
-            // coll.setSize(100)
-            main.ask(Broadcast(GetItemFrom(coll)))(5 seconds).mapTo[MapResponse]
-          }
-        } ~
+        // get {
+        //   complete {
+        //     var coll = new ActorbaseCollection(collection, "user")
+        //     // coll.setSize(100)
+        //     main.ask(Broadcast(GetItemFrom(coll)))(5 seconds).mapTo[MapResponse]
+        //   }
+        // } ~
         post {
           complete {
             //TODO controllare se esiste già

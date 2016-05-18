@@ -38,10 +38,20 @@ import scala.concurrent.duration._
 import spray.http.HttpResponse
 import spray.http._
 import spray.util._
+import HttpMethods._
+import spray.http.HttpHeaders._
+import spray.http.ContentTypes._
+
+import akka.routing.Broadcast
+import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.actorbase.actorsystem.main.Main.{Insert, GetItemFrom, RemoveItemFrom, CreateCollection, RemoveCollection}
 
 import scala.collection.mutable.ListBuffer
 
 import com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse
+
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 /**
   * Insert description here
@@ -89,17 +99,19 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
   }
 
   def handleResponses: Receive = {
+    case HttpRequest(GET, Uri.Path("/collections/customers"), _, _, _) =>
+      client = Some(sender)
+      var coll = new ActorbaseCollection("customers", "user")
+      // coll.setSize(100)
+      main ! Broadcast(GetItemFrom(coll))
+
     case m:GetCollectionResponse =>
       request ++= m.map
-      println(request)
-      if (request.size == 10)
-        client.get ! HttpResponse(entity = HttpEntity(com.actorbase.actorsystem.clientactor.messages.MapResponse("customers", request).toString()))
+      if (request.size == 50)
+        client.get ! HttpResponse(entity = HttpEntity(request.toString()), headers = List(`Content-Type`(`application/json`)))
   }
 
-  def httpReceive: Receive = {
-    client = Some(sender)
-    runRoute(collections(main, "user") ~ route(main) ~ login)
-  }
+  def httpReceive: Receive = runRoute(collections(main, "user") ~ route(main) ~ login)
 
   def receive = handleResponses orElse httpReceive
 
