@@ -105,7 +105,6 @@ class Main extends Actor with ActorLogging with Stash {
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
   private var counter = 0 // this is for debug purposes
-                          //private var getMap = new TreeMap[ActorRef, TreeMap[String, Any]]()
   private var requestMap = new TreeMap[String, Map[ActorbaseCollection, Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
@@ -265,8 +264,8 @@ class Main extends Actor with ActorLogging with Stash {
               case Some(p) =>
                 if(p._2.size > 0) {
                   log.info("req > 0")
-                  // sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, p._2.toMap)
-                  sender ! com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse(p._2.toMap)
+                  sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, p._2.toMap)
+                  // sender ! com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse(p._2.toMap)
                 }
                 else {
                   log.info("req < 0")
@@ -277,9 +276,7 @@ class Main extends Actor with ActorLogging with Stash {
                 sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
             }
           case None =>
-            var collectionMap = Map[ActorbaseCollection, Map[String, Any]]()
-            var items = Map[String, Any]()
-            collectionMap += (collection -> items)
+            var collectionMap = Map[ActorbaseCollection, Map[String, Any]](collection -> Map[String, Any]())
             requestMap += (collection.getOwner -> collectionMap)
             sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
         }
@@ -309,12 +306,10 @@ class Main extends Actor with ActorLogging with Stash {
           refPair._2.find(_._1.compare(collection) == 0) match {
             case Some(colMap) =>
               log.info(s"GetItemFromResponse: ${colMap._2.size} - ${collection.getSize}")
-              refPair._2 -= collection
-              items.foreach(kv => colMap._2 += (kv._1 -> kv._2))
-              refPair._2.+(collection -> colMap._2)
+              refPair._2.find(_._1.compare(collection) == 0) map (_._2 ++= items)
               if (colMap._2.size == collection.getSize) {
-                // clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
-                clientRef ! com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse(colMap._2.toMap)
+                clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+                // clientRef ! com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse(colMap._2.toMap)
                 // refPair._2 -= collection
                 // requestMap -= clientRef
               }

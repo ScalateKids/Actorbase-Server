@@ -74,7 +74,7 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
     authenticate(basicUserAuthenticator(ec, main)) { authInfo =>
       // only authenticated users can enter here
       get {
-        complete{
+        complete {
           // bind the userkeeper to this clientActor
           val future = sender ? com.actorbase.actorsystem.userkeeper.Userkeeper.BindClient( self )
           // ugly as hell
@@ -91,6 +91,7 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
   def handleResponses: Receive = {
     case m:GetCollectionResponse =>
       request ++= m.map
+      println(request)
       if (request.size == 10)
         client.get ! HttpResponse(entity = HttpEntity(com.actorbase.actorsystem.clientactor.messages.MapResponse("customers", request).toString()))
   }
