@@ -66,6 +66,8 @@ object Main {
 
   case class AddUser(username: String, password: String)
 
+  // manca RemoveUser
+
   case class Testsk()
 
   case class Login(username: String)
