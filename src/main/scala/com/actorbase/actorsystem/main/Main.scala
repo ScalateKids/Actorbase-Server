@@ -31,7 +31,8 @@ package com.actorbase.actorsystem.main
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import spray.json.DefaultJsonProtocol._
-import scala.collection.mutable.Map
+// import scala.collection.mutable.Map
+import scala.collection.mutable
 
 import scala.collection.immutable.TreeMap
 import com.actorbase.actorsystem.storefinder.Storefinder
@@ -67,7 +68,7 @@ object Main {
   case class AddUser(username: String, password: String)
 
   // manca RemoveUser
-  
+
   case class Login(username: String)
 
   case class Insert(owner: String, name: String, key: String, value: Any, update: Boolean = false)
@@ -107,8 +108,7 @@ class Main extends Actor with ActorLogging with Stash {
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
   private var counter = 0 // this is for debug purposes
-                          //private var getMap = new TreeMap[ActorRef, TreeMap[String, Any]]()
-  private var requestMap = new TreeMap[String, Map[ActorbaseCollection, Map[String, Any]]]() // a bit clunky, should switch to a queue
+  private var requestMap = new TreeMap[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
     * Insert description here
@@ -259,29 +259,43 @@ class Main extends Actor with ActorLogging with Stash {
       if (key.nonEmpty)
         sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
       else {
-        requestMap.find(_._1 == collection.getOwner) match {
-          case Some(cRef) =>
-            cRef._2.find(_._1.compare(collection) == 0) match {
-              case Some(p) =>
-                if(p._2.size > 0) {
-                  log.info("req > 0")
-                  sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, p._2.toMap)
-                }
-                else {
-                  log.info("req < 0")
-                  sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
-                }
-              case None =>
-                cRef._2 += (collection -> Map[String, Any]())
-                sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
-            }
-          case None =>
-            var collectionMap = Map[ActorbaseCollection, Map[String, Any]]()
-            var items = Map[String, Any]()
-            collectionMap += (collection -> items)
-            requestMap += (collection.getOwner -> collectionMap)
-            sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
-        }
+        requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
+        (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
+        sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+
+        // requestMap.find(_._1 == collection.getOwner) match {
+        //   case Some(cRef) =>
+        //     cRef._2 += (collection -> Map[String, Any]())
+        //     sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+
+        //   case None =>
+        //     var collectionMap = Map[ActorbaseCollection, Map[String, Any]](collection -> Map[String, Any]())
+        //     requestMap += (collection.getOwner -> collectionMap)
+        //     sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+        // }
+
+        // requestMap.find(_._1 == collection.getOwner) match {
+        //   case Some(cRef) =>
+        //     cRef._2.find(_._1.compare(collection) == 0) match {
+        //       case Some(p) =>
+        //         if(p._2.size > 0) {
+        //           log.info("req > 0")
+        //           sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, p._2.toMap)
+        //         }
+        //         else {
+        //           log.info("req < 0")
+        //           sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+        //         }
+        //       case None =>
+        //         cRef._2 += (collection -> Map[String, Any]())
+        //         sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+        //     }
+        //   case None =>
+        //     var collectionMap = Map[ActorbaseCollection, Map[String, Any]](collection -> Map[String, Any]())
+        //     requestMap += (collection.getOwner -> collectionMap)
+        //     sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+        // }
+
         // var collectionMap = Map[ActorbaseCollection, Map[String, Any]]()
         // var items = Map[String, Any]()
         // collectionMap += (collection -> items)
@@ -302,24 +316,33 @@ class Main extends Actor with ActorLogging with Stash {
       * @throws
       */
     case GetItemFromResponse(clientRef, collection, items) =>
-      val clientMapPair = requestMap.find(_._1 == collection.getOwner)
-      clientMapPair match {
-        case Some(refPair) =>
-          refPair._2.find(_._1.compare(collection) == 0) match {
-            case Some(colMap) =>
-              log.info(s"GetItemFromResponse: ${colMap._2.size} - ${collection.getSize}")
-              refPair._2 -= collection
-              items.foreach(kv => colMap._2 += (kv._1 -> kv._2))
-              refPair._2.+(collection -> colMap._2)
-              if (colMap._2.size == collection.getSize) {
-                clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
-                // refPair._2 -= collection
-                // requestMap -= clientRef
-              }
-            case None => log.info("GetItemFromResponse: collectionMap not found")
+      requestMap.find(_._1 == collection.getOwner) map { ref =>
+        ref._2.find(_._1.compare(collection) == 0) map { colMap =>
+          colMap._2 ++= items
+          if (colMap._2.size == collection.size) {
+            clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+            colMap._2.clear
+            ref._2.-(collection)
           }
-        case None => log.info("GetItemFromResponse: refPair not found")
-      }
+        } getOrElse (log.info("GetItemFromResponse: collectionMap not found"))
+      } getOrElse (log.info("GetItemFromResponse: refPair not found"))
+
+      // val clientMapPair = requestMap.find(_._1 == collection.getOwner)
+      // clientMapPair match {
+      //   case Some(refPair) =>
+      //     refPair._2.find(_._1.compare(collection) == 0) match {
+      //       case Some(colMap) =>
+      //         log.info(s"GetItemFromResponse: ${colMap._2.size} - ${collection.getSize}")
+      //         refPair._2.find(_._1.compare(collection) == 0) map (_._2 ++= items)
+      //         if (colMap._2.size == collection.getSize) {
+      //           clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+      //           // refPair._2 -= collection
+      //           // requestMap -= clientRef
+      //         }
+      //       case None => log.info("GetItemFromResponse: collectionMap not found")
+      //     }
+      //   case None => log.info("GetItemFromResponse: refPair not found")
+      // }
 
     /**
       * Remove item from collection  message, given a key of type String,

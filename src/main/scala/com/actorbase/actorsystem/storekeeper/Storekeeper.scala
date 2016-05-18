@@ -69,8 +69,8 @@ class Storekeeper (private var parentRef: ActorRef,
                                 // create the warehouseman of this SK
   private val warehouseman: ActorRef = context.actorOf(Warehouseman.props( collection.getName+"-"+collection.getOwner ))
 
-  private val initDelay = 30 seconds     // delay for the first persistence message to be sent
-  private val intervalDelay = 1 minutes  // interval in-between each persistence message has to be sent
+  private val initDelay = 3000 seconds     // delay for the first persistence message to be sent
+  private val intervalDelay = 100 minutes  // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _ // akka scheduler used to track time
 
   /**
