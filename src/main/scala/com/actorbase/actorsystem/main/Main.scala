@@ -259,7 +259,12 @@ class Main extends Actor with ActorLogging with Stash {
       else {
         requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
         (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
-        sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+        sfMap.find(x => (x._1.getCollectionName == collection.getName)) map { coll =>
+          if (coll._1.getCollection.getSize > 0)
+            sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+          else
+            (sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]()))
+        }
 
         // requestMap.find(_._1 == collection.getOwner) match {
         //   case Some(cRef) =>
