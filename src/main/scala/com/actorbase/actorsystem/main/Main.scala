@@ -30,8 +30,10 @@
 package com.actorbase.actorsystem.main
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.routing.ConsistentHashingRouter.ConsistentHashable
+
 import spray.json.DefaultJsonProtocol._
-import scala.collection.mutable.Map
+import scala.collection.mutable
 
 import scala.collection.immutable.TreeMap
 import com.actorbase.actorsystem.storefinder.Storefinder
@@ -68,23 +70,33 @@ object Main {
 
   case class Login(username: String)
 
-  case class Insert(owner: String, name: String, key: String, value: Any, update: Boolean = false)
+  final case class Insert(owner: String, name: String, key: String, value: Any, update: Boolean = false) extends ConsistentHashable {
+    override def consistentHashKey: Any = name
+  }
 
-  case class GetItemFrom(collection: ActorbaseCollection, key: String = "")
+  final case class GetItemFrom(collection: ActorbaseCollection, key: String = "") extends ConsistentHashable {
+    override def consistentHashKey: Any = collection.getName
+  }
 
   case class GetItemFromResponse(clientRef: ActorRef, collection: ActorbaseCollection, items: TreeMap[String, Any])
 
   // manca getcollection?
 
-  case class RemoveItemFrom(collection: String, key: String)
+  final case class RemoveItemFrom(collection: String, key: String) extends ConsistentHashable {
+    override def consistentHashKey: Any = collection
+  }
 
   case class AddContributor(username: String, permission: Boolean = false , collection: String)
 
   case class RemoveContributor(username: String, permission: Boolean = false , collection: String)
 
-  case class CreateCollection(name: String, owner: String) // basta così al momento
+  final case class CreateCollection(name: String, owner: String) extends ConsistentHashable {
+    override def consistentHashKey: Any = name
+  }
 
-  case class RemoveCollection( name: String, owner: String)
+  final case class RemoveCollection(name: String, owner: String) extends ConsistentHashable {
+    override def consistentHashKey: Any = name
+  }
 
   // case class UpdateCollectionSize(collection: ActorbaseCollection, increment: Boolean = true)
 
@@ -105,7 +117,7 @@ class Main extends Actor with ActorLogging with Stash {
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
   private var counter = 0 // this is for debug purposes
-  private var requestMap = new TreeMap[String, Map[ActorbaseCollection, Map[String, Any]]]() // a bit clunky, should switch to a queue
+  private var requestMap = new TreeMap[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
     * Insert description here
@@ -127,7 +139,7 @@ class Main extends Actor with ActorLogging with Stash {
     log.info(s"creating for $owner")
     ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
     var collection = new ActorbaseCollection(name, owner)
-    val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher"))
+    val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher") )
     var newCollectionRange = new CollectionRange(collection, new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     ufRef ! AddCollectionTo(owner, false, collection)
     sfMap += (newCollectionRange -> sf)
@@ -150,7 +162,7 @@ class Main extends Actor with ActorLogging with Stash {
       * This message will probably populate username/password after disk read
       */
     case InitUsers =>
-      ufRef ! InsertTo("user", "pass")
+      ufRef ! InsertTo("anonymous", "pass")
       ufRef ! InsertTo("user2", "pass2")
 
     /**
@@ -179,53 +191,10 @@ class Main extends Actor with ActorLogging with Stash {
     case Insert(owner, name, key, value, update) =>
       import com.actorbase.actorsystem.storefinder.messages.Insert
       val rangeRef = sfMap.find(x => (x._1.isSameCollection(name, owner) && x._1.getKeyRange.contains(key)))
-
       rangeRef map (_._2 forward Insert(key, value, update)) getOrElse (
         createCollection(name, owner) forward Insert(key, value, update))
-      // rangeRef map (_._2 forward Insert(key, value, update)) getOrElse (
-      //   context.actorSelection("/user/mainactor") forward com.actorbase.actorsystem.main.Main.Insert(owner, name, key, value, update))
-
       context.become(processingRequest)
 
-      // rangeRef match {
-      //   case Some(t) =>
-      //     t._2 forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
-      //     context.become(processingRequest)
-      //   case None =>
-      //     log.info("MAIN: collection range not found, creating collection..")
-      //     createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
-      //     context.become(processingRequest)
-      // }
-      // var inserted: Boolean = false
-      // for ((collectionRange, sfRef) <- sfMap) {
-      //   if (collectionRange.isSameCollection(name, owner) && collectionRange.getKeyRange.contains(key) ) {
-      //     // right collection and right keyrange (right collectionRange), let's insert here
-      //     log.info("inserting "+key+" in the range "+collectionRange.toString)
-
-      //     counter += 1
-      //     if (counter == 1000) {
-      //       println("inserting " + key + " in the range " + collectionRange.toString)
-      //       counter = 0
-      //     }
-
-      //     inserted = true
-      //     sfRef forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update)
-
-      //     // TODO uscire dal for
-
-      //     // change context because of an Insert is happening
-      //     context.become(processingRequest())
-      //   }
-      // }
-      // if (!inserted) {
-      //   // TODO possibile problema futuro, al primo insert nessuno ha la collection e come si capisce chi deve crearla?
-      //   log.info("item has not been inserted, must forward to siblings")
-      //   createCollection(name, owner) forward com.actorbase.actorsystem.storefinder.messages.Insert(key, value, update) // STUB needed for stress-test
-      //                                                                                                                   // change context of an Insert is happening
-      //   context.become(processingRequest)
-      //   //item has not been inserted, must send the message to the brothers
-      //   //TODO mandare agli altri main
-      // }
 
     /**
       * Create a collection in the system
@@ -258,33 +227,15 @@ class Main extends Actor with ActorLogging with Stash {
       if (key.nonEmpty)
         sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
       else {
-        requestMap.find(_._1 == collection.getOwner) match {
-          case Some(cRef) =>
-            cRef._2.find(_._1.compare(collection) == 0) match {
-              case Some(p) =>
-                if(p._2.size > 0) {
-                  log.info("req > 0")
-                  // sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, p._2.toMap)
-                  sender ! com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse(p._2.toMap)
-                }
-                else {
-                  log.info("req < 0")
-                  sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
-                }
-              case None =>
-                cRef._2 += (collection -> Map[String, Any]())
-                sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
-            }
-          case None =>
-            var collectionMap = Map[ActorbaseCollection, Map[String, Any]](collection -> Map[String, Any]())
-            requestMap += (collection.getOwner -> collectionMap)
+        requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
+        (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
+        // WIP: still completing
+        sfMap.find(x => (x._1.getCollectionName == collection.getName)) map { coll =>
+          if (coll._1.getCollection.getSize > 0)
             sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+          else
+            (sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]()))
         }
-        // var collectionMap = Map[ActorbaseCollection, Map[String, Any]]()
-        // var items = Map[String, Any]()
-        // collectionMap += (collection -> items)
-        // requestMap += (sender -> collectionMap)
-        // sfMap.filterKeys(_.getCollectionName == collection.getName).foreach(kv => kv._2 forward GetAllItem)
       }
 
     /**
@@ -300,23 +251,16 @@ class Main extends Actor with ActorLogging with Stash {
       * @throws
       */
     case GetItemFromResponse(clientRef, collection, items) =>
-      val clientMapPair = requestMap.find(_._1 == collection.getOwner)
-      clientMapPair match {
-        case Some(refPair) =>
-          refPair._2.find(_._1.compare(collection) == 0) match {
-            case Some(colMap) =>
-              log.info(s"GetItemFromResponse: ${colMap._2.size} - ${collection.getSize}")
-              refPair._2.find(_._1.compare(collection) == 0) map (_._2 ++= items)
-              if (colMap._2.size == collection.getSize) {
-                // clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
-                clientRef ! com.actorbase.actorsystem.clientactor.messages.GetCollectionResponse(colMap._2.toMap)
-                // refPair._2 -= collection
-                // requestMap -= clientRef
-              }
-            case None => log.info("GetItemFromResponse: collectionMap not found")
+      requestMap.find(_._1 == collection.getOwner) map { ref =>
+        ref._2.find(_._1.compare(collection) == 0) map { colMap =>
+          colMap._2 ++= items
+          if (colMap._2.size == collection.getSize) {
+            clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+            colMap._2.clear
+            ref._2.-(collection)
           }
-        case None => log.info("GetItemFromResponse: refPair not found")
-      }
+        } getOrElse (log.info("GetItemFromResponse: collectionMap not found"))
+      } getOrElse (log.info("GetItemFromResponse: refPair not found"))
 
     /**
       * Remove item from collection  message, given a key of type String,
@@ -328,7 +272,8 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case RemoveItemFrom(collection, key) =>
       // TODO
-      //sfMap.get(collection).get forward RemoveItem(key)
+      if (key.nonEmpty)
+        sfMap.filterKeys(_.contains(key)).head._2 forward RemoveItem(key)
 
     /**
       * Add Contributor from collection, given username of Contributor and read
@@ -405,7 +350,6 @@ class Main extends Actor with ActorLogging with Stash {
     /**
       * Any other message can't be processed while in this state so we just stash it
       */
-    case _ =>
-      stash()
+    case _ => stash()
   }
 }

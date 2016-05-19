@@ -4,7 +4,7 @@ import akka.actor.ActorRef
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
-import akka.routing.Broadcast
+import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -53,24 +53,24 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       */
     pathPrefix("collections" / "\\S+".r) { collection =>
       pathEndOrSingleSlash {
-        // get {
-        //   complete {
-        //     var coll = new ActorbaseCollection(collection, "user")
-        //     // coll.setSize(100)
-        //     main.ask(Broadcast(GetItemFrom(coll)))(5 seconds).mapTo[MapResponse]
-        //   }
-        // } ~
+        get {
+          complete {
+            var coll = new ActorbaseCollection(collection, "anonymous")
+            // coll.setSize(100)
+            main.ask(ConsistentHashableEnvelope(message = GetItemFrom(coll), hashKey = coll.getName))(5 seconds).mapTo[MapResponse]
+          }
+        } ~
         post {
           complete {
             //TODO controllare se esiste già
-            main ! CreateCollection(collection, owner)
+            main ! (ConsistentHashableEnvelope(message = CreateCollection(collection, owner), hashKey = collection))
             "Create collection complete"
           }
         } ~
         delete {
           complete {
             //TODO controllare, se non esiste inutile mandare il messaggio
-            main ! RemoveCollection(collection, owner)
+            main ! (ConsistentHashableEnvelope(message = RemoveCollection(collection, owner), hashKey = collection))
             "Remove collection complete"
           }
         }
@@ -79,13 +79,13 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         get {
           complete {
             //TODO controllare, se collection non esiste, inutile instradare
-            main.ask(GetItemFrom(new ActorbaseCollection(collection, "user"), key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
+            main.ask(ConsistentHashableEnvelope(message = GetItemFrom(new ActorbaseCollection(collection, "anonymous"), key), hashKey = collection))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
           }
         } ~
         delete {
           complete {
             //TODO controllare, se collection non esiste, inutile instradare
-            main ! RemoveItemFrom(collection, key)
+            main ! (ConsistentHashableEnvelope(message = RemoveItemFrom(collection, key), hashKey = collection))
             "Remove complete"
           }
         } ~
@@ -95,7 +95,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
               detach() {
                 complete {
                   //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                  main ! Insert(owner, collection, key, value)
+                  main ! (ConsistentHashableEnvelope(message = Insert(owner, collection, key, value), hashKey = collection))
                   "Insert complete"
                 }
               }
@@ -108,7 +108,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
               detach() {
                 complete {
                   //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                  main ! Insert(owner, collection, key, value, true)
+                  main ! (ConsistentHashableEnvelope(message = Insert(owner, collection, key, value, true), hashKey = collection))
                   "Update complete"
                 }
               }

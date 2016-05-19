@@ -34,6 +34,8 @@ import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
 
+import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -92,22 +94,22 @@ trait RestApi extends HttpServiceBase with Authenticator {
         }
       }
     } ~
-      // test miniotta
-      path("actorbase" / "multiinsert" / "\\S+".r / "\\S+".r ) { (numberOfItems, millisecs) =>
-        get {
-          complete {
-            main ! CreateCollection("customers", "user")
-            for( a <- 1 to numberOfItems.toInt) {
-              var tmpkey = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
-              tmpkey = tmpkey.replaceAll("[0-9]", "x") // tolgo i numeri, non si possono ancora mettere nelle chiavi
-              val key = tmpkey.replaceAll("z", "y") // tolgo le z, se sono come prime lettere spacca tutto
-              main.ask(Insert("user", "customers", key , s"value of $key".getBytes, false))(30000 seconds).mapTo[Response]
-              Thread.sleep(millisecs.toInt) // aspettando 10ms x ogni insert non ci sono problemi, con meno spesso rompe tutto
-            }
-            "multiinserted!"
+    // test miniotta
+    path("actorbase" / "multiinsert" / "\\S+".r / "\\S+".r ) { (numberOfItems, millisecs) =>
+      get {
+        complete {
+          main ! CreateCollection("customers", "user")
+          for( a <- 1 to numberOfItems.toInt) {
+            var tmpkey = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
+            tmpkey = tmpkey.replaceAll("[0-9]", "x") // tolgo i numeri, non si possono ancora mettere nelle chiavi
+            val key = tmpkey.replaceAll("z", "y") // tolgo le z, se sono come prime lettere spacca tutto
+            main ! (ConsistentHashableEnvelope(message = Insert("user", "customers", key , s"value of $key".getBytes, false), hashKey = "customers"))
+            Thread.sleep(millisecs.toInt) // aspettando 10ms x ogni insert non ci sono problemi, con meno spesso rompe tutto
           }
+          "multiinserted!"
         }
-      } ~
+      }
+    } ~
     // test miniotta
     path("actorbase" / "debugmaps") {
       get {

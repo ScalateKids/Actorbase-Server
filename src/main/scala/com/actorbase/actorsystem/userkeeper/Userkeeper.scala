@@ -62,7 +62,7 @@ object Userkeeper {
   * @return
   * @throws
   */
-class Userkeeper private (var username: String = "user",
+class Userkeeper private (var username: String = "anonymous",
   var password: String = "pass",
   val uuid: String = UUID.randomUUID.toString) extends Actor with ActorLogging {
 

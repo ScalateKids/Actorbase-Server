@@ -35,7 +35,7 @@ import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.storekeeper.messages._
-import com.actorbase.actorsystem.clientactor.messages.{MapResponse, Response}
+import com.actorbase.actorsystem.clientactor.messages.Response
 import com.actorbase.actorsystem.utils.KeyRange
 import com.actorbase.actorsystem.warehouseman.Warehouseman
 import com.actorbase.actorsystem.warehouseman.messages._
@@ -70,8 +70,8 @@ class Storekeeper (private var parentRef: ActorRef,
   private val warehouseman: ActorRef = context.actorOf(Warehouseman.props( collection.getName+"-"+collection.getOwner ))
 
   private val initDelay = 3000 seconds     // delay for the first persistence message to be sent
-  private val intervalDelay = 15 minutes  // interval in-between each persistence message has to be sent
-  private var scheduler: Cancellable = _ // akka scheduler used to track time
+  private val intervalDelay = 15 minutes   // interval in-between each persistence message has to be sent
+  private var scheduler: Cancellable = _   // akka scheduler used to track time
 
   /**
     * Actor lifecycle method, initialize a scheduler to persist data after some time

@@ -81,18 +81,13 @@ class Storefinder(private var collection: ActorbaseCollection,
     * Method that update the owner of all the Storekeepers mapped by this Storefinder, used when a Storefinder
     * is created due to a duplication
     */
-  private def updateOwnerOfSK(): Unit = //{
+  private def updateOwnerOfSK(): Unit =
     skMap.map(_._2 ! com.actorbase.actorsystem.storekeeper.messages.updateOwnerOfSK( self, range ))
-    // for((r, skref) <- skMap){
-    //   skref ! com.actorbase.actorsystem.storekeeper.messages.updateOwnerOfSK( self, range )
-    // }
-//  }
-
 
   /**
     * This method defines the type of messages that this actor can receive while in waitingForRequests status
     */
-  private def waitingForRequests(): Actor.Receive = {
+  private def waitingForRequests(): Receive = {
 
     /**
       *
@@ -128,36 +123,19 @@ class Storefinder(private var collection: ActorbaseCollection,
           skMap.find(_._1.contains(ins.key)) match {
             case Some(sk) => {
               sk._2 forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
-              context.become(processingRequest)
+              context.become(processingRequest) // to trap eventual bugs
             }
             case None => log.info("KeyRange not found")
           }
-          // for ((keyRange, sk) <- skMap){
-          //   //log.info (keyRange.toString())
-          //   if( keyRange.contains( ins.key ) ) {
-          //     sk forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
-          //     context.become(processingRequest)
-          //   }
-          // }
       }
 
     /**
       * Message that search for a given key
       */
-    case get: com.actorbase.actorsystem.storefinder.messages.GetItem => { //TODO implementare diversi tipi di getItem
+    case get: com.actorbase.actorsystem.storefinder.messages.GetItem =>
       log.info(s"SF: getItem of key -> ${get.key}")
       // search for the right KeyRange to get the ActorRef of the needed SK
       skMap.find(_._1.contains(get.key)) map (_._2 forward com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)) getOrElse (log.info("SF: getItem failed"))
-      // skMap.find(_._1.contains(get.key)) match {
-      //   case Some(sk) => sk._2 forward com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
-      //   case None => log.info("SF: getItem failed")
-      // }
-      // for ((keyRange, sk) <- skMap){
-      //   //log.info (keyRange.toString())
-      //   if( keyRange.contains( get.key ) )
-      //     sk forward com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key)
-      // }
-    }
 
     /**
       * Message that returns the entire collection mapped by this Storefinder
@@ -165,10 +143,6 @@ class Storefinder(private var collection: ActorbaseCollection,
     case com.actorbase.actorsystem.storefinder.messages.GetAllItem =>
       log.info("SF: getallitem")
       skMap map (_._2 forward com.actorbase.actorsystem.storekeeper.messages.GetAllItem)
-      // skMap.foreach(kv => kv._2 forward com.actorbase.actorsystem.storekeeper.messages.GetAllItem)
-      // for ((keyRange, sk) <- skMap) {
-      //   sk ! com.actorbase.actorsystem.storekeeper.messages.GetAllItem( clientRef )
-      // }
 
     /**
       * Message that removes an item with the given key
@@ -179,11 +153,6 @@ class Storefinder(private var collection: ActorbaseCollection,
       log.info("SF: remove")
       // search for the right KeyRange to get the ActorRef of the needed SK
       skMap.filterKeys(_.contains(rem.key)) map (_._2 forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key))
-      // for ((keyRange, sk) <- skMap) {
-      //   //log.info (keyRange.toString())
-      //   if( keyRange.contains( rem.key ) )
-      //     sk forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
-      // }
 
     /**
       *

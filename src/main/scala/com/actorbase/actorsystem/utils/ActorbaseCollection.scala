@@ -29,6 +29,7 @@
 package com.actorbase.actorsystem.utils
 
 import scala.math.Ordered.orderingToOrdered
+import java.util.UUID
 
 /**
   * Class representing a collection of actorbase
@@ -36,11 +37,10 @@ import scala.math.Ordered.orderingToOrdered
   * @param name a String representing the name of the collection
   * @param owner a String representing the username of the owner of this collection
   */
-class ActorbaseCollection(@transient private var name: String,
-  @transient private var owner: String) extends Ordered[ActorbaseCollection] with Serializable {
-  //TODO mettere uuid anche qui?
-
-  @transient var size = 0
+class ActorbaseCollection (@transient private var name: String,
+  @transient private var owner: String,
+  @transient private val uuid: String = UUID.randomUUID.toString,
+  @transient private var size: Int = 0) extends Ordered[ActorbaseCollection] with Serializable {
 
   /**
     * @return a String representing the name of the collection
@@ -51,6 +51,11 @@ class ActorbaseCollection(@transient private var name: String,
     * @return a String representing the username of the owner of this collection
     */
   def getOwner: String = owner
+
+  /**
+    * @return a String representing a universal-unique-identified ID
+    */
+  def getUUID: String = uuid
 
   /**
     * Insert description here
