@@ -67,7 +67,7 @@ object Main {
   case class AddUser(username: String, password: String)
 
   // manca RemoveUser
-  
+
   case class Login(username: String)
 
   case class Insert(owner: String, name: String, key: String, value: Any, update: Boolean = false)
