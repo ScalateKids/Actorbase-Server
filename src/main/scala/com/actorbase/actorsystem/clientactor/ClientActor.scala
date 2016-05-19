@@ -77,6 +77,6 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
       }
     }
   }
-  def receive = runRoute(collections(main, "user")~route(main)~login) //lol must be the name of the logged user
+  def receive = runRoute(collections(main, "anonymous")~route(main)~login) //lol must be the name of the logged user
 
 }

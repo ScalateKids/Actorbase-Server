@@ -54,7 +54,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       pathEndOrSingleSlash {
         get {
           complete {
-            var coll = new ActorbaseCollection(collection, "user")
+            var coll = new ActorbaseCollection(collection, "anonymous")
             // coll.setSize(100)
             main.ask(GetItemFrom(coll))(5 seconds).mapTo[MapResponse]
           }
@@ -78,7 +78,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         get {
           complete {
             //TODO controllare, se collection non esiste, inutile instradare
-            main.ask(GetItemFrom(new ActorbaseCollection(collection, "user"), key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
+            main.ask(GetItemFrom(new ActorbaseCollection(collection, "anonymous"), key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
           }
         } ~
         delete {

@@ -105,7 +105,7 @@ object Main {
 class Main extends Actor with ActorLogging with Stash {
   import Main._
 
-  private val ufRef: ActorRef = context.actorOf(Userfinder.props, "Userfinder") //TODO tutti devono avere lo stesso riferimento
+  private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
   private var sfMap = new TreeMap[CollectionRange, ActorRef]()
   private var counter = 0 // this is for debug purposes
   private var requestMap = new TreeMap[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
@@ -153,7 +153,7 @@ class Main extends Actor with ActorLogging with Stash {
       * This message will probably populate username/password after disk read
       */
     case InitUsers =>
-      ufRef ! InsertTo("user", "pass")
+      ufRef ! InsertTo("anonymous", "pass")
       ufRef ! InsertTo("user2", "pass2")
 
     /**
