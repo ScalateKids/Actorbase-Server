@@ -34,8 +34,6 @@ import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
 
-import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -81,30 +79,31 @@ trait RestApi extends HttpServiceBase with Authenticator {
     path("actorbase" / "find" / "\\S+".r / "\\S+".r ) { (collection, key) =>
       get {
         complete {
-          main.ask(GetItemFrom(new ActorbaseCollection(collection, "anonymous"), key))(5 seconds).mapTo[Response]
+          main.ask(GetItemFrom(ActorbaseCollection(collection, "anonymous"), key))(5 seconds).mapTo[Response]
         }
       }
     } ~
     // test miniotta
-    path("actorbase" / "insert" / "\\S+".r / "\\S+".r / "\\S+".r) { (collectionName, key, value) =>
-      get {
-        complete {
-          main.ask(Insert("", collectionName, key, value, false))(5 seconds).mapTo[Response]
-          "boh"
-        }
-      }
-    } ~
+    // path("actorbase" / "insert" / "\\S+".r / "\\S+".r / "\\S+".r) { (collectionName, key, value) =>
+    //   get {
+    //     complete {
+    //       main.ask(Insert("", collectionName, key, value, false))(5 seconds).mapTo[Response]
+    //       "boh"
+    //     }
+    //   }
+    // } ~
     // test miniotta
-    path("actorbase" / "multiinsert" / "\\S+".r / "\\S+".r ) { (numberOfItems, millisecs) =>
+    path("actorbase" / "\\S+".r / IntNumber / IntNumber ) { (collection, numberOfItems, millisecs) =>
       get {
         complete {
-          main ! CreateCollection("customers", "anonymous")
-          for( a <- 1 to numberOfItems.toInt) {
+          main ! CreateCollection(collection, "anonymous")
+          val coll = ActorbaseCollection(collection, "anonymous")
+          for( a <- 1 to numberOfItems) {
             var tmpkey = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
             tmpkey = tmpkey.replaceAll("[0-9]", "x") // tolgo i numeri, non si possono ancora mettere nelle chiavi
             val key = tmpkey.replaceAll("z", "y") // tolgo le z, se sono come prime lettere spacca tutto
-            main ! (ConsistentHashableEnvelope(message = Insert("anonymous", "customers", key , s"value of $key".getBytes, false), hashKey = "customers"))
-            Thread.sleep(millisecs.toInt) // aspettando 10ms x ogni insert non ci sono problemi, con meno spesso rompe tutto
+            main ! Insert(coll, key , s"value of $key".getBytes, false)
+            Thread.sleep(millisecs) // aspettando 10ms x ogni insert non ci sono problemi, con meno spesso rompe tutto
           }
           "multiinserted!"
         }

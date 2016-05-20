@@ -28,7 +28,7 @@
 
 package com.actorbase.actorsystem.httpserver
 
-import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, Deploy, Props}
+import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, Props}
 import akka.io.IO
 import spray.can.Http
 import akka.event.LoggingReceive
@@ -36,6 +36,7 @@ import akka.event.LoggingReceive
 import akka.routing._
 import akka.cluster._
 import akka.cluster.routing._
+import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import com.typesafe.config.ConfigFactory
 
 import com.actorbase.actorsystem.clientactor.ClientActor
@@ -80,9 +81,15 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
   */
 object HTTPServer extends App {
   val config = ConfigFactory.load()
-  implicit val system = ActorSystem(config getString "name", config)
-  Cluster(system).registerOnMemberUp {
-    val main = system.actorOf(FromConfig.props(Props[Main].withDispatcher("control-aware-dispatcher")), name = "mainrouter")
-    system.actorOf(Props(new HTTPServer(main, config getString "listen-on", config getInt "exposed-port")))
-  }
+  val system = ActorSystem(config getString "name", config)
+  ClusterSharding(system).start(
+    typeName = Main.shardName,
+    entityProps = Main.props,
+    settings = ClusterShardingSettings(system),
+    extractShardId = Main.extractShardId,
+    extractEntityId = Main.extractEntityId)
+
+  val main = ClusterSharding(system).shardRegion(Main.shardName)
+  system.actorOf(Props(classOf[HTTPServer], main, config getString "listen-on", config getInt "exposed-port"))
+
 }

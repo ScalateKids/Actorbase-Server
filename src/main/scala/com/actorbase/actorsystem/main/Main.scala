@@ -30,9 +30,9 @@
 package com.actorbase.actorsystem.main
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.routing.ConsistentHashingRouter.ConsistentHashable
+import akka.cluster.sharding.ShardRegion
+import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
 
-import spray.json.DefaultJsonProtocol._
 import scala.collection.mutable
 
 import scala.collection.immutable.TreeMap
@@ -60,45 +60,39 @@ import java.io._
   */
 object Main {
 
-  case class Response(response: String)
+  def props = Props[Main].withDispatcher("control-aware-dispatcher")
 
-  case object Response {
-    implicit val goJson = jsonFormat1(Response.apply)
+  def shardName = "mainActor"
+
+  val extractShardId: ExtractShardId = {
+    case Insert(collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
+    case GetItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
+  }
+
+  val extractEntityId: ExtractEntityId = {
+    case msg: Insert => (msg.collection.getUUID, msg)
+    case msg: GetItemFrom => (msg.collection.getUUID, msg)
   }
 
   case class AddUser(username: String, password: String)
 
   case class Login(username: String)
 
-  final case class Insert(owner: String, name: String, key: String, value: Any, update: Boolean = false) extends ConsistentHashable {
-    override def consistentHashKey: Any = name
-  }
+  case class Insert(collection: ActorbaseCollection, key: String, value: Any, update: Boolean = false)
 
-  final case class GetItemFrom(collection: ActorbaseCollection, key: String = "") extends ConsistentHashable {
-    override def consistentHashKey: Any = collection.getName
-  }
+  case class GetItemFrom(collection: ActorbaseCollection, key: String = "")
 
   case class GetItemFromResponse(clientRef: ActorRef, collection: ActorbaseCollection, items: TreeMap[String, Any])
 
-  // manca getcollection?
-
-  final case class RemoveItemFrom(collection: String, key: String) extends ConsistentHashable {
-    override def consistentHashKey: Any = collection
-  }
+  case class RemoveItemFrom(collection: String, key: String)
 
   case class AddContributor(username: String, permission: Boolean = false , collection: String)
 
   case class RemoveContributor(username: String, permission: Boolean = false , collection: String)
 
-  final case class CreateCollection(name: String, owner: String) extends ConsistentHashable {
-    override def consistentHashKey: Any = name
-  }
+  case class CreateCollection(name: String, owner: String)
 
-  final case class RemoveCollection(name: String, owner: String) extends ConsistentHashable {
-    override def consistentHashKey: Any = name
-  }
-
-  // case class UpdateCollectionSize(collection: ActorbaseCollection, increment: Boolean = true)
+  case class RemoveCollection(name: String, owner: String)
 
   case object InitUsers
 
@@ -138,7 +132,7 @@ class Main extends Actor with ActorLogging with Stash {
   private def createCollection(name: String, owner: String): ActorRef = {
     log.info(s"creating for $owner")
     ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
-    var collection = new ActorbaseCollection(name, owner)
+    var collection = ActorbaseCollection(name, owner)
     val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher") )
     var newCollectionRange = new CollectionRange(collection, new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     ufRef ! AddCollectionTo(owner, false, collection)
@@ -149,7 +143,7 @@ class Main extends Actor with ActorLogging with Stash {
   /**
     * This method defines the type of messages that this actor can receive while in waitingForRequests status
     */
-  private def waitingForRequests(): Actor.Receive = {
+  private def waitingForRequests(): Receive = {
 
     /**
       * Login message, this is received when a user tries to authenticate into the system.
@@ -188,11 +182,11 @@ class Main extends Actor with ActorLogging with Stash {
       * @param update a Boolean flag, define the insert behavior (with or without
       * updating the value)
       */
-    case Insert(owner, name, key, value, update) =>
+    case Insert(collection, key, value, update) =>
       import com.actorbase.actorsystem.storefinder.messages.Insert
-      val rangeRef = sfMap.find(x => (x._1.isSameCollection(name, owner) && x._1.getKeyRange.contains(key)))
+      val rangeRef = sfMap.find(x => (x._1.isSameCollection(collection.getName, collection.getOwner) && x._1.getKeyRange.contains(key)))
       rangeRef map (_._2 forward Insert(key, value, update)) getOrElse (
-        createCollection(name, owner) forward Insert(key, value, update))
+        createCollection(collection.getName, collection.getOwner) forward Insert(key, value, update))
       context.become(processingRequest)
 
 
@@ -224,6 +218,7 @@ class Main extends Actor with ActorLogging with Stash {
       * @param key a String representing the key to be retrieved
       */
     case GetItemFrom(collection, key) =>
+      // log.info("GetCollection request")
       if (key.nonEmpty)
         sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
       else {
@@ -286,7 +281,7 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case AddContributor(username , permission, collection) =>
       // need controls
-      ufRef ! AddCollectionTo(username, permission, new ActorbaseCollection(collection, username))
+      ufRef ! AddCollectionTo(username, permission, ActorbaseCollection(collection, username))
 
     /**
       * Remove Contributor from collection, given username of Contributor , and permission
@@ -298,7 +293,7 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case RemoveContributor(username, permission, collection) =>
       // need controls
-      ufRef ! RemoveCollectionFrom(username, permission, new ActorbaseCollection(collection, username))
+      ufRef ! RemoveCollectionFrom(username, permission, ActorbaseCollection(collection, username))
 
     case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
       // log.info(s"MAIN: Update size ${collection.getOwner}")
@@ -314,7 +309,7 @@ class Main extends Actor with ActorLogging with Stash {
   /**
     * This method defines the type of messages that this actor can receive while in processingRequest status
     */
-  private def processingRequest(): Actor.Receive = {
+  private def processingRequest(): Receive = {
 
     /**
       * Ack (Acknowledge) message represent received when a blocking request has finished and the actor can
