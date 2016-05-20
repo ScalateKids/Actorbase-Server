@@ -99,10 +99,10 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
     * @param path
     */
   private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
-    def getRecursively(f: File): Seq[File] =
-        f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
 
-    getRecursively(new File(path)).foreach{f =>f.delete()}
+    def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+
+    getRecursively(new File(path)).foreach { f => f.delete() }
 
     val dir = new File(path).delete()
   }

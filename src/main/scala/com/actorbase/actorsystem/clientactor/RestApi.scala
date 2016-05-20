@@ -81,7 +81,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
     path("actorbase" / "find" / "\\S+".r / "\\S+".r ) { (collection, key) =>
       get {
         complete {
-          main.ask(GetItemFrom(new ActorbaseCollection(collection, "user"), key))(5 seconds).mapTo[Response]
+          main.ask(GetItemFrom(new ActorbaseCollection(collection, "anonymous"), key))(5 seconds).mapTo[Response]
         }
       }
     } ~
@@ -98,12 +98,12 @@ trait RestApi extends HttpServiceBase with Authenticator {
     path("actorbase" / "multiinsert" / "\\S+".r / "\\S+".r ) { (numberOfItems, millisecs) =>
       get {
         complete {
-          main ! CreateCollection("customers", "user")
+          main ! CreateCollection("customers", "anonymous")
           for( a <- 1 to numberOfItems.toInt) {
             var tmpkey = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
             tmpkey = tmpkey.replaceAll("[0-9]", "x") // tolgo i numeri, non si possono ancora mettere nelle chiavi
             val key = tmpkey.replaceAll("z", "y") // tolgo le z, se sono come prime lettere spacca tutto
-            main ! (ConsistentHashableEnvelope(message = Insert("user", "customers", key , s"value of $key".getBytes, false), hashKey = "customers"))
+            main ! (ConsistentHashableEnvelope(message = Insert("anonymous", "customers", key , s"value of $key".getBytes, false), hashKey = "customers"))
             Thread.sleep(millisecs.toInt) // aspettando 10ms x ogni insert non ci sono problemi, con meno spesso rompe tutto
           }
           "multiinserted!"
