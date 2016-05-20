@@ -1,5 +1,4 @@
-https://localhost:9999/collections/customersA
-https://localhost:9999/collections/customersB
-https://localhost:9999/collections/customersA
-https://localhost:9999/collections/customersB
-https://localhost:9999/collections/customersA
+http://localhost:9999/collections/customersA
+http://localhost:9998/collections/customersB
+http://localhost:9999/collections/customersC
+http://localhost:9998/collections/customersD
