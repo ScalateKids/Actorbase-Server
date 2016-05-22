@@ -82,7 +82,7 @@ class Storekeeper (private var parentRef: ActorRef,
     * @throws
     */
   override def preStart(): Unit = {
-    log.info("SK prestarted")
+    // log.info("SK prestarted")
     scheduler = context.system.scheduler.schedule(
       initialDelay = initDelay,
       interval = intervalDelay,
@@ -148,7 +148,8 @@ class Storekeeper (private var parentRef: ActorRef,
       */
     case ins: Insert =>
       log.info("SK: Inserting "+ins.key+" this SK range is "+range.toString)
-      insertOrUpdate(ins.update, ins.key, ins.value)
+      if (insertOrUpdate(ins.update, ins.key, ins.value) == true)
+        parentRef ! UpdateCollectionSize(true)
       if (data.size == maxSize - 1) {
         log.info("SK: Must duplicate")
         // half the collection
@@ -170,9 +171,6 @@ class Storekeeper (private var parentRef: ActorRef,
         range = halfLeftKR
       }
       parentRef ! com.actorbase.actorsystem.main.messages.Ack
-      parentRef ! UpdateCollectionSize(true)
-      //sender ! Response("inserted")
-      // logAllItems
 
     /**
       * UpdateManager message, used to update the storekeeper manager, this is usefull when the Storefinder duplicate
@@ -183,7 +181,7 @@ class Storekeeper (private var parentRef: ActorRef,
       *                   the Storefinder mapping the range of this Storekeeper)
       */
     case updateOwnerOfSK( newParent, newRange ) =>
-      log.info("SK: updating owner")
+      // log.info("SK: updating owner")
       parentRef = newParent
       parentRange = newRange
 
@@ -209,13 +207,19 @@ class Storekeeper (private var parentRef: ActorRef,
     * @param key String representing the key of the item
     * @param value Any representing the value of the item
     */
-  private def insertOrUpdate(update: Boolean, key: String, value: Any): Unit = {
-    if(update)
+  private def insertOrUpdate(update: Boolean, key: String, value: Any): Boolean = {
+    var done = false
+    if (update) {
       data += (key -> value)
-    else if(!update && !data.contains(key))
+      done = true
+    }
+    else if (!update && !data.contains(key)) {
       data += (key -> value)
-    else if(!update && data.contains(key))
+      done = true
+    }
+    else if (!update && data.contains(key))
       log.info("SK: Duplicate key found, cannot insert")
+    done
   }
 
   /**

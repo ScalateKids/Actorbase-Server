@@ -55,13 +55,13 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       pathEndOrSingleSlash {
         get {
           complete {
-            main.ask(GetItemFrom(coll))(15 seconds).mapTo[MapResponse]
+            main.ask(GetItemFrom(coll))(5 seconds).mapTo[MapResponse]
           }
         } ~
         post {
           complete {
             //TODO controllare se esiste già
-            main ! CreateCollection(collection, owner)
+            main ! CreateCollection(coll)
             "Create collection complete"
           }
         } ~
@@ -83,7 +83,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         delete {
           complete {
             //TODO controllare, se collection non esiste, inutile instradare
-            main ! RemoveItemFrom(collection, key)
+            main ! RemoveItemFrom(coll, key)
             "Remove complete"
           }
         } ~

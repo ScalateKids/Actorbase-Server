@@ -120,13 +120,15 @@ class Storefinder(private var collection: ActorbaseCollection,
           context.become(processingRequest)
         // TreeMap not empty -> search which SK has the right KeyRange for the item to insert
         case _ =>
-          skMap.find(_._1.contains(ins.key)) match {
-            case Some(sk) => {
-              sk._2 forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
-              context.become(processingRequest) // to trap eventual bugs
-            }
-            case None => log.info("KeyRange not found")
-          }
+          skMap.find(_._1.contains(ins.key)) map (_._2 forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)) getOrElse (log.info("KeyRange not found"))
+          context become processingRequest()
+          // skMap.find(_._1.contains(ins.key)) match {
+          //   case Some(sk) => {
+          //     sk._2 forward com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update)
+          //     context.become(processingRequest) // to trap eventual bugs
+          //   }
+          //   case None => log.info("KeyRange not found")
+          // }
       }
 
     /**
@@ -188,7 +190,7 @@ class Storefinder(private var collection: ActorbaseCollection,
       * return to the waitingForRequests state
       */
     case com.actorbase.actorsystem.main.messages.Ack =>
-      log.info("SF: ack")
+      // log.info("SF: ack")
       unstashAll()
       context.become(waitingForRequests) // resets the latest 'become'
       context.parent ! com.actorbase.actorsystem.main.messages.Ack
@@ -248,7 +250,7 @@ class Storefinder(private var collection: ActorbaseCollection,
       * Any other message can't be processed while in this state so we just stash it
       */
     case _ =>
-      log.info("SF stashing")
+      // log.info("SF stashing")
       stash()
   }
 }

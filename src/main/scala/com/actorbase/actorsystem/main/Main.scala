@@ -65,11 +65,15 @@ object Main {
   def shardName = "mainActor"
 
   val extractShardId: ExtractShardId = {
+    case CreateCollection(collection) => (collection.getUUID.hashCode % 100).toString
+    case RemoveItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
     case Insert(collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
     case GetItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
   }
 
   val extractEntityId: ExtractEntityId = {
+    case msg: CreateCollection => (msg.collection.getUUID, msg)
+    case msg: RemoveItemFrom => (msg.collection.getUUID, msg)
     case msg: Insert => (msg.collection.getUUID, msg)
     case msg: GetItemFrom => (msg.collection.getUUID, msg)
   }
@@ -84,13 +88,13 @@ object Main {
 
   case class GetItemFromResponse(clientRef: ActorRef, collection: ActorbaseCollection, items: TreeMap[String, Any])
 
-  case class RemoveItemFrom(collection: String, key: String)
+  case class RemoveItemFrom(collection: ActorbaseCollection, key: String)
 
   case class AddContributor(username: String, permission: Boolean = false , collection: String)
 
   case class RemoveContributor(username: String, permission: Boolean = false , collection: String)
 
-  case class CreateCollection(name: String, owner: String)
+  case class CreateCollection(collection: ActorbaseCollection)
 
   case class RemoveCollection(name: String, owner: String)
 
@@ -196,7 +200,7 @@ class Main extends Actor with ActorLogging with Stash {
       * @param name a String representing the name of the collection
       * @param owner a String representing the owner of the collection
       */
-    case CreateCollection(name, owner) => createCollection(name, owner)
+    case CreateCollection(collection) => createCollection(collection.getName, collection.getOwner)
       // TODO avvisare lo userkeeper che a sua volta deve avvisare il client
 
     /**
@@ -218,9 +222,9 @@ class Main extends Actor with ActorLogging with Stash {
       * @param key a String representing the key to be retrieved
       */
     case GetItemFrom(collection, key) =>
-      // log.info("GetCollection request")
       if (key.nonEmpty)
-        sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
+        sfMap.find(_._1.contains(key)) map (_._2 forward GetItem(key)) getOrElse (log.info(s"Key $key not found"))
+        // sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
       else {
         requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
         (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
@@ -229,7 +233,7 @@ class Main extends Actor with ActorLogging with Stash {
           if (coll._1.getCollection.getSize > 0)
             sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
           else
-            (sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]()))
+            sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]())
         }
       }
 
@@ -268,7 +272,7 @@ class Main extends Actor with ActorLogging with Stash {
     case RemoveItemFrom(collection, key) =>
       // TODO
       if (key.nonEmpty)
-        sfMap.filterKeys(_.contains(key)).head._2 forward RemoveItem(key)
+        sfMap.filterKeys(x => (x.getCollectionUUID == collection.getUUID) && (x.contains(key))).head._2 forward RemoveItem(key)
 
     /**
       * Add Contributor from collection, given username of Contributor and read

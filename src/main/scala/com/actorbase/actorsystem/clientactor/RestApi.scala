@@ -96,8 +96,8 @@ trait RestApi extends HttpServiceBase with Authenticator {
     path("actorbase" / "\\S+".r / IntNumber / IntNumber ) { (collection, numberOfItems, millisecs) =>
       get {
         complete {
-          main ! CreateCollection(collection, "anonymous")
           val coll = ActorbaseCollection(collection, "anonymous")
+          main ! CreateCollection(coll)
           for( a <- 1 to numberOfItems) {
             var tmpkey = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
             tmpkey = tmpkey.replaceAll("[0-9]", "x") // tolgo i numeri, non si possono ancora mettere nelle chiavi

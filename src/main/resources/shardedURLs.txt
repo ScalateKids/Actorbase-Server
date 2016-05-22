@@ -1,4 +1,6 @@
-https://localhost:9999/actorbase/customers/10/1
-https://localhost:9998/actorbase/test/10/1
-https://localhost:9999/actorbase/customerized/10/1
-https://localhost:9998/actorbase/tested/10/1
+http://localhost:9999/collections/customers/keyOne
+http://localhost:9999/collections/customersB/keyTwo
+http://localhost:9999/collections/customers/keyThree
+http://localhost:9999/collections/customersB/keyFour
+http://localhost:9999/collections/customers/keyFive
+http://localhost:9999/collections/customersB/keySix

@@ -50,6 +50,11 @@ class CollectionRange(private var collection: ActorbaseCollection, private var r
   def getCollectionOwner: String = collection.getOwner
 
   /**
+    * @return a String representing the UUIID of the requested collection
+    */
+  def getCollectionUUID: String = collection.getUUID
+
+  /**
     * @return a String representing the minimum Key mappable in this collectionRange
     */
   def getMinRange: String = range.getMinRange
