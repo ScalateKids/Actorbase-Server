@@ -69,7 +69,7 @@ class Storekeeper (private var parentRef: ActorRef,
                                 // create the warehouseman of this SK
   private val warehouseman: ActorRef = context.actorOf(Warehouseman.props( collection.getName+"-"+collection.getOwner ))
 
-  private val initDelay = 3000 seconds     // delay for the first persistence message to be sent
+  private val initDelay = 1 seconds     // delay for the first persistence message to be sent
   private val intervalDelay = 100 minutes  // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _ // akka scheduler used to track time
 
@@ -134,6 +134,7 @@ class Storekeeper (private var parentRef: ActorRef,
       */
     case rem: RemoveItem =>
       data -= rem.key
+	  println("item removed")
       parentRef ! UpdateCollectionSize(false)
 
     /**
@@ -220,7 +221,8 @@ class Storekeeper (private var parentRef: ActorRef,
       done = true
     }
     else if (!update && data.contains(key))
-      log.info("SK: Duplicate key found, cannot insert")
+	   println("Duplicated key found, cannot insert")
+      //log.info("SK: Duplicate key found, cannot insert")
     done
   }
 

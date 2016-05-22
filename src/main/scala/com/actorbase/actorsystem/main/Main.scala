@@ -128,6 +128,7 @@ class Main extends Actor with ActorLogging with Stash {
     */
   private def createCollection(name: String, owner: String): ActorRef = {
     log.info(s"creating for $owner")
+	println("Collection "+ name +" created")
     ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
     var collection = new ActorbaseCollection(name, owner)
     val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher") )
@@ -408,6 +409,7 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case Ack =>
       log.info("MAIN: ack")
+	  println("Item inserted")
       unstashAll()
       context.become(waitingForRequests)
 

@@ -57,6 +57,7 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
       */
     case Save(sfRange, range, map) =>
       log.info("warehouseman: save")
+	  println("Saving")
       val key = "Dummy implicit k"
       val encryptedShardFile = new File(rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"+range.getMinRange+"-"+range.getMaxRange+".actb")
       encryptedShardFile.getParentFile.mkdirs
