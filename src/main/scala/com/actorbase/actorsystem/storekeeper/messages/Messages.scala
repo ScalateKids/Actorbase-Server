@@ -35,7 +35,7 @@ import com.actorbase.actorsystem.utils.KeyRange
 
 case object Persist
 
-case object GetAllItem
+case class GetAllItem(parent: ActorRef)
 
 case class Init(manager: ActorRef, range: KeyRange)
 

@@ -131,18 +131,8 @@ class Main extends Actor with ActorLogging with Stash {
   import Main._
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
-  private var sfMap = new TreeMap[CollectionRange, ActorRef]()
-  private var counter = 0 // this is for debug purposes
+  private var sfMap = new TreeMap[ActorbaseCollection, ActorRef]()
   private var requestMap = new TreeMap[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def receive = waitingForRequests()  // start in this state
 
   /**
     * Method that create a collection in Actorbase.
@@ -156,16 +146,13 @@ class Main extends Actor with ActorLogging with Stash {
     ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
     var collection = ActorbaseCollection(name, owner)
     val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher") )
-    var newCollectionRange = new CollectionRange(collection, new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
+    // var newCollectionRange = new CollectionRange(collection, new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     ufRef ! AddCollectionTo(owner, false, collection)
-    sfMap += (newCollectionRange -> sf)
+    sfMap += (collection -> sf)
     sf
   }
 
-  /**
-    * This method defines the type of messages that this actor can receive while in waitingForRequests status
-    */
-  private def waitingForRequests(): Receive = {
+  def receive: Receive = {
 
     /**
       * Login message, this is received when a user tries to authenticate into the system.
@@ -206,10 +193,8 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case Insert(collection, key, value, update) =>
       import com.actorbase.actorsystem.storefinder.messages.Insert
-      val rangeRef = sfMap.find(x => (x._1.isSameCollection(collection.getName, collection.getOwner) && x._1.getKeyRange.contains(key)))
-      rangeRef map (_._2 forward Insert(key, value, update)) getOrElse (
+      sfMap.find(x => x._1.compareTo(collection) == 0) map (_._2 forward Insert(key, value, update)) getOrElse(
         createCollection(collection.getName, collection.getOwner) forward Insert(key, value, update))
-      context.become(processingRequest)
 
 
     /**
@@ -241,16 +226,16 @@ class Main extends Actor with ActorLogging with Stash {
       */
     case GetItemFrom(collection, key) =>
       if (key.nonEmpty)
-        sfMap.find(_._1.contains(key)) map (_._2 forward GetItem(key)) getOrElse (log.info(s"Key $key not found"))
+        sfMap.find(_._1.compareTo(collection) == 0) map (_._2 forward GetItem(key)) getOrElse (log.info(s"Key $key not found"))
       else {
         requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
         (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
         // WIP: still completing
-        sfMap.find(x => (x._1.isSameCollection(collection.getName, collection.getOwner))) map { coll =>
-          if (coll._1.getCollection.getSize > 0)
-          {
+        sfMap.find(x => x._1.compareTo(collection) == 0) map { coll =>
+          if (coll._1.getSize > 0) {
             log.info("all")
-            sfMap.filterKeys(_.isSameCollection(collection.getName, collection.getOwner)) map (_._2 forward GetAllItem)}
+            sfMap.filterKeys(_.compareTo(collection) == 0) map (_._2 forward GetAllItem)
+          }
           else
             sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]())
         }
@@ -291,7 +276,7 @@ class Main extends Actor with ActorLogging with Stash {
     case RemoveItemFrom(collection, key) =>
       // TODO
       if (key.nonEmpty)
-        sfMap.filterKeys(x => (x.getCollectionUUID == collection.getUUID) && (x.contains(key))).head._2 forward RemoveItem(key)
+        sfMap.filterKeys(x => (x.getUUID == collection.getUUID)).head._2 forward RemoveItem(key)
 
     /**
       * Add Contributor from collection, given username of Contributor and read
@@ -321,53 +306,5 @@ class Main extends Actor with ActorLogging with Stash {
     case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
       // log.info(s"MAIN: Update size ${collection.getOwner}")
       ufRef ! UpdateCollectionSizeTo(collection, increment)
-
-    case DebugMaps => // debug purposes
-      for( (collRange, sfRef )<- sfMap) {
-        log.info("DEBUG MAIN "+collRange.toString)
-        sfRef forward DebugMap( collRange.getKeyRange )
-      }
-  }
-
-  /**
-    * This method defines the type of messages that this actor can receive while in processingRequest status
-    */
-  private def processingRequest(): Receive = {
-
-    /**
-      * Ack (Acknowledge) message represent received when a blocking request has finished and the actor can
-      * return to the waitingForRequests state
-      */
-    case Ack =>
-      log.info("MAIN: ack")
-      unstashAll()
-      context.become(waitingForRequests)
-
-    /**
-      * A message that means that a Storefinder must duplicate.
-      *
-      * @param oldCollRange a CollectionRange representing the CollectionRange that needs to be duplicated
-      * @param leftCollRange a CollectionRange representing the new CollectionRange of the duplicated one
-      * @param map a TreeMap[KeyRange, ActorRef] that contains the data that needs to be used by the
-      *            Storefinder that needs to be created
-      * @param rightCollRange a CollectionRange representing the CollectionRange of the Storefinder that needs to
-      *                       be created
-      */
-    case DuplicationRequestSF( oldCollRange, leftCollRange, map, rightCollRange ) =>
-      log.info("MAIN: duplicateSFnotify "+oldCollRange+" leftcollrange "+leftCollRange+" rightcollrange "+rightCollRange)
-      // update sfMap due to a SF duplicate happened
-      val newSf = context.actorOf(Props(new Storefinder(oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher") )
-      // get old sk actorRef
-      val tmpActorRef = sfMap.get(oldCollRange).get // refactor to getOrElse or match case
-                                                    // remove entry associated with that actorRef
-      sfMap -= oldCollRange // non so se sia meglio così o fare una specie di update key (che non c'è)
-                            // add the entry with the oldSK and the new one
-      sfMap += (leftCollRange -> tmpActorRef)
-      sfMap += (rightCollRange -> newSf)
-
-    /**
-      * Any other message can't be processed while in this state so we just stash it
-      */
-    case _ => stash()
   }
 }

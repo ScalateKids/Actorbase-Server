@@ -118,6 +118,6 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
 
   def httpReceive: Receive = runRoute(collections(main, "anonymous") ~ route(main) ~ login)
 
-  override def receive = handleHttpRequests orElse httpReceive
+  override def receive = /*handleHttpRequests orElse */httpReceive
 
 }
