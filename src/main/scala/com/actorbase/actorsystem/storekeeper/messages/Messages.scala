@@ -29,6 +29,8 @@
 package com.actorbase.actorsystem.storekeeper.messages
 
 import akka.actor.ActorRef
+import akka.routing.ConsistentHashingRouter.ConsistentHashable
+
 import com.actorbase.actorsystem.utils.KeyRange
 
 case object Persist
@@ -37,9 +39,13 @@ case object GetAllItem
 
 case class Init(manager: ActorRef, range: KeyRange)
 
-case class GetItem(key: String)
+final case class GetItem(key: String) extends ConsistentHashable {
+  override def consistentHashKey: Any = key
+}
 
-case class Insert(key: String, value: Any, update: Boolean = false)
+final case class Insert(key: String, value: Any, update: Boolean = false) extends ConsistentHashable {
+  override def consistentHashKey: Any = key
+}
 
 case class RemoveItem(key: String)
 
