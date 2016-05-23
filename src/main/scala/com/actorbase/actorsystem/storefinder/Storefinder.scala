@@ -72,11 +72,7 @@ class Storefinder(private var collection: ActorbaseCollection,
   private var skMap : TreeMap[KeyRange, ActorRef] = new TreeMap[KeyRange, ActorRef](),
   private var range: KeyRange = new KeyRange("a", "z") ) extends Actor with ActorLogging with Stash {
 
-  val storekeepers = context.actorOf(
-    ClusterRouterPool(ConsistentHashingPool(0), ClusterRouterPoolSettings(
-      totalInstances = 10000, maxInstancesPerNode = 20,
-      allowLocalRoutees = true, useRole = None)).props(Props(new Storekeeper(self, collection, range, new TreeMap[String, Any](), new KeyRange("a", "z")))),
-    name = "storekeepers")
+  val storekeepers = context.actorOf(ConsistentHashingPool(20).props(Props(new Storekeeper(self, collection, range, new TreeMap[String, Any](), new KeyRange("a", "z")))), name = "storekeepers")
   // val storekeepers = context.actorOf(FromConfig.props(Props(new Storekeeper(self, collection, range, new TreeMap[String, Any](), new KeyRange("a", "z")))), name = "storekeepers")
 
   // firstly we need to update the owner of the SK of his map, this is necessary when the SF is created due

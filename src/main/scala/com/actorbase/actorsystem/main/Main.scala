@@ -248,7 +248,9 @@ class Main extends Actor with ActorLogging with Stash {
         // WIP: still completing
         sfMap.find(x => (x._1.isSameCollection(collection.getName, collection.getOwner))) map { coll =>
           if (coll._1.getCollection.getSize > 0)
-            sfMap.filterKeys(_.isSameCollection(collection.getName, collection.getOwner)) map (_._2 forward GetAllItem)
+          {
+            log.info("all")
+            sfMap.filterKeys(_.isSameCollection(collection.getName, collection.getOwner)) map (_._2 forward GetAllItem)}
           else
             sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]())
         }
