@@ -120,7 +120,7 @@ class CollectionRange(private var collection: ActorbaseCollection, private var r
     * @return Boolean. True if the collection represented by the input parameters is the same as the collection
     *         represented by this object
     */
-  def isSameCollection(name: String, owner: String): Boolean ={
+  def isSameCollection(name: String, owner: String): Boolean = {
     (this.getCollectionName == name && this.getCollectionOwner == owner)
   }
 

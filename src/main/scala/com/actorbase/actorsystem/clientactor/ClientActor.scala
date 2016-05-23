@@ -32,8 +32,11 @@ package com.actorbase.actorsystem.clientactor
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
+import spray.can.Http
+
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.util.Try
 
 // import spray.http.HttpResponse
 // import spray.http._
@@ -96,6 +99,10 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
     }
   }
 
+  def handleHttpRequests: Receive = {
+    case _: Http.ConnectionClosed => Try(context.stop(self))
+  }
+
   // def handleResponses: Receive = {
   //   case HttpRequest(GET, Uri.Path("/collections/customers"), _, _, _) =>
   //     client = Some(sender)
@@ -111,6 +118,6 @@ class ClientActor(main: ActorRef) extends Actor with ActorLogging with RestApi w
 
   def httpReceive: Receive = runRoute(collections(main, "anonymous") ~ route(main) ~ login)
 
-  override def receive = httpReceive
+  override def receive = handleHttpRequests orElse httpReceive
 
 }

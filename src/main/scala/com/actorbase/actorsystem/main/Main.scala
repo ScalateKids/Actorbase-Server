@@ -60,10 +60,22 @@ import java.io._
   */
 object Main {
 
+  /**
+    * Props method, used to build an instance of Main actor
+    *
+    * @return an object of type Props, usable directly with an actorsystem running
+    */
   def props = Props[Main].withDispatcher("control-aware-dispatcher")
 
+  /** name of the sharded entity */
   def shardName = "mainActor"
 
+  /**
+    * ExtractShardId is a function needed by akka's cluster sharding extension in order to
+    * retrieve shard region ids while addressing messages between sharded actors
+    *
+    * @return a String representing an UUID of a shard-region where the actor belongs to
+    */
   val extractShardId: ExtractShardId = {
     case CreateCollection(collection) => (collection.getUUID.hashCode % 100).toString
     case RemoveItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
@@ -71,6 +83,12 @@ object Main {
     case GetItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
   }
 
+  /**
+    * ExtractEntityId is a function needed by akka's cluster sharding extension in order to
+    * retrieve entity actors ids while addressing messages
+    *
+    * @return a String representing an UUID of an entity actor inside a shard-region
+    */
   val extractEntityId: ExtractEntityId = {
     case msg: CreateCollection => (msg.collection.getUUID, msg)
     case msg: RemoveItemFrom => (msg.collection.getUUID, msg)
@@ -224,14 +242,13 @@ class Main extends Actor with ActorLogging with Stash {
     case GetItemFrom(collection, key) =>
       if (key.nonEmpty)
         sfMap.find(_._1.contains(key)) map (_._2 forward GetItem(key)) getOrElse (log.info(s"Key $key not found"))
-        // sfMap.filterKeys(_.contains(key)).head._2 forward GetItem(key) // STUB needed for stress-test
       else {
         requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
         (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
         // WIP: still completing
-        sfMap.find(x => (x._1.getCollectionName == collection.getName)) map { coll =>
+        sfMap.find(x => (x._1.isSameCollection(collection.getName, collection.getOwner))) map { coll =>
           if (coll._1.getCollection.getSize > 0)
-            sfMap.filterKeys(_.getCollectionName == collection.getName) map (_._2 forward GetAllItem)
+            sfMap.filterKeys(_.isSameCollection(collection.getName, collection.getOwner)) map (_._2 forward GetAllItem)
           else
             sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]())
         }
