@@ -36,7 +36,6 @@ import ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.storekeeper.messages._
 import com.actorbase.actorsystem.clientactor.messages.Response
-import com.actorbase.actorsystem.utils.KeyRange
 import com.actorbase.actorsystem.warehouseman.Warehouseman
 import com.actorbase.actorsystem.warehouseman.messages._
 import com.actorbase.actorsystem.storefinder.messages.{GetAllItemResponse, UpdateCollectionSize}

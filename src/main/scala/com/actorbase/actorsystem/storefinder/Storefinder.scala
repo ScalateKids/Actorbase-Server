@@ -32,7 +32,6 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.actor.{Actor, ActorRef, ActorLogging, Props}
-import akka.actor.Stash
 
 import akka.cluster.routing.ClusterRouterPool
 import akka.cluster.routing.ClusterRouterPoolSettings
@@ -48,7 +47,7 @@ import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.warehouseman.Warehouseman
 import com.actorbase.actorsystem.warehouseman.messages.RemoveSfFolder
 
-import com.actorbase.actorsystem.utils.{ActorbaseCollection, CollectionRange, KeyRange}
+import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 import scala.collection.immutable.TreeMap
 
@@ -65,7 +64,7 @@ object Storefinder {
   * @param range represent the range of the keys mappable in this storefinder
   * @param maxSize represent the max size of the collection
   */
-class Storefinder(private var collection: ActorbaseCollection) extends Actor with ActorLogging with Stash {
+class Storefinder(private var collection: ActorbaseCollection) extends Actor with ActorLogging {
 
   val storekeepers = context.actorOf(ConsistentHashingPool(20).props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
 

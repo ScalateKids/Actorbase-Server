@@ -47,7 +47,6 @@ import com.actorbase.actorsystem.utils.{KeyRange, ActorbaseCollection, Collectio
 
 import com.github.t3hnar.bcrypt._
 import org.mindrot.jbcrypt.BCrypt
-import akka.actor.Stash
 
 import java.io._
 
@@ -127,7 +126,7 @@ object Main {
   * @return
   * @throws
   */
-class Main extends Actor with ActorLogging with Stash {
+class Main extends Actor with ActorLogging {
   import Main._
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
@@ -146,7 +145,6 @@ class Main extends Actor with ActorLogging with Stash {
     ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
     var collection = ActorbaseCollection(name, owner)
     val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher") )
-    // var newCollectionRange = new CollectionRange(collection, new KeyRange("a", "z")) //TODO CAMBIARE Z CON MAX
     ufRef ! AddCollectionTo(owner, false, collection)
     sfMap += (collection -> sf)
     sf
