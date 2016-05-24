@@ -254,8 +254,8 @@ class Main extends Actor with ActorLogging {
       requestMap.find(_._1 == collection.getOwner) map { ref =>
         ref._2.find(_._1.compare(collection) == 0) map { colMap =>
           colMap._2 ++= items
-          // log.info(s"${colMap._2.size} - ${collection.getSize} - ${colMap._1.getSize}")
-          if (colMap._2.size == colMap._1.getSize) {
+          log.info(s"${colMap._2.size} - ${collection.getSize} - ${colMap._1.getSize}")
+          if (colMap._2.size == collection.getSize) {
             clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
             colMap._2.clear
             ref._2.-(collection)
