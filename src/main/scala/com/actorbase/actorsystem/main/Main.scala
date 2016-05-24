@@ -232,7 +232,7 @@ class Main extends Actor with ActorLogging {
           requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Any]())) getOrElse
           (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](coll._1 -> mutable.Map[String, Any]())))
           if (coll._1.getSize > 0)
-            sfMap.filterKeys(_.compareTo(collection) == 0) map (_._2 forward GetAllItem)
+            sfMap get collection map (_ forward GetAllItem) getOrElse log.info (s"MAIN: key $key not found")
           else
             sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]())
         }
