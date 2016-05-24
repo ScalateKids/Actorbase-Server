@@ -29,7 +29,7 @@
 
 package com.actorbase.actorsystem.main
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{ Actor, ActorLogging, ActorRef, PoisonPill, Props }
 import akka.cluster.sharding.ShardRegion
 import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
 
@@ -64,7 +64,7 @@ object Main {
     *
     * @return an object of type Props, usable directly with an actorsystem running
     */
-  def props = Props[Main].withDispatcher("control-aware-dispatcher")
+  def props = Props[Main]
 
   /** name of the sharded entity */
   def shardName = "mainActor"
@@ -77,6 +77,7 @@ object Main {
     */
   val extractShardId: ExtractShardId = {
     case CreateCollection(collection) => (collection.getUUID.hashCode % 100).toString
+    case RemoveCollection(uuid) => (uuid.hashCode % 100).toString
     case RemoveItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
     case Insert(collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
     case GetItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
@@ -90,6 +91,7 @@ object Main {
     */
   val extractEntityId: ExtractEntityId = {
     case msg: CreateCollection => (msg.collection.getUUID, msg)
+    case msg: RemoveCollection => (msg.uuid, msg)
     case msg: RemoveItemFrom => (msg.collection.getUUID, msg)
     case msg: Insert => (msg.collection.getUUID, msg)
     case msg: GetItemFrom => (msg.collection.getUUID, msg)
@@ -113,7 +115,7 @@ object Main {
 
   case class CreateCollection(collection: ActorbaseCollection)
 
-  case class RemoveCollection(name: String, owner: String)
+  case class RemoveCollection(uuid: String)
 
   case object InitUsers
 
@@ -209,7 +211,11 @@ class Main extends Actor with ActorLogging {
       * @param name a String representing the name of the collection
       * @param owner a String representing the owner of the collection
       */
-    case RemoveCollection(name, owner) =>
+    case RemoveCollection(uuid) =>
+      sfMap find (_._1.getUUID == uuid) map { coll =>
+        coll._2 ! PoisonPill
+        sfMap -= coll._1
+      } getOrElse log.warning(s"Collection with $uuid not found")
       //TODO da implementare
 
       //TODO questo messaggio dovrà rimuovere i file relativi agli storefinder tramite uso di warehouseman
@@ -223,7 +229,7 @@ class Main extends Actor with ActorLogging {
       */
     case GetItemFrom(collection, key) =>
       if (key.nonEmpty)
-        sfMap.find(_._1.compareTo(collection) == 0) map (_._2 forward GetItem(key)) getOrElse (log.info(s"Key $key not found"))
+        sfMap.find(_._1.compareTo(collection) == 0) map (_._2 forward GetItem(key)) getOrElse (log.warning(s"Key $key not found"))
       else {
         // requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
         // (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
@@ -232,7 +238,7 @@ class Main extends Actor with ActorLogging {
           requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Any]())) getOrElse
           (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](coll._1 -> mutable.Map[String, Any]())))
           if (coll._1.getSize > 0)
-            sfMap get collection map (_ forward GetAllItem) getOrElse log.info (s"MAIN: key $key not found")
+            sfMap get collection map (_ forward GetAllItem) getOrElse log.warning (s"MAIN: key $key not found")
           else
             sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]())
         }
@@ -260,8 +266,8 @@ class Main extends Actor with ActorLogging {
             colMap._2.clear
             ref._2.-(collection)
           }
-        } getOrElse (log.info("GetItemFromResponse: collectionMap not found"))
-      } getOrElse (log.info("GetItemFromResponse: refPair not found"))
+        } getOrElse (log.warning("GetItemFromResponse: collectionMap not found"))
+      } getOrElse (log.warning("GetItemFromResponse: refPair not found"))
 
     /**
       * Remove item from collection  message, given a key of type String,
@@ -272,9 +278,9 @@ class Main extends Actor with ActorLogging {
       *
       */
     case RemoveItemFrom(collection, key) =>
-      // TODO
       if (key.nonEmpty)
         sfMap.filterKeys(x => (x.getUUID == collection.getUUID)).head._2 ! RemoveItem(key)
+      // could make else branch and remove the entire collection
 
     /**
       * Add Contributor from collection, given username of Contributor and read
@@ -301,12 +307,12 @@ class Main extends Actor with ActorLogging {
       // need controls
       ufRef ! RemoveCollectionFrom(username, permission, ActorbaseCollection(collection, username))
 
-    case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
-      // log.info(s"MAIN: Update size ${collection.getOwner}")
-      // ufRef ! UpdateCollectionSizeTo(collection, increment)
-      sfMap.find(_._1 == collection) map (x => if (increment) x._1.incrementSize else x._1.decrementSize)
-      requestMap.values.map(x => x.map { m =>
-        if (m._1 == collection)
-          if (increment) m._1.incrementSize else m._1.decrementSize })
+    // case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
+    //   // log.info(s"MAIN: Update size ${collection.getOwner}")
+    //   // ufRef ! UpdateCollectionSizeTo(collection, increment)
+    //   sfMap.find(_._1 == collection) map (x => if (increment) x._1.incrementSize else x._1.decrementSize)
+    //   requestMap.values.map(x => x.map { m =>
+    //     if (m._1 == collection)
+    //       if (increment) m._1.incrementSize else m._1.decrementSize })
   }
 }

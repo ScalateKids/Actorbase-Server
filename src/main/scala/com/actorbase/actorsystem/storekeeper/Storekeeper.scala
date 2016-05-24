@@ -144,7 +144,7 @@ class Storekeeper extends Actor with ActorLogging {
         else if (!update && !data.contains(key))
           sender ! UpdateCollectionSize(true)
         else if (!update && data.contains(key)) {
-          log.info("SK: Duplicate key found, cannot insert")
+          log.warning("SK: Duplicate key found, cannot insert")
           done = false
         }
         done
