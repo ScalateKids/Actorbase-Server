@@ -29,7 +29,6 @@
 package com.actorbase.actorsystem.storekeeper
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, Props}
-import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
@@ -101,14 +100,12 @@ class Storekeeper (private val warehouseman: ActorRef) extends Actor with ActorL
       *
       */
     case getItem: GetItem  =>
-      // sender ! data.get(getItem.key).getOrElse("None").asInstanceOf[Array[Byte]]
       sender ! Response(data.get(getItem.key).getOrElse("None").toString())
 
     /**
       * GetAllItem message, this actor will send back the collection name and all the collection.
       */
     case GetAllItem(parent) =>
-      // TODO
       log.info("SK GetAllItems")
       parent ! GetAllItemResponse(sender, data)
 
@@ -154,7 +151,7 @@ class Storekeeper (private val warehouseman: ActorRef) extends Actor with ActorL
         done
       }
 
-      if(insertOrUpdate(ins.update, ins.key) == true)
+      if (insertOrUpdate(ins.update, ins.key) == true)
         context become running(data + (ins.key -> ins.value))
 
       /**

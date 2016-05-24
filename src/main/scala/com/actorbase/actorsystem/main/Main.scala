@@ -191,7 +191,7 @@ class Main extends Actor with ActorLogging {
       */
     case Insert(collection, key, value, update) =>
       import com.actorbase.actorsystem.storefinder.messages.Insert
-      sfMap.find(x => x._1.compareTo(collection) == 0) map (_._2 forward Insert(key, value, update)) getOrElse(
+      sfMap.find(x => x._1.compareTo(collection) == 0) map (_._2 forward Insert(key, value, update)) getOrElse (
         createCollection(collection.getName, collection.getOwner) forward Insert(key, value, update))
 
 
@@ -230,10 +230,8 @@ class Main extends Actor with ActorLogging {
         (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
         // WIP: still completing
         sfMap.find(x => x._1.compareTo(collection) == 0) map { coll =>
-          if (coll._1.getSize > 0) {
-            log.info("all")
+          if (coll._1.getSize > 0)
             sfMap.filterKeys(_.compareTo(collection) == 0) map (_._2 forward GetAllItem)
-          }
           else
             sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]())
         }

@@ -47,7 +47,9 @@ final case class Insert(key: String, value: Any, update: Boolean = false) extend
   override def consistentHashKey: Any = key
 }
 
-case class RemoveItem(key: String)
+final case class RemoveItem(key: String) extends ConsistentHashable {
+  override def consistentHashKey: Any = key
+}
 
 case class updateOwnerOfSK( newParent: ActorRef, newRange: KeyRange )
 

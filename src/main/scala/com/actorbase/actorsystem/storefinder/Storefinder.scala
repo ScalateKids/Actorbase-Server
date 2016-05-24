@@ -31,15 +31,13 @@
 
 package com.actorbase.actorsystem.storefinder
 
-import akka.actor.{Actor, ActorRef, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, Props}
 
 import akka.cluster.routing.ClusterRouterPool
 import akka.cluster.routing.ClusterRouterPoolSettings
-import akka.routing.{ ConsistentHashingPool, FromConfig }
+import akka.routing.ConsistentHashingPool
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
-
-// import com.typesafe.config.ConfigFactory.
 
 import com.actorbase.actorsystem.storefinder.messages._
 import com.actorbase.actorsystem.storekeeper.messages._
@@ -48,8 +46,6 @@ import com.actorbase.actorsystem.warehouseman.Warehouseman
 import com.actorbase.actorsystem.warehouseman.messages.RemoveSfFolder
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
-
-import scala.collection.immutable.TreeMap
 
 object Storefinder {
 
@@ -67,6 +63,8 @@ object Storefinder {
 class Storefinder(private var collection: ActorbaseCollection) extends Actor with ActorLogging {
 
   val storekeepers = context.actorOf(ConsistentHashingPool(20).props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
+  // val storekeepers = context.actorOf(new ClusterRouterPool(new ConsistentHashingPool(0),
+  //   new ClusterRouterPoolSettings(10000, 20, true, None)).props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
 
   /**
     * Insert description here
@@ -119,8 +117,7 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
       */
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem =>
       log.info("SF: remove")
-      // search for the right KeyRange to get the ActorRef of the needed SK
-      // skMap.filterKeys(_.contains(rem.key)) map (_._2 forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key))
+      storekeepers forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
 
     /**
       *
