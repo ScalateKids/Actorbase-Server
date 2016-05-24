@@ -35,7 +35,7 @@ import akka.actor.{Actor, ActorLogging, Props}
 
 import akka.cluster.routing.ClusterRouterPool
 import akka.cluster.routing.ClusterRouterPoolSettings
-import akka.routing.{ ConsistentHashingPool, FromConfig }
+import akka.routing.ConsistentHashingPool
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
 
@@ -63,7 +63,7 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
 
   // val storekeepers = context.actorOf(ConsistentHashingPool(20).props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
   val storekeepers = context.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
-    ClusterRouterPoolSettings(10000, 20, true, None)).props(Storekeeper.props), name = "storekeepers")
+    ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props), name = "storekeepers")
   // val storekeepers = context.actorOf(FromConfig.props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
 
   /**
