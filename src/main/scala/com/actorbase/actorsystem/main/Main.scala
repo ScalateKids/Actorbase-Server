@@ -191,9 +191,8 @@ class Main extends Actor with ActorLogging {
       */
     case Insert(collection, key, value, update) =>
       import com.actorbase.actorsystem.storefinder.messages.Insert
-      sfMap.find(x => x._1.compareTo(collection) == 0) map (_._2 forward Insert(key, value, update)) getOrElse (
-        createCollection(collection.getName, collection.getOwner) forward Insert(key, value, update))
-
+      sfMap.find(x => x._1.compareTo(collection) == 0) map (_._2 ! Insert(key, value, update)) getOrElse (
+        createCollection(collection.getName, collection.getOwner) ! Insert(key, value, update))
 
     /**
       * Create a collection in the system
@@ -226,10 +225,12 @@ class Main extends Actor with ActorLogging {
       if (key.nonEmpty)
         sfMap.find(_._1.compareTo(collection) == 0) map (_._2 forward GetItem(key)) getOrElse (log.info(s"Key $key not found"))
       else {
-        requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
-        (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
+        // requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
+        // (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
         // WIP: still completing
         sfMap.find(x => x._1.compareTo(collection) == 0) map { coll =>
+          requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Any]())) getOrElse
+          (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](coll._1 -> mutable.Map[String, Any]())))
           if (coll._1.getSize > 0)
             sfMap.filterKeys(_.compareTo(collection) == 0) map (_._2 forward GetAllItem)
           else
@@ -253,7 +254,8 @@ class Main extends Actor with ActorLogging {
       requestMap.find(_._1 == collection.getOwner) map { ref =>
         ref._2.find(_._1.compare(collection) == 0) map { colMap =>
           colMap._2 ++= items
-          if (colMap._2.size == collection.getSize) {
+          // log.info(s"${colMap._2.size} - ${collection.getSize} - ${colMap._1.getSize}")
+          if (colMap._2.size == colMap._1.getSize) {
             clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
             colMap._2.clear
             ref._2.-(collection)
@@ -272,7 +274,7 @@ class Main extends Actor with ActorLogging {
     case RemoveItemFrom(collection, key) =>
       // TODO
       if (key.nonEmpty)
-        sfMap.filterKeys(x => (x.getUUID == collection.getUUID)).head._2 forward RemoveItem(key)
+        sfMap.filterKeys(x => (x.getUUID == collection.getUUID)).head._2 ! RemoveItem(key)
 
     /**
       * Add Contributor from collection, given username of Contributor and read
@@ -301,6 +303,10 @@ class Main extends Actor with ActorLogging {
 
     case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
       // log.info(s"MAIN: Update size ${collection.getOwner}")
-      ufRef ! UpdateCollectionSizeTo(collection, increment)
+      // ufRef ! UpdateCollectionSizeTo(collection, increment)
+      sfMap.find(_._1 == collection) map (x => if (increment) x._1.incrementSize else x._1.decrementSize)
+      requestMap.values.map(x => x.map { m =>
+        if (m._1 == collection)
+          if (increment) m._1.incrementSize else m._1.decrementSize })
   }
 }

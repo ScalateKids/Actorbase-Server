@@ -117,14 +117,17 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
       */
     case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem =>
       log.info("SF: remove")
-      storekeepers forward com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
+      storekeepers ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
 
     /**
       *
       */
     case UpdateCollectionSize(increment) =>
       // log.info(s"SF: Update size ${collection.getOwner}")
-      context.parent ! com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment)
+      if (increment)
+        collection.incrementSize
+      else collection.decrementSize
+      // context.parent ! com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment)
 
     /**
       *
