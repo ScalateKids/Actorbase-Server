@@ -43,9 +43,7 @@ import scala.collection.immutable.TreeMap
 import scala.concurrent.duration._
 
 object Storekeeper {
-
-  def props(warehouseman: ActorRef): Props = Props(new Storekeeper(warehouseman))
-
+  def props: Props = Props[Storekeeper]
 }
 
 /**
@@ -55,11 +53,12 @@ object Storekeeper {
   * @param range
   * @param maxSize
   */
-class Storekeeper (private val warehouseman: ActorRef) extends Actor with ActorLogging {
+class Storekeeper extends Actor with ActorLogging {
 
   private val initDelay = 3000 seconds     // delay for the first persistence message to be sent
   private val intervalDelay = 15 minutes   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
+  private val warehouseman = context.actorOf(Warehouseman.props("name"))
 
   /**
     * Actor lifecycle method, initialize a scheduler to persist data after some time

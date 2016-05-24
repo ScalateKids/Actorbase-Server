@@ -99,7 +99,7 @@ object Main {
 
   case class Login(username: String)
 
-  case class Insert(collection: ActorbaseCollection, key: String, value: Any, update: Boolean = false)
+  case class Insert(collection: ActorbaseCollection, key: String, value: Array[Byte], update: Boolean = false)
 
   case class GetItemFrom(collection: ActorbaseCollection, key: String = "")
 
@@ -144,7 +144,7 @@ class Main extends Actor with ActorLogging {
     log.info(s"creating for $owner")
     ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
     var collection = ActorbaseCollection(name, owner)
-    val sf = context.actorOf(Storefinder.props(collection).withDispatcher("control-aware-dispatcher") )
+    val sf = context.actorOf(Storefinder.props(collection))
     ufRef ! AddCollectionTo(owner, false, collection)
     sfMap += (collection -> sf)
     sf

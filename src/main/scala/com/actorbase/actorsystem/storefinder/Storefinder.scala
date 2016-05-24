@@ -35,7 +35,7 @@ import akka.actor.{Actor, ActorLogging, Props}
 
 import akka.cluster.routing.ClusterRouterPool
 import akka.cluster.routing.ClusterRouterPoolSettings
-import akka.routing.ConsistentHashingPool
+import akka.routing.{ ConsistentHashingPool, FromConfig }
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
 
@@ -48,8 +48,7 @@ import com.actorbase.actorsystem.warehouseman.messages.RemoveSfFolder
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 object Storefinder {
-
-  def props(collection: ActorbaseCollection) : Props = Props(new Storefinder(collection))
+  def props(collection: ActorbaseCollection): Props = Props(new Storefinder(collection))
 }
 
 /**
@@ -62,9 +61,10 @@ object Storefinder {
   */
 class Storefinder(private var collection: ActorbaseCollection) extends Actor with ActorLogging {
 
-  val storekeepers = context.actorOf(ConsistentHashingPool(20).props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
-  // val storekeepers = context.actorOf(new ClusterRouterPool(new ConsistentHashingPool(0),
-  //   new ClusterRouterPoolSettings(10000, 20, true, None)).props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
+  // val storekeepers = context.actorOf(ConsistentHashingPool(20).props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
+  val storekeepers = context.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
+    ClusterRouterPoolSettings(10000, 20, true, None)).props(Storekeeper.props), name = "storekeepers")
+  // val storekeepers = context.actorOf(FromConfig.props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
 
   /**
     * Insert description here

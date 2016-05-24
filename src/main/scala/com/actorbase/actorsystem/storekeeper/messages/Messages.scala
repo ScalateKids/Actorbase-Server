@@ -43,14 +43,10 @@ final case class GetItem(key: String) extends ConsistentHashable {
   override def consistentHashKey: Any = key
 }
 
-final case class Insert(key: String, value: Any, update: Boolean = false) extends ConsistentHashable {
+final case class Insert(key: String, value: Array[Byte], update: Boolean = false) extends ConsistentHashable {
   override def consistentHashKey: Any = key
 }
 
 final case class RemoveItem(key: String) extends ConsistentHashable {
   override def consistentHashKey: Any = key
 }
-
-case class updateOwnerOfSK( newParent: ActorRef, newRange: KeyRange )
-
-case class DebugMaa(mainRange: KeyRange, sfRange: KeyRange)
