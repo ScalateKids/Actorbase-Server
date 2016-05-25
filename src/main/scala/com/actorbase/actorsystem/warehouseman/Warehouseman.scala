@@ -41,9 +41,12 @@ object Warehouseman {
 
 }
 
-class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLogging {
+class Warehouseman(collectionUuid: String = "namecollection-owner") extends Actor with ActorLogging {
 
+  private val wareUUID = java.util.UUID.randomUUID.toString
   private val rootFolder = "actorbasedata/"
+
+
 
   def receive = {
 
@@ -55,10 +58,10 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
       *
       * @param map a TreeMap representing Storekeeper data
       */
-    case Save(sfRange, range, map) =>
-      log.info("warehouseman: save")
+    case Save( map ) =>
+      log.info("warehouseman: save "+rootFolder+collectionUuid+"/"+wareUUID+".actb")
       val key = "Dummy implicit k"
-      val encryptedShardFile = new File(rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"+range.getMinRange+"-"+range.getMaxRange+".actb")
+      val encryptedShardFile = new File(rootFolder+collectionUuid+"/"+wareUUID+".actb")
       encryptedShardFile.getParentFile.mkdirs
       CryptoUtils.encrypt(key, map, encryptedShardFile)
       sender ! 0 // ok reply
@@ -69,17 +72,17 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
       * @param range a KeyRange representing the range of the file to delete
       */
     case Clean(sfRange, range) =>
-      val filePath = new File(rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"+range.getMinRange+"-"+range.getMaxRange+".actb").delete()
+      val filePath = new File(rootFolder+collectionUuid+"/"+wareUUID+".actb").delete()
 
     /**
       * Delete a folder of a Storefinder, usefull when a Storefinder duplicates
       *
       * @param sfRange a KeyRange representing the range of the storefinder that has to be deleted
       */
-    case RemoveSfFolder(sfRange) =>
+    /*case RemoveSfFolder(sfRange) =>
       val f = rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"
       removeAll(f)
-      self ! PoisonPill
+      self ! PoisonPill*/
 
     /**
       * Read a file from filesystem and decrypt the content
@@ -98,13 +101,13 @@ class Warehouseman(collectionShard: String = "shard") extends Actor with ActorLo
     *
     * @param path
     */
-  private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
+  /*private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
 
     def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
 
     getRecursively(new File(path)).foreach { f => f.delete() }
 
     val dir = new File(path).delete()
-  }
+  }*/
 
 }

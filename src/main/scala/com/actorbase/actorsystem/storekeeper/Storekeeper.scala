@@ -43,7 +43,10 @@ import scala.collection.immutable.TreeMap
 import scala.concurrent.duration._
 
 object Storekeeper {
+
   def props: Props = Props[Storekeeper]
+  def props(c: String): Props = Props(new Storekeeper(c))
+
 }
 
 /**
@@ -53,12 +56,12 @@ object Storekeeper {
   * @param range
   * @param maxSize
   */
-class Storekeeper extends Actor with ActorLogging {
+class Storekeeper(private val collectionUUID: String) extends Actor with ActorLogging {
 
-  private val initDelay = 3000 seconds     // delay for the first persistence message to be sent
-  private val intervalDelay = 15 minutes   // interval in-between each persistence message has to be sent
+  private val initDelay = 60 seconds     // delay for the first persistence message to be sent
+  private val intervalDelay = 60 seconds //15 minutes   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
-  private val warehouseman = context.actorOf(Warehouseman.props("name"))
+  private val warehouseman = context.actorOf(Warehouseman.props(collectionUUID))
 
   /**
     * Actor lifecycle method, initialize a scheduler to persist data after some time
@@ -70,12 +73,12 @@ class Storekeeper extends Actor with ActorLogging {
     */
   override def preStart(): Unit = {
     // log.info("SK prestarted")
-    // scheduler = context.system.scheduler.schedule(
-    //   initialDelay = initDelay,
-    //   interval = intervalDelay,
-    //   receiver = self,
-    //   message = Persist
-    // )
+     scheduler = context.system.scheduler.schedule(
+       initialDelay = initDelay,
+       interval = intervalDelay,
+       receiver = self,
+       message = Persist
+     )
   }
 
   def receive = running(TreeMap[String, Any]().empty)
@@ -156,7 +159,7 @@ class Storekeeper extends Actor with ActorLogging {
       /**
         * Persist data to disk
         */
-      // case Persist => warehouseman ! Save( parentRange, range, data)
+      case Persist => warehouseman ! Save( data )
 
   }
 

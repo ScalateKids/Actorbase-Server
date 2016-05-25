@@ -36,7 +36,7 @@ import java.io.File
 
 case class Init() //class because it will have parameters
 
-case class Save( sfRange:KeyRange, range: KeyRange, map: TreeMap[String, Any]) //class because it will have parameters
+case class Save( map: TreeMap[String, Any])
 
 case class Clean( sfRange: KeyRange, range: KeyRange)
 
