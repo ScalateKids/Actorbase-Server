@@ -78,7 +78,7 @@ object Main {
   val extractShardId: ExtractShardId = {
     case CreateCollection(collection) => (collection.getUUID.hashCode % 100).toString
     case RemoveCollection(uuid) => (uuid.hashCode % 100).toString
-    case RemoveItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
+    case RemoveItemFrom(uuid, _) => (uuid.hashCode % 100).toString
     case Insert(collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
     case GetItemFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
   }
@@ -92,7 +92,7 @@ object Main {
   val extractEntityId: ExtractEntityId = {
     case msg: CreateCollection => (msg.collection.getUUID, msg)
     case msg: RemoveCollection => (msg.uuid, msg)
-    case msg: RemoveItemFrom => (msg.collection.getUUID, msg)
+    case msg: RemoveItemFrom => (msg.uuid, msg)
     case msg: Insert => (msg.collection.getUUID, msg)
     case msg: GetItemFrom => (msg.collection.getUUID, msg)
   }
@@ -107,7 +107,7 @@ object Main {
 
   case class GetItemFromResponse(clientRef: ActorRef, collection: ActorbaseCollection, items: TreeMap[String, Any])
 
-  case class RemoveItemFrom(collection: ActorbaseCollection, key: String)
+  case class RemoveItemFrom(uuid: String, key: String)
 
   case class AddContributor(username: String, permission: Boolean = false , collection: String)
 
@@ -132,8 +132,8 @@ class Main extends Actor with ActorLogging {
   import Main._
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
-  private var sfMap = new TreeMap[ActorbaseCollection, ActorRef]()
-  private var requestMap = new TreeMap[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
+  private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
+  private var requestMap = Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
     * Method that create a collection in Actorbase.
@@ -142,12 +142,12 @@ class Main extends Actor with ActorLogging {
     * @param owner the owner of the collection
     * @return an ActorRef pointing to the Storefinder just created that maps the collection
     */
-  private def createCollection(name: String, owner: String): ActorRef = {
-    log.info(s"creating for $owner")
-    ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
-    var collection = ActorbaseCollection(name, owner)
+  private def createCollection(collection: ActorbaseCollection): ActorRef = {
+    log.info(s"creating for ${collection.getOwner}")
+    // ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
+    // var collection = ActorbaseCollection(name, owner)
     val sf = context.actorOf(Storefinder.props(collection))
-    ufRef ! AddCollectionTo(owner, false, collection)
+    // ufRef ! AddCollectionTo(owner, false, collection)
     sfMap += (collection -> sf)
     sf
   }
@@ -194,7 +194,7 @@ class Main extends Actor with ActorLogging {
     case Insert(collection, key, value, update) =>
       import com.actorbase.actorsystem.storefinder.messages.Insert
       sfMap.find(x => x._1.compareTo(collection) == 0) map (_._2 ! Insert(key, value, update)) getOrElse (
-        createCollection(collection.getName, collection.getOwner) ! Insert(key, value, update))
+        createCollection(collection) ! Insert(key, value, update))
 
     /**
       * Create a collection in the system
@@ -202,7 +202,7 @@ class Main extends Actor with ActorLogging {
       * @param name a String representing the name of the collection
       * @param owner a String representing the owner of the collection
       */
-    case CreateCollection(collection) => createCollection(collection.getName, collection.getOwner)
+    case CreateCollection(collection) => createCollection(collection)
       // TODO avvisare lo userkeeper che a sua volta deve avvisare il client
 
     /**
@@ -277,9 +277,9 @@ class Main extends Actor with ActorLogging {
       * @param key a String representing the key to be deleted
       *
       */
-    case RemoveItemFrom(collection, key) =>
+    case RemoveItemFrom(uuid, key) =>
       if (key.nonEmpty)
-        sfMap.filterKeys(x => (x.getUUID == collection.getUUID)).head._2 ! RemoveItem(key)
+        sfMap.filterKeys(x => (x.getUUID == uuid)).head._2 ! RemoveItem(key)
       // could make else branch and remove the entire collection
 
     /**
