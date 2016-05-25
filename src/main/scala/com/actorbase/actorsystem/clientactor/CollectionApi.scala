@@ -83,7 +83,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         delete {
           complete {
             //TODO controllare, se collection non esiste, inutile instradare
-            main ! RemoveItemFrom(coll, key)
+            main ! RemoveItemFrom(owner + collection, key)
             "Remove complete"
           }
         } ~
