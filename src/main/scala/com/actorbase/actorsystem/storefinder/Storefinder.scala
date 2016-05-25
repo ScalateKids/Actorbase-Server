@@ -39,12 +39,11 @@ import akka.routing.ConsistentHashingPool
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
 
-import com.actorbase.actorsystem.storefinder.messages._
-import com.actorbase.actorsystem.storekeeper.messages._
+import com.actorbase.actorsystem.messages.StorefinderMessages._
+import com.actorbase.actorsystem.messages.StorekeeperMessages.{GetItem, GetAll, InsertItem, RemoveItem}
+import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 import com.actorbase.actorsystem.storekeeper.Storekeeper
 import com.actorbase.actorsystem.warehouseman.Warehouseman
-import com.actorbase.actorsystem.warehouseman.messages.RemoveSfFolder
-
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 object Storefinder {
@@ -75,66 +74,79 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
     */
   def receive: Receive = {
 
-    /**
-      *
-      */
-    case com.actorbase.actorsystem.storefinder.messages.Init(name, manager, range) =>
-      log.info("SF: init")
+    case message: StorefinderMessage => message match {
+
+      /**
+        *
+        */
+      // case com.actorbase.actorsystem.storefinder.messages.Init(name, manager, range) =>
+      //   log.info("SF: init")
 
 
-    /**
-      * Insert message, insert a key/value into a designed collection
-      *
-      * @param key a String representing the new key to be inserted
-      * @param value a Any object type representing the value to be inserted
-      * with associated key, default to Array[Byte] type
-      * @param update a Boolean flag, define the insert behavior (with or without
-      * updating the value)
-      *
-      */
-    case ins: com.actorbase.actorsystem.storefinder.messages.Insert =>
-      log.info("SF: inserting " + ins.key)
-      storekeepers ! (ConsistentHashableEnvelope(message = com.actorbase.actorsystem.storekeeper.messages.Insert(ins.key, ins.value, ins.update), hashKey = ins.key))
+      /**
+        * Insert message, insert a key/value into a designed collection
+        *
+        * @param key a String representing the new key to be inserted
+        * @param value a Any object type representing the value to be inserted
+        * with associated key, default to Array[Byte] type
+        * @param update a Boolean flag, define the insert behavior (with or without
+        * updating the value)
+        *
+        */
+      case ins: Insert =>
+        log.info("SF: inserting " + ins.key)
+        storekeepers ! (ConsistentHashableEnvelope(message = InsertItem(ins.key, ins.value, ins.update), hashKey = ins.key))
 
-    /**
-      * Message that search for a given key
-      */
-    case get: com.actorbase.actorsystem.storefinder.messages.GetItem =>
-      log.info(s"SF: getItem of key -> ${get.key}")
-      storekeepers forward (ConsistentHashableEnvelope(message = com.actorbase.actorsystem.storekeeper.messages.GetItem(get.key), hashKey = get.key))
+      /**
+        * Message that search for a given key
+        */
+      case Get(key) =>
+        log.info(s"SF: getItem of key -> ${key}")
+        storekeepers forward (ConsistentHashableEnvelope(message = GetItem(key), hashKey = key))
 
-    /**
-      * Message that returns the entire collection mapped by this Storefinder
-      */
-    case com.actorbase.actorsystem.storefinder.messages.GetAllItem =>
-      log.info("SF: getallitem")
-      storekeepers forward Broadcast(com.actorbase.actorsystem.storekeeper.messages.GetAllItem(self))
+      /**
+        * Message that returns the entire collection mapped by this Storefinder
+        */
+      case GetAllItems =>
+        log.info("SF: getallitem")
+        storekeepers forward Broadcast(GetAll(self))
 
-    /**
-      * Message that removes an item with the given key
-      *
-      * @param key a String representing the key of the item to be removed
-      */
-    case rem: com.actorbase.actorsystem.storefinder.messages.RemoveItem =>
-      log.info("SF: remove")
-      storekeepers ! com.actorbase.actorsystem.storekeeper.messages.RemoveItem(rem.key)
+      /**
+        * Message that removes an item with the given key
+        *
+        * @param key a String representing the key of the item to be removed
+        */
+      case rem: Remove =>
+        log.info("SF: remove")
+        storekeepers ! RemoveItem(rem.key)
 
-    /**
-      *
-      */
-    case UpdateCollectionSize(increment) =>
-      // log.info(s"SF: Update size ${collection.getOwner}")
-      if (increment)
-        collection.incrementSize
-      else collection.decrementSize
-      // context.parent ! com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment)
+      /**
+        * Update the size of the collection that this storefinder represents,
+        * increasing it if a insert is performed, decreasing it in case of
+        * a remove
+        *
+        * @param increment a Boolean value representing whether the collection
+        * represented by this storefinder is increased in size by an insert operation
+        * or decreased by a remove operation
+        */
+      case UpdateCollectionSize(increment) =>
+        // log.info(s"SF: Update size ${collection.getOwner}")
+        if (increment)
+          collection.incrementSize
+        else collection.decrementSize
 
-    /**
-      *
-      */
-    case GetAllItemResponse(clientRef, items) =>
-      context.parent ! com.actorbase.actorsystem.main.Main.GetItemFromResponse(clientRef, collection, items)
+      /**
+        * Await for storekeeper entire partial map returning, and
+        * forward it to main actor
+        *
+        * @param clientRef an ActorRef pointing to the client who sent the request
+        * @param items a Map[String, Any] containing all key-value pair of the partial
+        * collection contained inside a single storekeeper, receive order is unpredictable
+        */
+      case PartialMapTransaction(clientRef, items) =>
+        context.parent ! CompleteTransaction(clientRef, collection, items)
 
+    }
   }
 
 }

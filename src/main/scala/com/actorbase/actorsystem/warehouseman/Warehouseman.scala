@@ -32,7 +32,7 @@ package com.actorbase.actorsystem.warehouseman
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import java.io._
 
-import com.actorbase.actorsystem.warehouseman.messages._
+import com.actorbase.actorsystem.messages.Warehouseman._
 import com.actorbase.actorsystem.utils.CryptoUtils
 
 object Warehouseman {
@@ -41,7 +41,7 @@ object Warehouseman {
 
 }
 
-class Warehouseman(collectionUuid: String = "namecollection-owner") extends Actor with ActorLogging {
+class Warehouseman(collectionUUID: String = "namecollection-owner") extends Actor with ActorLogging {
 
   private val wareUUID = java.util.UUID.randomUUID.toString
   private val rootFolder = "actorbasedata/"
@@ -50,64 +50,65 @@ class Warehouseman(collectionUuid: String = "namecollection-owner") extends Acto
 
   def receive = {
 
-    case Init => log.info("warehouseman: init")
+    case message: WarehousemanMessage => message match {
 
-    /**
-      * Save a shard of a collection represented by the TreeMap stored by a
-      * Storekeeper
-      *
-      * @param map a TreeMap representing Storekeeper data
-      */
-    case Save( map ) =>
-      log.info("warehouseman: save "+rootFolder+collectionUuid+"/"+wareUUID+".actb")
-      val key = "Dummy implicit k"
-      val encryptedShardFile = new File(rootFolder+collectionUuid+"/"+wareUUID+".actb")
-      encryptedShardFile.getParentFile.mkdirs
-      CryptoUtils.encrypt(key, map, encryptedShardFile)
-      sender ! 0 // ok reply
+      // case Init => log.info("warehouseman: init")
 
-    /**
-      * Delete a file with the Range with the keys passed in
-      *
-      * @param range a KeyRange representing the range of the file to delete
-      */
-    case Clean(sfRange, range) =>
-      val filePath = new File(rootFolder+collectionUuid+"/"+wareUUID+".actb").delete()
+      /**
+        * Save a shard of a collection represented by the TreeMap stored by a
+        * Storekeeper
+        *
+        * @param map a TreeMap representing Storekeeper data
+        */
+      case Save(map) =>
+        log.info("warehouseman: save " + rootFolder + collectionUUID + "/" + wareUUID + ".actb")
+        val key = "Dummy implicit k"
+        val encryptedShardFile = new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb")
+        encryptedShardFile.getParentFile.mkdirs
+        CryptoUtils.encrypt(key, map, encryptedShardFile)
+        sender ! 0 // ok reply
 
-    /**
-      * Delete a folder of a Storefinder, usefull when a Storefinder duplicates
-      *
-      * @param sfRange a KeyRange representing the range of the storefinder that has to be deleted
-      */
-    /*case RemoveSfFolder(sfRange) =>
-      val f = rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"
-      removeAll(f)
-      self ! PoisonPill*/
+      /**
+        * Delete a file with the Range with the keys passed in
+        *
+        * @param range a KeyRange representing the range of the file to delete
+        */
+      case Clean => new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
 
-    /**
-      * Read a file from filesystem and decrypt the content
-      * extracting the map shard contained
-      *
-      * @param f an encrypted file containing the shard of the collection
-      */
-    case Read(f) =>
-      log.info("warehouseman: read")
-      val key = "Dummy implicit k"
-      val m = CryptoUtils.decrypt(key, f)
-      sender ! m // ok reply
+        /**
+          * Delete a folder of a Storefinder, usefull when a Storefinder duplicates
+          *
+          * @param sfRange a KeyRange representing the range of the storefinder that has to be deleted
+          */
+        /*case RemoveSfFolder(sfRange) =>
+         val f = rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"
+         removeAll(f)
+         self ! PoisonPill*/
+
+      /**
+        * Read a file from filesystem and decrypt the content
+        * extracting the map shard contained
+        *
+        * @param f an encrypted file containing the shard of the collection
+        */
+      case Read(f) =>
+        log.info("warehouseman: read")
+        val key = "Dummy implicit k"
+        val m = CryptoUtils.decrypt(key, f)
+        sender ! m // ok reply
+    }
+
+      /**
+        *
+        * @param path
+        */
+      /*private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
+
+       def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+
+       getRecursively(new File(path)).foreach { f => f.delete() }
+
+       val dir = new File(path).delete()
+       }*/
   }
-
-  /**
-    *
-    * @param path
-    */
-  /*private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
-
-    def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
-
-    getRecursively(new File(path)).foreach { f => f.delete() }
-
-    val dir = new File(path).delete()
-  }*/
-
 }

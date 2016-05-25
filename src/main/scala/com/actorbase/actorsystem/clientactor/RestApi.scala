@@ -38,7 +38,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.main.Main.{CreateCollection, Insert, GetItemFrom, RemoveItemFrom}
+// import com.actorbase.actorsystem.main.Main.{CreateCollection, Insert, GetItemFrom, RemoveItemFrom}
+import com.actorbase.actorsystem.messages.MainMessages.{CreateCollection, InsertTo, GetFrom, RemoveFrom}
 import com.actorbase.actorsystem.main.messages._
 import com.actorbase.actorsystem.clientactor.messages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
@@ -79,7 +80,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
     path("actorbase" / "find" / "\\S+".r / "\\S+".r ) { (collection, key) =>
       get {
         complete {
-          main.ask(GetItemFrom(ActorbaseCollection(collection, "anonymous"), key))(5 seconds).mapTo[Response]
+          main.ask(GetFrom(ActorbaseCollection(collection, "anonymous"), key))(5 seconds).mapTo[Response]
         }
       }
     } ~
@@ -102,7 +103,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
             val key = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()
             // tmpkey = tmpkey.replaceAll("[0-9]", "x") // tolgo i numeri, non si possono ancora mettere nelle chiavi
             // val key = tmpkey.replaceAll("z", "y") // tolgo le z, se sono come prime lettere spacca tutto
-            main ! Insert(coll, key , s"value of $key".getBytes, false)
+            main ! InsertTo(coll, key , s"value of $key".getBytes, false)
             Thread.sleep(millisecs) // aspettando 10ms x ogni insert non ci sono problemi, con meno spesso rompe tutto
           }
           "multiinserted!"

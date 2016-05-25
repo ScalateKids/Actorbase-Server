@@ -31,7 +31,8 @@ package com.actorbase.actorsystem.clientactor
 import akka.actor.ActorRef
 import akka.pattern.ask
 
-import com.actorbase.actorsystem.main.Main.Login
+// import com.actorbase.actorsystem.main.Main.Login
+import com.actorbase.actorsystem.messages.MainMessages.Login
 
 import com.github.t3hnar.bcrypt._
 import org.mindrot.jbcrypt.BCrypt

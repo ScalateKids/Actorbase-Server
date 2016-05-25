@@ -33,11 +33,11 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, Props}
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 
-import com.actorbase.actorsystem.storekeeper.messages._
+import com.actorbase.actorsystem.messages.StorekeeperMessages._
+import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransaction, UpdateCollectionSize}
 import com.actorbase.actorsystem.clientactor.messages.Response
 import com.actorbase.actorsystem.warehouseman.Warehouseman
 import com.actorbase.actorsystem.warehouseman.messages._
-import com.actorbase.actorsystem.storefinder.messages.{GetAllItemResponse, UpdateCollectionSize}
 
 import scala.collection.immutable.TreeMap
 import scala.concurrent.duration._
@@ -58,8 +58,8 @@ object Storekeeper {
   */
 class Storekeeper(private val collectionUUID: String) extends Actor with ActorLogging {
 
-  private val initDelay = 60 seconds     // delay for the first persistence message to be sent
-  private val intervalDelay = 60 seconds //15 minutes   // interval in-between each persistence message has to be sent
+  private val initDelay = 60 seconds       // delay for the first persistence message to be sent
+  private val intervalDelay = 60 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props(collectionUUID))
 
@@ -80,8 +80,6 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
     )
   }
 
-  def receive = running(TreeMap[String, Any]().empty)
-
   /**
     * Actor lifecycle method, cancel the scheduler in order to not send persistence
     * messages to the void
@@ -90,76 +88,79 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
     * @return
     * @throws
     */
-  // override def postStop(): Unit = scheduler.cancel()
+  override def postStop(): Unit = scheduler.cancel()
+
+  def receive = running(TreeMap[String, Any]().empty)
 
   def running(data: TreeMap[String, Any]): Receive = {
 
-    /**
-      * GetItem message, this actor will send back a value associated with the input key
-      *
-      * @param key a String representing the key of the item to be returned (sta roba sarà da cambiare)
-      *
-      */
-    case getItem: GetItem  =>
-      sender ! Response(data.get(getItem.key).getOrElse("None").toString())
-
-    /**
-      * GetAllItem message, this actor will send back the collection name and all the collection.
-      */
-    case GetAllItem(parent) =>
-      // log.info("SK GetAllItems")
-      parent ! GetAllItemResponse(sender, data)
-
-    /**
-      * RemoveItem message, when the actor receive this message it will erase the item associated with the
-      * key in input. This method doesn't throw an exception if the item is not present.
-      */
-    case rem: RemoveItem =>
-      sender ! UpdateCollectionSize(false)
-      context become running(data - rem.key)
-
-    /**
-      * Insert message, insert a key/value into a designed collection
-      *
-      * @param key a String representing the new key to be inserted
-      * @param value a Any object type representing the value to be inserted
-      * with associated key, default to Array[Byte] type
-      * @param update a Boolean flag, define the insert behavior (with or without
-      * updating the value)
-      *
-      */
-    case ins: Insert =>
-      // log.info("SK: Inserting " + ins.key)
+    case message: StorekeeperMessage => message match {
 
       /**
-        * private method that insert an item to the collection, can allow the update of the item or not
-        * changing the param update
+        * GetItem message, this actor will send back a value associated with the input key
         *
-        * @param update boolean. 1 if the insert allow an update, 0 otherwise
-        * @param key String representing the key of the item
-        * @param value Any representing the value of the item
+        * @param key a String representing the key of the item to be returned (sta roba sarà da cambiare)
+        *
         */
-      def insertOrUpdate(update: Boolean, key: String): Boolean = {
-        var done = true
-        if (update)
-          sender ! UpdateCollectionSize(true)
-        else if (!update && !data.contains(key))
-          sender ! UpdateCollectionSize(true)
-        else if (!update && data.contains(key)) {
-          log.warning("SK: Duplicate key found, cannot insert")
-          done = false
+      case GetItem(key)  =>
+        sender ! Response(data.get(key).getOrElse("None").toString())
+
+      /**
+        * GetAllItem message, this actor will send back the collection name and all the collection.
+        */
+      case GetAll(parent) =>
+        parent ! PartialMapTransaction(sender, data)
+
+      /**
+        * RemoveItem message, when the actor receive this message it will erase the item associated with the
+        * key in input. This method doesn't throw an exception if the item is not present.
+        */
+      case RemoveItem(key) =>
+        if (data contains(key)) {
+          sender ! UpdateCollectionSize(false)
+          context become running(data - key)
         }
-        done
-      }
 
-      if (insertOrUpdate(ins.update, ins.key) == true)
-        context become running(data + (ins.key -> ins.value))
+      /**
+        * Insert message, insert a key/value into a designed collection
+        *
+        * @param key a String representing the new key to be inserted
+        * @param value a Any object type representing the value to be inserted
+        * with associated key, default to Array[Byte] type
+        * @param update a Boolean flag, define the insert behavior (with or without
+        * updating the value)
+        *
+        */
+      case ins: InsertItem =>
+        log.info("SK: Inserting " + ins.key)
 
-    /**
-      * Persist data to disk
-      */
-    case Persist => warehouseman ! Save( data )
+        /**
+          * private method that insert an item to the collection, can allow the update of the item or not
+          * changing the param update
+          *
+          * @param update boolean. 1 if the insert allow an update, 0 otherwise
+          * @param key String representing the key of the item
+          * @param value Any representing the value of the item
+          */
+        def insertOrUpdate(update: Boolean, key: String): Boolean = {
+          var done = true
+          if (!update && !data.contains(key))
+            sender ! UpdateCollectionSize(true)
+          else if (!update && data.contains(key)) {
+            log.warning("SK: Duplicate key found, cannot insert")
+            done = false
+          }
+          done
+        }
 
+        if (insertOrUpdate(ins.update, ins.key) == true)
+          context become running(data + (ins.key -> ins.value))
+
+      /**
+        * Persist data to disk
+        */
+      case Persist => warehouseman ! Save( data )
+
+    }
   }
-
 }
