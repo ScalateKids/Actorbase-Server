@@ -55,7 +55,8 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
 
   implicit val system = context.system
   IO(Http)(system) ! Http.Bind(self, interface = address, port = listenPort)
-  private val nothing: Unit = loadData
+
+  private val initLoad: Unit = loadData
 
   /**
     *
@@ -79,6 +80,7 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
               println("FILE "+x.getName)
               var dataShard = CryptoUtils.decrypt("Dummy implicit k", x)
               dataShard.foreach {
+                // should insert every pair
                 case(k, v) => println("key is "+k+" value is "+v)
               }
             }
