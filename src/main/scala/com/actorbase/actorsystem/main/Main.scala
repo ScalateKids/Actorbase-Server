@@ -229,14 +229,14 @@ class Main extends Actor with ActorLogging {
       */
     case GetItemFrom(collection, key) =>
       if (key.nonEmpty)
-        sfMap.find(_._1.compareTo(collection) == 0) map (_._2 forward GetItem(key)) getOrElse (log.warning(s"Key $key not found"))
+        sfMap.find(_._1.compareTo(collection) == 0) map (_._2 forward GetItem(key)) getOrElse log.warning(s"Key $key not found")
       else {
         // requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
         // (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
         // WIP: still completing
         sfMap.find(x => x._1.compareTo(collection) == 0) map { coll =>
-          requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Any]())) getOrElse
-          (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](coll._1 -> mutable.Map[String, Any]())))
+          requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Any]())) getOrElse (
+            requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](coll._1 -> mutable.Map[String, Any]())))
           if (coll._1.getSize > 0)
             sfMap get collection map (_ forward GetAllItem) getOrElse log.warning (s"MAIN: key $key not found")
           else
@@ -266,8 +266,8 @@ class Main extends Actor with ActorLogging {
             colMap._2.clear
             ref._2.-(collection)
           }
-        } getOrElse (log.warning("GetItemFromResponse: collectionMap not found"))
-      } getOrElse (log.warning("GetItemFromResponse: refPair not found"))
+        } getOrElse log.warning("GetItemFromResponse: collectionMap not found")
+      } getOrElse log.warning("GetItemFromResponse: refPair not found")
 
     /**
       * Remove item from collection  message, given a key of type String,
@@ -307,12 +307,12 @@ class Main extends Actor with ActorLogging {
       // need controls
       ufRef ! RemoveCollectionFrom(username, permission, ActorbaseCollection(collection, username))
 
-    // case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
-    //   // log.info(s"MAIN: Update size ${collection.getOwner}")
-    //   // ufRef ! UpdateCollectionSizeTo(collection, increment)
-    //   sfMap.find(_._1 == collection) map (x => if (increment) x._1.incrementSize else x._1.decrementSize)
-    //   requestMap.values.map(x => x.map { m =>
-    //     if (m._1 == collection)
-    //       if (increment) m._1.incrementSize else m._1.decrementSize })
+      // case com.actorbase.actorsystem.main.messages.UpdateCollectionSize(collection, increment) =>
+      //   // log.info(s"MAIN: Update size ${collection.getOwner}")
+      //   // ufRef ! UpdateCollectionSizeTo(collection, increment)
+      //   sfMap.find(_._1 == collection) map (x => if (increment) x._1.incrementSize else x._1.decrementSize)
+      //   requestMap.values.map(x => x.map { m =>
+      //     if (m._1 == collection)
+      //       if (increment) m._1.incrementSize else m._1.decrementSize })
   }
 }
