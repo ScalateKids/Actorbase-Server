@@ -132,8 +132,8 @@ class Main extends Actor with ActorLogging {
   import Main._
 
   private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
-  private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
-  private var requestMap = Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
+  private var sfMap = new TreeMap[ActorbaseCollection, ActorRef]().empty
+  private var requestMap = new TreeMap[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
     * Method that create a collection in Actorbase.
@@ -193,7 +193,7 @@ class Main extends Actor with ActorLogging {
       */
     case Insert(collection, key, value, update) =>
       import com.actorbase.actorsystem.storefinder.messages.Insert
-      sfMap.find(x => x._1.compareTo(collection) == 0) map (_._2 ! Insert(key, value, update)) getOrElse (
+      sfMap.find(x => x._1.compare(collection) == 0) map (_._2 ! Insert(key, value, update)) getOrElse (
         createCollection(collection) ! Insert(key, value, update))
 
     /**
@@ -216,7 +216,6 @@ class Main extends Actor with ActorLogging {
         coll._2 ! PoisonPill
         sfMap -= coll._1
       } getOrElse log.warning(s"Collection with $uuid not found")
-      //TODO da implementare
 
       //TODO questo messaggio dovrà rimuovere i file relativi agli storefinder tramite uso di warehouseman
 
@@ -229,12 +228,10 @@ class Main extends Actor with ActorLogging {
       */
     case GetItemFrom(collection, key) =>
       if (key.nonEmpty)
-        sfMap.find(_._1.compareTo(collection) == 0) map (_._2 forward GetItem(key)) getOrElse log.warning(s"Key $key not found")
+        sfMap.find(_._1.compare(collection) == 0) map (_._2 forward GetItem(key)) getOrElse log.warning(s"Key $key not found")
       else {
-        // requestMap.find(_._1 == collection.getOwner) map (_._2 += (collection -> mutable.Map[String, Any]())) getOrElse
-        // (requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](collection -> mutable.Map[String, Any]())))
         // WIP: still completing
-        sfMap.find(x => x._1.compareTo(collection) == 0) map { coll =>
+        sfMap.find(x => x._1.compare(collection) == 0) map { coll =>
           requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Any]())) getOrElse (
             requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](coll._1 -> mutable.Map[String, Any]())))
           if (coll._1.getSize > 0)

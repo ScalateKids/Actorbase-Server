@@ -72,13 +72,12 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
     * @throws
     */
   override def preStart(): Unit = {
-    // log.info("SK prestarted")
-     scheduler = context.system.scheduler.schedule(
-       initialDelay = initDelay,
-       interval = intervalDelay,
-       receiver = self,
-       message = Persist
-     )
+    scheduler = context.system.scheduler.schedule(
+      initialDelay = initDelay,
+      interval = intervalDelay,
+      receiver = self,
+      message = Persist
+    )
   }
 
   def receive = running(TreeMap[String, Any]().empty)
@@ -108,7 +107,7 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
       * GetAllItem message, this actor will send back the collection name and all the collection.
       */
     case GetAllItem(parent) =>
-      log.info("SK GetAllItems")
+      // log.info("SK GetAllItems")
       parent ! GetAllItemResponse(sender, data)
 
     /**
@@ -130,7 +129,7 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
       *
       */
     case ins: Insert =>
-      log.info("SK: Inserting " + ins.key)
+      // log.info("SK: Inserting " + ins.key)
 
       /**
         * private method that insert an item to the collection, can allow the update of the item or not
@@ -156,10 +155,10 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
       if (insertOrUpdate(ins.update, ins.key) == true)
         context become running(data + (ins.key -> ins.value))
 
-      /**
-        * Persist data to disk
-        */
-      case Persist => warehouseman ! Save( data )
+    /**
+      * Persist data to disk
+      */
+    case Persist => warehouseman ! Save( data )
 
   }
 
