@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -54,6 +55,53 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
 
   implicit val system = context.system
   IO(Http)(system) ! Http.Bind(self, interface = address, port = listenPort)
+  private val nothing: Unit = loadData
+
+  /**
+    *
+    */
+  def loadData: Unit = {
+    import com.actorbase.actorsystem.utils.CryptoUtils
+    import java.io.File
+
+    val root = new File("actorbasedata/")
+
+    println("\n LOADING ......... ")
+    if (root.exists && root.isDirectory) {
+      log.info("dirs")
+      root.listFiles.filter(_.isDirectory).foreach{
+        x => {
+          // should create an ActorbaseCollection foreach one of this
+          log.info("FOLDER "+x.getName)
+          x.listFiles.filter(_.isFile).foreach{
+            x => {
+              // should insert all the items in the files
+              println("FILE "+x.getName)
+              var dataShard = CryptoUtils.decrypt("Dummy implicit k", x)
+              dataShard.foreach {
+                case(k, v) => println("key is "+k+" value is "+v)
+              }
+            }
+          }
+        }
+      }
+    } else {
+      log.info("Directory not found!")
+    }
+
+
+  /*def getListOfFiles(dir: String):List[File] = {
+      val d = new File(dir)
+      if (d.exists && d.isDirectory) {
+        d.listFiles.filter(_.isFile).toList
+      } else {
+        List[File]()
+      }
+    }
+
+    val m = CryptoUtils.decrypt(key, f)
+    sender ! m */
+  }
 
   /**
     * Receive method, handle connection from outside, registering it to a
@@ -90,6 +138,6 @@ object HTTPServer extends App {
     extractEntityId = Main.extractEntityId)
 
   val main = ClusterSharding(system).shardRegion(Main.shardName)
-  system.actorOf(Props(classOf[HTTPServer], main, config getString "listen-on", config getInt "exposed-port"))
+  val http = system.actorOf(Props(classOf[HTTPServer], main, config getString "listen-on", config getInt "exposed-port"))
 
 }
