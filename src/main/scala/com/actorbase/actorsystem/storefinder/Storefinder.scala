@@ -98,7 +98,9 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         storekeepers ! (ConsistentHashableEnvelope(message = InsertItem(ins.key, ins.value, ins.update), hashKey = ins.key))
 
       /**
-        * Message that search for a given key
+        * Message that forward to Storekeeper in order to retrieve a given key
+        *
+        * @param key a String representing the key of the item to be retrieved
         */
       case Get(key) =>
         log.info(s"SF: getItem of key -> ${key}")
