@@ -99,6 +99,7 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
           log.info("key is " + k + " value is " + v)
           main ! InsertTo(new ActorbaseCollection(name, owner), k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
       }
+      // should probably delete actorbasedata here
     } else {
       log.info("Directory not found!")
     }
