@@ -91,7 +91,7 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
     * @return
     * @throws
     */
-  // override def postStop(): Unit = scheduler.cancel()
+  override def postStop(): Unit = scheduler.cancel()
 
   def receive = running(TreeMap[String, Any]().empty)
 
