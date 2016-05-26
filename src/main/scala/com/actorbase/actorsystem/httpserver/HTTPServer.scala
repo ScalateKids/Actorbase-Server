@@ -31,6 +31,7 @@ package com.actorbase.actorsystem.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, Props}
 import akka.io.IO
+import scala.collection.immutable.TreeMap
 import spray.can.Http
 import akka.event.LoggingReceive
 
@@ -42,6 +43,8 @@ import com.typesafe.config.ConfigFactory
 
 import com.actorbase.actorsystem.clientactor.ClientActor
 import com.actorbase.actorsystem.main.Main
+import com.actorbase.actorsystem.messages.MainMessages._
+import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 /**
   * Insert description here
@@ -66,43 +69,52 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
     import java.io.File
 
     val root = new File("actorbasedata/")
+    var dataShard = TreeMap[String, Any]().empty
 
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
       log.info("dirs")
-      root.listFiles.filter(_.isDirectory).foreach{
+      var (name, owner) = ("", "")
+      root.listFiles.filter(_.isDirectory).foreach {
         x => {
-          // should create an ActorbaseCollection foreach one of this
-          log.info("FOLDER "+x.getName)
-          x.listFiles.filter(_.isFile).foreach{
+          log.info("FOLDER " + x.getName)
+          x.listFiles.filter(_.isFile).foreach {
             x => {
               // should insert all the items in the files
-              println("FILE "+x.getName)
-              var dataShard = CryptoUtils.decrypt("Dummy implicit k", x)
-              dataShard.foreach {
-                // should insert every pair
-                case(k, v) => println("key is "+k+" value is "+v)
+              log.info("FILE " + x.getName)
+              if (x.getName.endsWith("actbmeta")) {
+                val metaData = CryptoUtils.decrypt("Dummy implicit k", x)
+                name = metaData.get("collection").get.asInstanceOf[String]
+                owner = metaData.get("owner").get.toString
+                main ! CreateCollection(ActorbaseCollection(name, owner))
+              } else {
+                dataShard ++= CryptoUtils.decrypt("Dummy implicit k", x)
               }
             }
           }
         }
+      }
+      dataShard.foreach {
+        case(k, v) =>
+          log.info("key is " + k + " value is " + v)
+          main ! InsertTo(new ActorbaseCollection(name, owner), k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
       }
     } else {
       log.info("Directory not found!")
     }
 
 
-  /*def getListOfFiles(dir: String):List[File] = {
-      val d = new File(dir)
-      if (d.exists && d.isDirectory) {
-        d.listFiles.filter(_.isFile).toList
-      } else {
-        List[File]()
-      }
-    }
+    /*def getListOfFiles(dir: String):List[File] = {
+     val d = new File(dir)
+     if (d.exists && d.isDirectory) {
+     d.listFiles.filter(_.isFile).toList
+     } else {
+     List[File]()
+     }
+     }
 
-    val m = CryptoUtils.decrypt(key, f)
-    sender ! m */
+     val m = CryptoUtils.decrypt(key, f)
+     sender ! m */
   }
 
   /**

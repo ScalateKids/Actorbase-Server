@@ -35,9 +35,10 @@ import ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransaction, UpdateCollectionSize}
+import com.actorbase.actorsystem.messages.WarehousemanMessages.{Init, Save}
 import com.actorbase.actorsystem.clientactor.messages.Response
 import com.actorbase.actorsystem.warehouseman.Warehouseman
-import com.actorbase.actorsystem.warehouseman.messages._
+// import com.actorbase.actorsystem.warehouseman.messages._
 
 import scala.collection.immutable.TreeMap
 import scala.concurrent.duration._
@@ -62,6 +63,8 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
   private val intervalDelay = 60 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props(collectionUUID))
+
+  warehouseman ! Init("customers", "anonymous")
 
   /**
     * Actor lifecycle method, initialize a scheduler to persist data after some time
@@ -88,7 +91,7 @@ class Storekeeper(private val collectionUUID: String) extends Actor with ActorLo
     * @return
     * @throws
     */
-  override def postStop(): Unit = scheduler.cancel()
+  // override def postStop(): Unit = scheduler.cancel()
 
   def receive = running(TreeMap[String, Any]().empty)
 

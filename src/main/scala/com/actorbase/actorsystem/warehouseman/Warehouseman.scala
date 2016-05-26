@@ -31,8 +31,9 @@ package com.actorbase.actorsystem.warehouseman
 
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import java.io._
+import scala.collection.immutable.TreeMap
 
-import com.actorbase.actorsystem.messages.Warehouseman._
+import com.actorbase.actorsystem.messages.WarehousemanMessages._
 import com.actorbase.actorsystem.utils.CryptoUtils
 
 object Warehouseman {
@@ -52,7 +53,13 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
 
     case message: WarehousemanMessage => message match {
 
-      // case Init => log.info("warehouseman: init")
+      case Init(collection, owner) =>
+        val key = "Dummy implicit k"
+        val encryptedMetaFile = new File(rootFolder + collectionUUID + "/collection-meta.actbmeta")
+        if (!encryptedMetaFile.exists) {
+          encryptedMetaFile.getParentFile.mkdirs
+          CryptoUtils.encrypt(key, TreeMap("collection" -> collection, "owner" -> owner), encryptedMetaFile)
+        }
 
       /**
         * Save a shard of a collection represented by the TreeMap stored by a
@@ -73,7 +80,9 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         *
         * @param range a KeyRange representing the range of the file to delete
         */
-      case Clean => new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
+      case Clean =>
+        new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
+        new File(rootFolder + collectionUUID + "/collection-meta.actbmeta").delete()
 
         /**
           * Delete a folder of a Storefinder, usefull when a Storefinder duplicates
