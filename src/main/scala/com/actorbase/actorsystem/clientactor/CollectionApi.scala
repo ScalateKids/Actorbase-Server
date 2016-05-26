@@ -2,6 +2,7 @@ package com.actorbase.actorsystem.clientactor
 
 import akka.actor.ActorRef
 import spray.httpx.SprayJsonSupport._
+import spray.http.StatusCodes.MovedPermanently
 import spray.routing._
 import akka.pattern.ask
 
