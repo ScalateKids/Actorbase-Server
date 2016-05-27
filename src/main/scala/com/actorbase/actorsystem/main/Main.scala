@@ -116,7 +116,7 @@ class Main extends Actor with ActorLogging {
     * @return an ActorRef pointing to the Storefinder just created that maps the collection
     */
   private def createCollection(collection: ActorbaseCollection): ActorRef = {
-    log.info(s"creating for ${collection.getOwner}")
+    log.info(s"creating ${collection.getName} for ${collection.getOwner}")
     // ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
     // var collection = ActorbaseCollection(name, owner)
     val sf = context.actorOf(Storefinder.props(collection))
