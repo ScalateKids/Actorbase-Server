@@ -46,7 +46,7 @@ import scala.concurrent.duration._
 object Storekeeper {
 
   def props: Props = Props[Storekeeper]
-  def props(c: String): Props = Props(new Storekeeper(c))
+  def props(n: String, o: String): Props = Props(new Storekeeper(n, o))
 
 }
 
@@ -57,14 +57,14 @@ object Storekeeper {
   * @param range
   * @param maxSize
   */
-class Storekeeper(private val collectionUUID: String) extends Actor with ActorLogging {
+class Storekeeper(private val collectionName: String, private val collectionOwner: String) extends Actor with ActorLogging {
 
   private val initDelay = 60 seconds       // delay for the first persistence message to be sent
   private val intervalDelay = 60 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
-  private val warehouseman = context.actorOf(Warehouseman.props(collectionUUID))
+  private val warehouseman = context.actorOf(Warehouseman.props( collectionName+collectionOwner ))
 
-  warehouseman ! Init("customers", "anonymous")
+  warehouseman ! Init( collectionName, collectionOwner)
 
   /**
     * Actor lifecycle method, initialize a scheduler to persist data after some time
