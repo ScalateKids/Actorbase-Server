@@ -26,60 +26,12 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.clientactor
+package com.actorbase.actorsystem.messages.AuthActorMessages
 
-import com.github.t3hnar.bcrypt._
-import org.mindrot.jbcrypt.BCrypt
+sealed trait AuthActorMessages
 
-import scala.concurrent.ExecutionContext.Implicits.global
+final case class AddCredentials(username: String, password: String) extends AuthActorMessages
 
-/**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
-  */
-object UserApi {
+final case class RemoveCredentials(username: String) extends AuthActorMessages
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case class User(login: String, hashedPassword: Option[String] = None) {
-
-    /**
-      * Basic password matching, will be implemented at least with
-      * bcrypt for hashing the password
-      *
-      * @param password a String representing the password to be tested
-      * @return a Boolean, true if the password matches, false otherwise
-      * @throws
-      */
-    def passwordMatches(password: String): Boolean = hashedPassword.exists(hash => BCrypt.checkpw(password, hash))
-
-  }
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  case class AuthInfo(val user: User) {
-
-    /**
-      * Verify wether the user has admin privileges for restricted area
-      * operations
-      *
-      * @return true if the user has admin privileges, false otherwise
-      * @throws
-      */
-    def hasAdminPermissions = true
-  }
-
-}
+final case class Authenticate(username: String, password: String) extends AuthActorMessages

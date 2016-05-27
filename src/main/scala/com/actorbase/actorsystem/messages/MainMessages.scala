@@ -35,10 +35,6 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 sealed abstract trait MainMessage
 
-final case class AddUser(username: String, password: String) extends MainMessage
-
-final case class Login(username: String) extends MainMessage
-
 final case class InsertTo(collection: ActorbaseCollection, key: String, value: Array[Byte], update: Boolean = false) extends MainMessage
 
 final case class GetFrom(collection: ActorbaseCollection, key: String = "") extends MainMessage

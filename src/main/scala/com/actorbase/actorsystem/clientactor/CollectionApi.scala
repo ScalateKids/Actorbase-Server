@@ -2,7 +2,6 @@ package com.actorbase.actorsystem.clientactor
 
 import akka.actor.ActorRef
 import spray.httpx.SprayJsonSupport._
-import spray.http.StatusCodes.MovedPermanently
 import spray.routing._
 import akka.pattern.ask
 
@@ -29,7 +28,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     * DELETE /collections/customers/aracing  - Delete key aracing from customers
     *
     */
-  def collections(main: ActorRef, owner: String): Route = {
+  def collectionsDirectives(main: ActorRef, owner: String): Route = {
 
     /**
       * Collections route, manage all collection related operations, based

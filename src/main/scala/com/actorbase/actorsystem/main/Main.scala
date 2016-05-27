@@ -104,7 +104,6 @@ object Main {
   */
 class Main extends Actor with ActorLogging {
 
-  private val ufRef: ActorRef = context.actorOf(Userfinder.props, "userfinder") //TODO tutti devono avere lo stesso riferimento
   private var sfMap = new TreeMap[ActorbaseCollection, ActorRef]().empty
   private var requestMap = new TreeMap[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
 
@@ -115,36 +114,19 @@ class Main extends Actor with ActorLogging {
     * @param owner the owner of the collection
     * @return an ActorRef pointing to the Storefinder just created that maps the collection
     */
-  private def createCollection(collection: ActorbaseCollection): ActorRef = {
-    log.info(s"creating ${collection.getName} for ${collection.getOwner}")
-    // ufRef ! InsertTo(owner, "pass") // DEBUG: to be removed
-    // var collection = ActorbaseCollection(name, owner)
-    val sf = context.actorOf(Storefinder.props(collection))
-    // ufRef ! AddCollectionTo(owner, false, collection)
-    sfMap += (collection -> sf)
-    sf
+  private def createCollection(collection: ActorbaseCollection): Option[ActorRef] = {
+    if (sfMap.contains(collection)) sfMap.get(collection) // to be tested, probably uses equals, fuck up with different sizes
+    else {
+      log.info(s"creating ${collection.getName} for ${collection.getOwner}")
+      val sf = context.actorOf(Storefinder.props(collection))
+      sfMap += (collection -> sf)
+      Some(sf)
+    }
   }
 
   def receive: Receive = {
 
     case message: MainMessage => message match {
-
-      /**
-        * Login message, this is received when a user tries to authenticate into the system.
-        *
-        * @param username the username inserted to authenticate
-        */
-      case Login(username) => // ufRef forward GetPasswordOf(username)
-
-      /**
-        * Add a new user sending the username and hashing a password with Blowfish
-        * salt
-        *
-        * @param username a String representing the username of the newly added User
-        * @param password a String representing the associated password to the newly
-        * added User
-        */
-      case AddUser(username, password) => // ufRef ! com.actorbase.actorsystem.userfinder.messages.InsertTo(username, password.bcrypt(generateSalt))
 
       /**
         * Insert message, insert a key/value into a designed collection, searching
@@ -161,7 +143,7 @@ class Main extends Actor with ActorLogging {
         */
       case InsertTo(collection, key, value, update) =>
         sfMap.find(x => x._1.compare(collection) == 0) map (_._2 ! Insert(key, value, update)) getOrElse (
-          createCollection(collection) ! Insert(key, value, update))
+          createCollection(collection) map (_ ! Insert(key, value, update)) getOrElse log.error("Error retrieving storefinder ActorRef"))
 
       /**
         * Create a collection in the system
@@ -170,7 +152,6 @@ class Main extends Actor with ActorLogging {
         * @param owner a String representing the owner of the collection
         */
       case CreateCollection(collection) => createCollection(collection)
-        // TODO avvisare lo userkeeper che a sua volta deve avvisare il client
 
       /**
         * Get item from collection message, given a key of type String, retrieve

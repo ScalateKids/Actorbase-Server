@@ -29,13 +29,19 @@
 package com.actorbase.actorsystem.clientactor
 
 import akka.actor.ActorRef
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.Await
 import spray.routing.authentication.BasicAuth
 import spray.routing.authentication.UserPass
 import spray.routing.directives.AuthMagnet
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 import com.actorbase.actorsystem.clientactor.UserApi.{User, AuthInfo}
+import com.actorbase.actorsystem.messages.AuthActorMessages.Authenticate
 
 /**
   * Authenticator, mix it with a HttpServiceBase class to give basic
@@ -47,6 +53,8 @@ import com.actorbase.actorsystem.clientactor.UserApi.{User, AuthInfo}
   */
 trait Authenticator {
 
+  implicit val timeout = Timeout(5 seconds)
+
   /**
     * Basic authentication method
     *
@@ -55,7 +63,7 @@ trait Authenticator {
     * @return a BasicAuth uncrypted for a private area
     * @throws
     */
-  def basicUserAuthenticator(implicit ec: ExecutionContext, main: ActorRef): AuthMagnet[AuthInfo] = {
+  def basicUserAuthenticator(implicit ec: ExecutionContext, authProxy: ActorRef): AuthMagnet[AuthInfo] = {
 
     /**
       * Validation method, get an Option[UserPass] reference and test for
@@ -69,9 +77,9 @@ trait Authenticator {
     def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
       for {
         p <- userPass
-        user = User(p.user, main)
-        if user.passwordMatches(p.pass)
-      } yield new AuthInfo(user)
+        auth = Await.result(authProxy.ask(Authenticate(p.user, p.pass)).mapTo[String], Duration.Inf) // ugly as f**k
+        if (auth == "OK")
+          } yield new AuthInfo(UserApi.User(userPass.get.user, Some(userPass.get.pass)))
     }
 
     /**

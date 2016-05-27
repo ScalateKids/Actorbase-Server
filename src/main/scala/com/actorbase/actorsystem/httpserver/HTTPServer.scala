@@ -29,19 +29,20 @@
 
 package com.actorbase.actorsystem.httpserver
 
-import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
 import scala.collection.immutable.TreeMap
 import spray.can.Http
 import akka.event.LoggingReceive
 
-// import akka.routing._
 import akka.cluster._
 import akka.cluster.routing._
+import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings, ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import com.typesafe.config.ConfigFactory
 
 import com.actorbase.actorsystem.clientactor.ClientActor
+import com.actorbase.actorsystem.authactor.AuthActor
 import com.actorbase.actorsystem.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
@@ -53,7 +54,7 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection
   * @return
   * @throws
   */
-class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
+class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPort: Int) extends Actor
     with ActorLogging with SslConfiguration {
 
   implicit val system = context.system
@@ -92,33 +93,17 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
               }
             }
           }
-
+          val collection = new ActorbaseCollection(name, owner)
           dataShard.foreach {
             case(k, v) =>
               log.info("key is " + k + " value is " + v)
-              main ! InsertTo(new ActorbaseCollection(name, owner), k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
+              main ! InsertTo(collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
           }
           dataShard = dataShard.empty
         }
       }
-
       // should probably delete actorbasedata here
-    } else {
-      log.info("Directory not found!")
-    }
-
-
-    /*def getListOfFiles(dir: String):List[File] = {
-     val d = new File(dir)
-     if (d.exists && d.isDirectory) {
-     d.listFiles.filter(_.isFile).toList
-     } else {
-     List[File]()
-     }
-     }
-
-     val m = CryptoUtils.decrypt(key, f)
-     sender ! m */
+    } else log.warning("Directory not found!")
   }
 
   /**
@@ -132,7 +117,7 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
   def receive: Receive = LoggingReceive {
     case _: Http.Connected =>
       val serverConnection = sender()
-      val handler = context.actorOf(Props(new ClientActor(main)))
+      val handler = context.actorOf(Props(new ClientActor(main, authProxy)))
       serverConnection ! Http.Register(handler)
   }
 
@@ -148,6 +133,18 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
 object HTTPServer extends App {
   val config = ConfigFactory.load()
   val system = ActorSystem(config getString "name", config)
+  // singleton userkeeper
+  system.actorOf(ClusterSingletonManager.props(
+    singletonProps = Props(classOf[AuthActor]),
+    terminationMessage = PoisonPill,
+    settings = ClusterSingletonManagerSettings(system)),
+    name = "authactor")
+  // proxy
+  val authProxy = system.actorOf(ClusterSingletonProxy.props(
+    singletonManagerPath = "/user/authactor",
+    settings = ClusterSingletonProxySettings(system)),
+    name = "authProxy")
+  // main sharding
   ClusterSharding(system).start(
     typeName = Main.shardName,
     entityProps = Main.props,
@@ -156,6 +153,6 @@ object HTTPServer extends App {
     extractEntityId = Main.extractEntityId)
 
   val main = ClusterSharding(system).shardRegion(Main.shardName)
-  val http = system.actorOf(Props(classOf[HTTPServer], main, config getString "listen-on", config getInt "exposed-port"))
+  val http = system.actorOf(Props(classOf[HTTPServer], main, authProxy, config getString "listen-on", config getInt "exposed-port"))
 
 }

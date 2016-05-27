@@ -8,6 +8,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.4.4",
   "com.typesafe.akka" %% "akka-testkit" % "2.4.4",
   "com.typesafe.akka" %% "akka-cluster-sharding" % "2.4.4",
+  "com.typesafe.akka" %% "akka-cluster-tools" % "2.4-SNAPSHOT",
   "com.typesafe" % "config" % "1.2.1",
   "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
   "io.spray" %% "spray-can" % "1.3.3",

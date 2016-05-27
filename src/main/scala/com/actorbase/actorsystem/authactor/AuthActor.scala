@@ -26,36 +26,15 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.utils
+package com.actorbase.actorsystem.authactor
 
-import scala.math.Ordered.orderingToOrdered
+import akka.actor.{Actor, ActorLogging}
 
-/**
-  * Class representing a collection of actorbase
-  *
-  * @param name a String representing the name of the collection
-  * @param owner a String representing the username of the owner of this collection
-  */
-case class ActorbaseCollection (private var name: String,
-  private var owner: String) extends Ordered[ActorbaseCollection] {
+import com.actorbase.actorsystem.messages.AuthActorMessages._
+import com.github.t3hnar.bcrypt._
+// import org.mindrot.jbcrypt.BCrypt
 
-  private val uuid: String = owner + name
-  private var size: Int = 0
-
-  /**
-    * @return a String representing the name of the collection
-    */
-  def getName: String = name
-
-  /**
-    * @return a String representing the username of the owner of this collection
-    */
-  def getOwner: String = owner
-
-  /**
-    * @return a String representing a universal-unique-identified ID
-    */
-  def getUUID: String = uuid
+class AuthActor extends Actor with ActorLogging {
 
   /**
     * Insert description here
@@ -64,7 +43,7 @@ case class ActorbaseCollection (private var name: String,
     * @return
     * @throws
     */
-  def getSize: Int = size
+  override def receive = running(Map[String, String]("admin" -> "actorbase"))
 
   /**
     * Insert description here
@@ -73,34 +52,44 @@ case class ActorbaseCollection (private var name: String,
     * @return
     * @throws
     */
-  def setSize(newSize: Int): Unit = size = newSize
+  def running(credentials: Map[String, String]): Receive = {
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def incrementSize = size += 1
+    case message: AuthActorMessages => message match {
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def decrementSize = size -= 1
+      /**
+        * Insert description here
+        *
+        * @param
+        * @return
+        * @throws
+        */
+      case AddCredentials(username, password) =>
+        log.info(s"$username added")
+        context become running(credentials + (username -> password.bcrypt(generateSalt)))
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  override def compare(that: ActorbaseCollection): Int = {
-    (this.name + this.owner) compare (that.name + that.owner)
+      /**
+        * Insert description here
+        *
+        * @param
+        * @return
+        * @throws
+        */
+      case RemoveCredentials(username) =>
+        log.info(s"$username removed")
+        context become running(credentials - username)
+
+      /**
+        * Insert description here
+        *
+        * @param
+        * @return
+        * @throws
+        */
+      case Authenticate(username, password) =>
+        if (credentials.contains(username))
+          credentials get username map (pwd => if (pwd == password) sender ! "OK" else sender ! "None") getOrElse(sender ! "None")
+        else sender ! "None"
+
+    }
   }
 }
