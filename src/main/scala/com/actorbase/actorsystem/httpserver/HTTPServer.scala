@@ -92,13 +92,16 @@ class HTTPServer(main: ActorRef, address: String, listenPort: Int) extends Actor
               }
             }
           }
+
+          dataShard.foreach {
+            case(k, v) =>
+              log.info("key is " + k + " value is " + v)
+              main ! InsertTo(new ActorbaseCollection(name, owner), k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
+          }
+          dataShard = dataShard.empty
         }
       }
-      dataShard.foreach {
-        case(k, v) =>
-          log.info("key is " + k + " value is " + v)
-          main ! InsertTo(new ActorbaseCollection(name, owner), k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
-      }
+
       // should probably delete actorbasedata here
     } else {
       log.info("Directory not found!")
