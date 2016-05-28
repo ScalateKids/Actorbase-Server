@@ -43,8 +43,8 @@ import scala.concurrent.duration._
 
 object Storekeeper {
 
-  def props: Props = Props[Storekeeper]//.withDispatcher("control-aware-dispatcher")
-  def props(n: String, o: String): Props = Props(classOf[Storekeeper], n, o)//.withDispatcher("control-aware-dispatcher")
+  def props: Props = Props[Storekeeper].withDispatcher("control-aware-dispatcher")
+  def props(n: String, o: String): Props = Props(classOf[Storekeeper], n, o).withDispatcher("control-aware-dispatcher")
 
 }
 
@@ -60,7 +60,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
   private val initDelay = 160 seconds       // delay for the first persistence message to be sent
   private val intervalDelay = 160 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
-  private val warehouseman = context.actorOf(Warehouseman.props( collectionName+collectionOwner ))
+  private val warehouseman = context.actorOf(Warehouseman.props( collectionOwner + collectionName ))
 
   warehouseman ! Init( collectionName, collectionOwner)
 

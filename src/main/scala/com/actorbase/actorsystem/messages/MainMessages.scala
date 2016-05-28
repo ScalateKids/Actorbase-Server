@@ -32,6 +32,7 @@ import akka.actor.ActorRef
 import akka.dispatch.ControlMessage
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
 
 sealed abstract trait MainMessage
 
@@ -43,8 +44,8 @@ final case class CompleteTransaction(clientRef: ActorRef, collection: ActorbaseC
 
 final case class RemoveFrom(uuid: String, key: String = "") extends MainMessage
 
-final case class AddContributor(username: String, permission: Boolean = false , collection: String) extends MainMessage
+final case class AddContributor(username: String, permission: Permissions, uuid: String) extends MainMessage
 
-final case class RemoveContributor(username: String, permission: Boolean = false , collection: String) extends MainMessage
+final case class RemoveContributor(username: String, uuid: String) extends MainMessage
 
 final case class CreateCollection(collection: ActorbaseCollection) extends MainMessage

@@ -43,11 +43,11 @@ import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.StorekeeperMessages.{GetItem, GetAll, InsertItem, RemoveItem}
 import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 import com.actorbase.actorsystem.storekeeper.Storekeeper
-import com.actorbase.actorsystem.warehouseman.Warehouseman
+// import com.actorbase.actorsystem.warehouseman.Warehouseman
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 object Storefinder {
-  def props(collection: ActorbaseCollection): Props = Props(new Storefinder(collection))//.withDispatcher("control-aware-dispatcher")
+  def props(collection: ActorbaseCollection): Props = Props(new Storefinder(collection)).withDispatcher("control-aware-dispatcher")
 }
 
 /**

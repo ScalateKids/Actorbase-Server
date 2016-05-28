@@ -54,7 +54,7 @@ object Main {
     *
     * @return an object of type Props, usable directly with an actorsystem running
     */
-  def props = Props[Main]//.withDispatcher("control-aware-dispatcher")
+  def props = Props[Main].withDispatcher("control-aware-dispatcher")
 
   /** name of the sharded entity */
   def shardName = "mainActor"
@@ -70,6 +70,8 @@ object Main {
     case RemoveFrom(uuid, _) => (uuid.hashCode % 100).toString
     case InsertTo(collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
     case GetFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
+    case AddContributor(_, _, uuid) => (uuid.hashCode % 100).toString
+    case RemoveContributor(_, uuid) => (uuid.hashCode % 100).toString
   }
 
   /**
@@ -83,6 +85,8 @@ object Main {
     case msg: RemoveFrom => (msg.uuid, msg)
     case msg: InsertTo => (msg.collection.getUUID, msg)
     case msg: GetFrom => (msg.collection.getUUID, msg)
+    case msg: AddContributor => (msg.uuid, msg)
+    case msg: RemoveContributor => (msg.uuid, msg)
   }
 
 }
@@ -96,8 +100,8 @@ object Main {
   */
 class Main extends Actor with ActorLogging {
 
-  private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
-  private var requestMap = Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
+  private var sfMap = mutable.Map[ActorbaseCollection, ActorRef]().empty
+  private var requestMap = mutable.Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
     * Method that create a collection in Actorbase.
@@ -203,11 +207,11 @@ class Main extends Actor with ActorLogging {
         */
       case RemoveFrom(uuid, key) =>
         if (key.nonEmpty)
-          sfMap.filterKeys(x => (x.getUUID == uuid)).head._2 ! Remove(key)
+          sfMap.find(_._1.getUUID == uuid) map (_._2 ! Remove(key)) getOrElse log.error(s"$uuid collection not found")
         else {
           sfMap find (_._1.getUUID == uuid) map { coll =>
             coll._2 ! PoisonPill
-            sfMap -= coll._1
+            sfMap = sfMap - coll._1
           } getOrElse log.warning(s"Collection with $uuid not found")
         }
 
@@ -220,21 +224,18 @@ class Main extends Actor with ActorLogging {
         * @param collection a String representing the collection name
         *
         */
-      case AddContributor(username , permission, collection) =>
-        // need controls
-        // ufRef ! AddCollectionTo(username, permission, ActorbaseCollection(collection, username))
+      case AddContributor(username, permission, uuid) =>
+        sfMap.find(_._1.getUUID == uuid) map (_._1.addContributor(username, permission)) getOrElse log.error(s"cannot add $username as contributor to $uuid collection")
 
       /**
         * Remove Contributor from collection, given username of Contributor , and permission
         *
         * @param username a String to identify the contributor to remove
-        * @param permission a boolean representing the permission : (true = readWrite , false = readOnly)
         * @param collection a String representing the collection name
         *
         */
-      case RemoveContributor(username, permission, collection) =>
-        // need controls
-        // ufRef ! RemoveCollectionFrom(username, permission, ActorbaseCollection(collection, username))
+      case RemoveContributor(username, uuid) =>
+        sfMap.find(_._1.getUUID == uuid) map (_._1.removeContributor(username)) getOrElse log.error(s"cannot remove $username as contributor to $uuid collection")
 
     }
   }

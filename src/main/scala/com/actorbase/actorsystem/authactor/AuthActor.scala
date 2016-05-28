@@ -84,7 +84,7 @@ class AuthActor extends Actor with ActorLogging {
         */
       case AddCredentials(username, password) =>
         log.info(s"$username added")
-        val salt = password.bcrypt(generateSalt)
+        val salt = password//.bcrypt(generateSalt)
         persist(credentials + (username -> salt))
         context become running(credentials + (username -> salt))
 

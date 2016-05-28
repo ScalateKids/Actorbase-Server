@@ -31,6 +31,7 @@ package com.actorbase.actorsystem.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
+import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
 import scala.collection.immutable.TreeMap
 import spray.can.Http
 import akka.event.LoggingReceive
@@ -74,23 +75,33 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
 
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
-      log.info("dirs")
+      // log.info("dirs")
       var (name, owner) = ("", "")
       root.listFiles.filter(_.isDirectory).foreach {
         x => {
           // log.info("FOLDER " + x.getName)
           x.listFiles.filter(_.isFile).foreach {
             x => {
+              x match {
+                case meta if meta.getName.endsWith("actbmeta") =>
+                  val metaData = CryptoUtils.decrypt("Dummy implicit k", meta)
+                  name = metaData.get("collection").get.asInstanceOf[String]
+                  owner = metaData.get("owner").get.toString
+                  main ! CreateCollection(ActorbaseCollection(name, owner))
+                case user if user.getName.endsWith("shadow") =>
+                  CryptoUtils.decrypt("Dummy implicit k", user) map { case (u, p) => authProxy ! AddCredentials(u, p.asInstanceOf[String])}
+                case _ => dataShard ++= CryptoUtils.decrypt("Dummy implicit k", x)
+              }
               // should insert all the items in the files
               // log.info("FILE " + x.getName)
-              if (x.getName.endsWith("actbmeta")) {
-                val metaData = CryptoUtils.decrypt("Dummy implicit k", x)
-                name = metaData.get("collection").get.asInstanceOf[String]
-                owner = metaData.get("owner").get.toString
-                main ! CreateCollection(ActorbaseCollection(name, owner))
-              } else {
-                dataShard ++= CryptoUtils.decrypt("Dummy implicit k", x)
-              }
+              // if (x.getName.endsWith("actbmeta")) {
+              //   val metaData = CryptoUtils.decrypt("Dummy implicit k", x)
+              //   name = metaData.get("collection").get.asInstanceOf[String]
+              //   owner = metaData.get("owner").get.toString
+              //   main ! CreateCollection(ActorbaseCollection(name, owner))
+              // } else {
+              //   dataShard ++= CryptoUtils.decrypt("Dummy implicit k", x)
+              // }
             }
           }
           val collection = new ActorbaseCollection(name, owner)

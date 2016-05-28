@@ -139,7 +139,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
   /**
     * Handle all directives to manage and query the system
     */
-  def httpReceive: Receive = runRoute(collectionsDirectives(main, "anonymous") ~ route(main) ~ adminDirectives)
+  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy, "anonymous") ~ route(main) ~ adminDirectives)
 
   override def receive = handleHttpRequests orElse httpReceive
 

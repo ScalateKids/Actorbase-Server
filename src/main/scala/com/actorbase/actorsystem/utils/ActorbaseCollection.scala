@@ -29,6 +29,16 @@
 package com.actorbase.actorsystem.utils
 
 import scala.math.Ordered.orderingToOrdered
+import scala.collection.mutable
+
+case object ActorbaseCollection {
+
+  sealed trait Permissions
+
+  case object Read extends Permissions
+
+  case object ReadWrite extends Permissions
+}
 
 /**
   * Class representing a collection of actorbase
@@ -41,6 +51,8 @@ case class ActorbaseCollection (private var name: String,
   private var size: Int = 0) extends Ordered[ActorbaseCollection] {
 
   private val uuid: String = owner + name
+
+  private var contributors = mutable.Map[String, ActorbaseCollection.Permissions]().empty
 
   /**
     * @return a String representing the name of the collection
@@ -73,7 +85,16 @@ case class ActorbaseCollection (private var name: String,
     * @return
     * @throws
     */
-  def setSize(newSize: Int): Unit = size = newSize
+  def addContributor(username: String, permission: ActorbaseCollection.Permissions): Unit = contributors += (username -> permission)
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def removeContributor(username: String): Unit = contributors -= username
 
   /**
     * Insert description here

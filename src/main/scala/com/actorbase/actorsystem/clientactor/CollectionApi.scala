@@ -28,7 +28,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     * DELETE /collections/customers/aracing  - Delete key aracing from customers
     *
     */
-  def collectionsDirectives(main: ActorRef, owner: String): Route = {
+  def collectionsDirectives(main: ActorRef, authProxy: ActorRef, owner: String): Route = {
 
     /**
       * Collections route, manage all collection related operations, based
@@ -52,7 +52,8 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       */
     pathPrefix("collections" / "\\S+".r) { collection =>
       var coll = ActorbaseCollection(collection, "anonymous")
-      pathEndOrSingleSlash {
+      // pathEndOrSingleSlash {
+      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
         get {
           complete {
             main.ask(GetFrom(coll))(5 seconds).mapTo[MapResponse]
@@ -72,42 +73,45 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             "Remove collection complete"
           }
         }
+        // }
       } ~
       pathSuffix("\\S+".r) { key =>
-        get {
-          complete {
-            //TODO controllare, se collection non esiste, inutile instradare
-            main.ask(GetFrom(coll, key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
-          }
-        } ~
-        delete {
-          complete {
-            //TODO controllare, se collection non esiste, inutile instradare
-            main ! RemoveFrom(owner + collection, key)
-            "Remove complete"
-          }
-        } ~
-        post {
-          decompressRequest() {
-            entity(as[Array[Byte]]) { value =>
-              detach() {
-                complete {
-                  //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                  main ! InsertTo(coll, key, value)
-                  "Insert complete"
+        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+          get {
+            complete {
+              //TODO controllare, se collection non esiste, inutile instradare
+              main.ask(GetFrom(coll, key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
+            }
+          } ~
+          delete {
+            complete {
+              //TODO controllare, se collection non esiste, inutile instradare
+              main ! RemoveFrom(owner + collection, key)
+              "Remove complete"
+            }
+          } ~
+          post {
+            decompressRequest() {
+              entity(as[Array[Byte]]) { value =>
+                detach() {
+                  complete {
+                    //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
+                    main ! InsertTo(coll, key, value)
+                    "Insert complete"
+                  }
                 }
               }
             }
-          }
-        } ~
-        put {
-          decompressRequest() {
-            entity(as[Array[Byte]]) { value =>
-              detach() {
-                complete {
-                  //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                  main ! InsertTo(coll, key, value, true)
-                  "Update complete"
+          } ~
+          put {
+            decompressRequest() {
+              entity(as[Array[Byte]]) { value =>
+                detach() {
+                  complete {
+                    //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
+                    main ! InsertTo(coll, key, value, true)
+                    "Update complete"
+                  }
                 }
               }
             }
