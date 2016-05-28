@@ -37,10 +37,10 @@ import scala.math.Ordered.orderingToOrdered
   * @param owner a String representing the username of the owner of this collection
   */
 case class ActorbaseCollection (private var name: String,
-  private var owner: String) extends Ordered[ActorbaseCollection] {
+  private var owner: String,
+  private var size: Int = 0) extends Ordered[ActorbaseCollection] {
 
   private val uuid: String = owner + name
-  private var size: Int = 0
 
   /**
     * @return a String representing the name of the collection
