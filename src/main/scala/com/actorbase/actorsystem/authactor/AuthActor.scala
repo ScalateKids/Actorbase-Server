@@ -31,19 +31,16 @@ package com.actorbase.actorsystem.authactor
 import akka.actor.{Actor, ActorLogging}
 
 import com.actorbase.actorsystem.messages.AuthActorMessages._
+import com.actorbase.actorsystem.utils.CryptoUtils
 import com.github.t3hnar.bcrypt._
+import scala.collection.immutable.TreeMap
 // import org.mindrot.jbcrypt.BCrypt
+
+import java.io.File
 
 class AuthActor extends Actor with ActorLogging {
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  override def receive = running(Map[String, String]("admin" -> "actorbase"))
+  private val rootFolder = "actorbasedata/usersdata/"
 
   /**
     * Insert description here
@@ -52,7 +49,30 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def running(credentials: Map[String, String]): Receive = {
+  override def receive = running(TreeMap[String, String]("admin" -> "actorbase"))
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def persist(credentials: TreeMap[String, String]): Unit = {
+    val key = "Dummy implicit k"
+    val encryptedCredentialsFile = new File(rootFolder + "/usersdata.shadow")
+    encryptedCredentialsFile.getParentFile.mkdirs
+    CryptoUtils.encrypt(key, credentials, encryptedCredentialsFile)
+  }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def running(credentials: TreeMap[String, String]): Receive = {
 
     case message: AuthActorMessages => message match {
 
@@ -65,7 +85,9 @@ class AuthActor extends Actor with ActorLogging {
         */
       case AddCredentials(username, password) =>
         log.info(s"$username added")
-        context become running(credentials + (username -> password.bcrypt(generateSalt)))
+        val salt = password.bcrypt(generateSalt)
+        persist(credentials + (username -> salt))
+        context become running(credentials + (username -> salt))
 
       /**
         * Insert description here
@@ -76,6 +98,7 @@ class AuthActor extends Actor with ActorLogging {
         */
       case RemoveCredentials(username) =>
         log.info(s"$username removed")
+        persist(credentials - username)
         context become running(credentials - username)
 
       /**

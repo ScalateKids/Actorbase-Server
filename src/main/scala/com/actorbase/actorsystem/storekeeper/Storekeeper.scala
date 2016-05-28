@@ -38,7 +38,6 @@ import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransac
 import com.actorbase.actorsystem.messages.WarehousemanMessages.{Init, Save}
 import com.actorbase.actorsystem.clientactor.messages.Response
 import com.actorbase.actorsystem.warehouseman.Warehouseman
-// import com.actorbase.actorsystem.warehouseman.messages._
 
 import scala.collection.immutable.TreeMap
 import scala.concurrent.duration._
