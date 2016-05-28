@@ -16,7 +16,8 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.2",
   "org.mindrot" % "jbcrypt" % "0.3m",
   "com.github.t3hnar" % "scala-bcrypt_2.10" % "2.6",
-  "org.scala-lang.modules" %% "scala-pickling" % "0.10.1")
+  "org.scala-lang.modules" %% "scala-pickling" % "0.10.1",
+  "com.github.romix.akka" %% "akka-kryo-serialization" % "0.4.1")
 
 // addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.3.5")
 

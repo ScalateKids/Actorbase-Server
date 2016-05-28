@@ -28,7 +28,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     * DELETE /collections/customers/aracing  - Delete key aracing from customers
     *
     */
-  def collectionsDirectives(main: ActorRef, authProxy: ActorRef, owner: String): Route = {
+  def collectionsDirectives(main: ActorRef, authProxy: ActorRef): Route = {
 
     /**
       * Collections route, manage all collection related operations, based
@@ -51,32 +51,33 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       * All routes return a standard marshallable of type Array[Byte]
       */
     pathPrefix("collections" / "\\S+".r) { collection =>
-      var coll = ActorbaseCollection(collection, "anonymous")
-      // pathEndOrSingleSlash {
-      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-        get {
-          complete {
-            main.ask(GetFrom(coll))(5 seconds).mapTo[MapResponse]
-          }
-        } ~
-        post {
-          complete {
-            //TODO controllare se esiste già
-            main ! CreateCollection(coll)
-            "Create collection complete"
-          }
-        } ~
-        delete {
-          complete {
-            //TODO controllare, se non esiste inutile mandare il messaggio
-            main ! RemoveFrom(owner + collection)
-            "Remove collection complete"
+      pathEndOrSingleSlash {
+        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+          val coll = ActorbaseCollection(collection, authInfo.user.login)
+          get {
+            complete {
+              main.ask(GetFrom(coll))(5 seconds).mapTo[MapResponse]
+            }
+          } ~
+          post {
+            complete {
+              //TODO controllare se esiste già
+              main ! CreateCollection(coll)
+              "Create collection complete"
+            }
+          } ~
+          delete {
+            complete {
+              //TODO controllare, se non esiste inutile mandare il messaggio
+              main ! RemoveFrom(authInfo.user.login + collection)
+              "Remove collection complete"
+            }
           }
         }
-        // }
       } ~
       pathSuffix("\\S+".r) { key =>
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+          val coll = ActorbaseCollection(collection, authInfo.user.login)
           get {
             complete {
               //TODO controllare, se collection non esiste, inutile instradare
@@ -86,7 +87,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           delete {
             complete {
               //TODO controllare, se collection non esiste, inutile instradare
-              main ! RemoveFrom(owner + collection, key)
+              main ! RemoveFrom(authInfo.user.login + collection, key)
               "Remove complete"
             }
           } ~
