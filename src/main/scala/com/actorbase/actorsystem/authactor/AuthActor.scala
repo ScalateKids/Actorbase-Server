@@ -85,8 +85,21 @@ class AuthActor extends Actor with ActorLogging {
       case AddCredentials(username, password) =>
         log.info(s"$username added")
         val salt = password//.bcrypt(generateSalt)
-        persist(credentials + (username -> salt))
+          persist(credentials + (username -> salt))
         context become running(credentials + (username -> salt))
+
+      /**
+        * Change the password associated to an user given his username and
+        * current password
+        *
+        * @param username a String representing the username of the user owner of
+        * the password designatef for change
+        * @param password a String representing the current password of the user that will be updated
+        * @param newPassword a String representing the new password to be set for
+        * the requested username
+        */
+      case UpdateCredentials(username, password, newPassword) =>
+        credentials get username map (pwd => if (pwd == password) context become running(credentials + (username -> newPassword)) else sender ! "None") getOrElse(sender ! "None")
 
       /**
         * Insert description here

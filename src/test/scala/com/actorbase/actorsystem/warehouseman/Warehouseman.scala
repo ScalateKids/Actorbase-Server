@@ -28,7 +28,7 @@
 
 package com.actorbase.actorsystem.warehouseman
 
-import com.actorbase.actorsystem.warehouseman.messages._
+import com.actorbase.actorsystem.messages.WarehousemanMessages._
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 
 import akka.actor.ActorSystem
@@ -36,7 +36,6 @@ import akka.pattern.ask
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.Await
-import scala.collection.immutable.TreeMap
 
 import java.io.File
 
@@ -57,10 +56,7 @@ class WarehousemanSpec extends ActorSystemUnitSpec {
     val warehouseman = system.actorOf(Warehouseman.props("shard"))
     "save encrypted data" in {
 
-      var map: TreeMap[String, Any] = new TreeMap[String, Any]()
-      map += ("key0" -> "zero")
-      map += ("key1" -> "one")
-      map += ("key2" -> "two")
+      val map = Map[String, Any]("key0" -> "zero", "key1" -> "one", "key2" -> "two")
       Await.result(warehouseman.ask(Save(map))(5 seconds).mapTo[Int], Duration.Inf)
       new File("shard").exists should be(true)
 
@@ -69,7 +65,7 @@ class WarehousemanSpec extends ActorSystemUnitSpec {
     "decrypt encrypted data" in {
 
       val f = new File("shard")
-      val map = Await.result(warehouseman.ask(Read(f))(5 seconds).mapTo[TreeMap[String, Any]], Duration.Inf)
+      val map = Await.result(warehouseman.ask(Read(f))(5 seconds).mapTo[Map[String, Any]], Duration.Inf)
       map should have size 3
 
     }

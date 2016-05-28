@@ -32,6 +32,8 @@ sealed trait AuthActorMessages
 
 final case class AddCredentials(username: String, password: String) extends AuthActorMessages
 
+final case class UpdateCredentials(username: String, password: String, newPassword: String) extends AuthActorMessages
+
 final case class RemoveCredentials(username: String) extends AuthActorMessages
 
 final case class Authenticate(username: String, password: String) extends AuthActorMessages
