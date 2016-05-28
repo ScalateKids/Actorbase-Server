@@ -43,8 +43,8 @@ import scala.concurrent.duration._
 
 object Storekeeper {
 
-  def props: Props = Props[Storekeeper]//.withDispatcher("control-aware-dispatcher")
-  def props(n: String, o: String): Props = Props(classOf[Storekeeper], n, o)//.withDispatcher("control-aware-dispatcher")
+  def props: Props = Props[Storekeeper].withDispatcher("control-aware-dispatcher")
+  def props(n: String, o: String): Props = Props(classOf[Storekeeper], n, o).withDispatcher("control-aware-dispatcher")
 
 }
 
