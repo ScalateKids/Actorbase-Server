@@ -62,7 +62,7 @@ object Main {
     *
     * @return an object of type Props, usable directly with an actorsystem running
     */
-  def props = Props[Main]
+  def props = Props[Main].withDispatcher("control-aware-dispatcher")
 
   /** name of the sharded entity */
   def shardName = "mainActor"

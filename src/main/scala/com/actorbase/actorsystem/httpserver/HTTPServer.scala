@@ -78,11 +78,11 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
       var (name, owner) = ("", "")
       root.listFiles.filter(_.isDirectory).foreach {
         x => {
-          log.info("FOLDER " + x.getName)
+          // log.info("FOLDER " + x.getName)
           x.listFiles.filter(_.isFile).foreach {
             x => {
               // should insert all the items in the files
-              log.info("FILE " + x.getName)
+              // log.info("FILE " + x.getName)
               if (x.getName.endsWith("actbmeta")) {
                 val metaData = CryptoUtils.decrypt("Dummy implicit k", x)
                 name = metaData.get("collection").get.asInstanceOf[String]
@@ -96,7 +96,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
           val collection = new ActorbaseCollection(name, owner)
           dataShard.foreach {
             case(k, v) =>
-              log.info("key is " + k + " value is " + v)
+              // log.info("key is " + k + " value is " + v)
               main ! InsertTo(collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
           }
           dataShard = dataShard.empty

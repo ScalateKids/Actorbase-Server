@@ -29,11 +29,12 @@
 package com.actorbase.actorsystem.messages.StorekeeperMessages
 
 import akka.actor.ActorRef
+import akka.dispatch.ControlMessage
 import akka.routing.ConsistentHashingRouter.ConsistentHashable
 
 sealed abstract trait StorekeeperMessage
 
-final case object Persist extends StorekeeperMessage
+final case object Persist extends StorekeeperMessage with ControlMessage
 
 final case class GetAll(parent: ActorRef) extends StorekeeperMessage
 
