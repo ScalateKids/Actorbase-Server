@@ -29,9 +29,8 @@
 
 package com.actorbase.actorsystem.warehouseman
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
-import java.io._
-import scala.collection.immutable.TreeMap
+import akka.actor.{Actor, ActorLogging, Props}
+import java.io.File
 
 import com.actorbase.actorsystem.messages.WarehousemanMessages._
 import com.actorbase.actorsystem.utils.CryptoUtils
@@ -58,7 +57,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         val encryptedMetaFile = new File(rootFolder + collectionUUID + "/collection-meta.actbmeta")
         if (!encryptedMetaFile.exists) {
           encryptedMetaFile.getParentFile.mkdirs
-          CryptoUtils.encrypt(key, TreeMap("collection" -> collection, "owner" -> owner), encryptedMetaFile)
+          CryptoUtils.encrypt(key, Map("collection" -> collection, "owner" -> owner), encryptedMetaFile)
         }
 
       /**

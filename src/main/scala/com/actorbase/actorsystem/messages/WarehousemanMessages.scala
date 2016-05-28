@@ -28,7 +28,6 @@
 
 package com.actorbase.actorsystem.messages.WarehousemanMessages
 
-import scala.collection.immutable.TreeMap
 import java.io.File
 
 sealed abstract trait WarehousemanMessage
@@ -37,6 +36,6 @@ final case object Clean extends WarehousemanMessage
 
 final case class Init(collection: String, owner: String) extends WarehousemanMessage
 
-final case class Save(map: TreeMap[String, Any]) extends WarehousemanMessage
+final case class Save(map: Map[String, Any]) extends WarehousemanMessage
 
 final case class Read(file: File) extends WarehousemanMessage

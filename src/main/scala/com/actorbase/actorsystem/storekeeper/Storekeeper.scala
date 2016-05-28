@@ -28,7 +28,7 @@
 
 package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, Props}
+import akka.actor.{Actor, ActorLogging, Cancellable, Props}
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
@@ -39,13 +39,12 @@ import com.actorbase.actorsystem.messages.WarehousemanMessages.{Init, Save}
 import com.actorbase.actorsystem.clientactor.messages.Response
 import com.actorbase.actorsystem.warehouseman.Warehouseman
 
-import scala.collection.immutable.TreeMap
 import scala.concurrent.duration._
 
 object Storekeeper {
 
-  def props: Props = Props[Storekeeper].withDispatcher("control-aware-dispatcher")
-  def props(n: String, o: String): Props = Props(classOf[Storekeeper], n, o).withDispatcher("control-aware-dispatcher")
+  def props: Props = Props[Storekeeper]//.withDispatcher("control-aware-dispatcher")
+  def props(n: String, o: String): Props = Props(classOf[Storekeeper], n, o)//.withDispatcher("control-aware-dispatcher")
 
 }
 
@@ -58,8 +57,8 @@ object Storekeeper {
   */
 class Storekeeper(private val collectionName: String, private val collectionOwner: String) extends Actor with ActorLogging {
 
-  private val initDelay = 60 seconds       // delay for the first persistence message to be sent
-  private val intervalDelay = 60 seconds   // interval in-between each persistence message has to be sent
+  private val initDelay = 160 seconds       // delay for the first persistence message to be sent
+  private val intervalDelay = 160 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props( collectionName+collectionOwner ))
 
@@ -92,9 +91,9 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     */
   override def postStop(): Unit = scheduler.cancel()
 
-  def receive = running(TreeMap[String, Any]().empty)
+  def receive = running(Map[String, Any]().empty)
 
-  def running(data: TreeMap[String, Any]): Receive = {
+  def running(data: Map[String, Any]): Receive = {
 
     case message: StorekeeperMessage => message match {
 

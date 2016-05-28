@@ -30,7 +30,6 @@ package com.actorbase.actorsystem.messages.MainMessages
 
 import akka.actor.ActorRef
 import akka.dispatch.ControlMessage
-import scala.collection.immutable.TreeMap
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
@@ -40,7 +39,7 @@ final case class InsertTo(collection: ActorbaseCollection, key: String, value: A
 
 final case class GetFrom(collection: ActorbaseCollection, key: String = "") extends MainMessage
 
-final case class CompleteTransaction(clientRef: ActorRef, collection: ActorbaseCollection, items: TreeMap[String, Any]) extends MainMessage with ControlMessage
+final case class CompleteTransaction(clientRef: ActorRef, collection: ActorbaseCollection, items: Map[String, Any]) extends MainMessage with ControlMessage
 
 final case class RemoveFrom(uuid: String, key: String = "") extends MainMessage
 

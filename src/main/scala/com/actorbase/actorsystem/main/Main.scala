@@ -35,18 +35,10 @@ import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
 
 import scala.collection.mutable
 
-import scala.collection.immutable.TreeMap
 import com.actorbase.actorsystem.storefinder.Storefinder
-import com.actorbase.actorsystem.userfinder.Userfinder
-// import com.actorbase.actorsystem.userfinder.messages._
-// import com.actorbase.actorsystem.userkeeper.Userkeeper
-import com.actorbase.actorsystem.userkeeper.Userkeeper.GetPassword
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
-
-import com.github.t3hnar.bcrypt._
-import org.mindrot.jbcrypt.BCrypt
 
 /**
   * Insert description here
@@ -62,7 +54,7 @@ object Main {
     *
     * @return an object of type Props, usable directly with an actorsystem running
     */
-  def props = Props[Main].withDispatcher("control-aware-dispatcher")
+  def props = Props[Main]//.withDispatcher("control-aware-dispatcher")
 
   /** name of the sharded entity */
   def shardName = "mainActor"
@@ -104,8 +96,8 @@ object Main {
   */
 class Main extends Actor with ActorLogging {
 
-  private var sfMap = new TreeMap[ActorbaseCollection, ActorRef]().empty
-  private var requestMap = new TreeMap[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
+  private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
+  private var requestMap = Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
 
   /**
     * Method that create a collection in Actorbase.

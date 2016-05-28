@@ -33,7 +33,6 @@ import akka.actor.{Actor, ActorLogging}
 import com.actorbase.actorsystem.messages.AuthActorMessages._
 import com.actorbase.actorsystem.utils.CryptoUtils
 import com.github.t3hnar.bcrypt._
-import scala.collection.immutable.TreeMap
 // import org.mindrot.jbcrypt.BCrypt
 
 import java.io.File
@@ -49,7 +48,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  override def receive = running(TreeMap[String, String]("admin" -> "actorbase"))
+  override def receive = running(Map[String, String]("admin" -> "actorbase"))
 
   /**
     * Insert description here
@@ -58,7 +57,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def persist(credentials: TreeMap[String, String]): Unit = {
+  def persist(credentials: Map[String, String]): Unit = {
     val key = "Dummy implicit k"
     val encryptedCredentialsFile = new File(rootFolder + "/usersdata.shadow")
     encryptedCredentialsFile.getParentFile.mkdirs
@@ -72,7 +71,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def running(credentials: TreeMap[String, String]): Receive = {
+  def running(credentials: Map[String, String]): Receive = {
 
     case message: AuthActorMessages => message match {
 

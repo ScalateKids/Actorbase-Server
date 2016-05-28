@@ -31,8 +31,6 @@ package com.actorbase.actorsystem.messages.StorefinderMessages
 import akka.actor.ActorRef
 import akka.dispatch.ControlMessage
 
-import scala.collection.immutable.TreeMap
-
 sealed abstract trait StorefinderMessage
 
 final case object GetAllItems extends StorefinderMessage
@@ -41,7 +39,7 @@ final case class UpdateCollectionSize(increment: Boolean = true) extends Storefi
 
 final case class Get(key: String) extends StorefinderMessage
 
-final case class PartialMapTransaction(clientRef: ActorRef, items: TreeMap[String, Any]) extends StorefinderMessage with ControlMessage
+final case class PartialMapTransaction(clientRef: ActorRef, items: Map[String, Any]) extends StorefinderMessage with ControlMessage
 
 final case class Remove(key: String) extends StorefinderMessage
 

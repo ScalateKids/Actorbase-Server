@@ -103,4 +103,26 @@ case class ActorbaseCollection (private var name: String,
   override def compare(that: ActorbaseCollection): Int = {
     (this.name + this.owner) compare (that.name + that.owner)
   }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  override def equals(o: Any) = o match {
+    case that: ActorbaseCollection => that.uuid.equals(this.uuid)
+    case _ => false
+  }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  override def hashCode = uuid.hashCode
+
 }

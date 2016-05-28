@@ -68,6 +68,6 @@ case object MapResponse {
   }
   implicit val mapResponseMarshall = jsonFormat2(MapResponse.apply)
 
-  def goJson(m: MapResponse) = jsonFormat2(MapResponse.apply)
+  // def goJson(m: MapResponse) = jsonFormat2(MapResponse.apply)
 
 }

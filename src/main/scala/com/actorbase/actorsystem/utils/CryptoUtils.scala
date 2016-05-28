@@ -55,7 +55,7 @@ object CryptoUtils {
     * InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
     * IOException
     */
-  def encrypt(key: String, inputData: TreeMap[String, Any], outputFile: File): Unit = {
+  def encrypt(key: String, inputData: Map[String, Any], outputFile: File): Unit = {
 
     val cipherMode: Int = Cipher.ENCRYPT_MODE
 
@@ -66,7 +66,7 @@ object CryptoUtils {
       * @return an array of bytes representing the object binarized
       * @throws
       */
-    def binarize(o: TreeMap[String, Any]): Array[Byte] = {
+    def binarize(o: Map[String, Any]): Array[Byte] = {
       val bos = new ByteArrayOutputStream()
       var out = new ObjectOutputStream(bos)
       out.writeObject(o);
@@ -115,7 +115,7 @@ object CryptoUtils {
   @throws(classOf[InvalidKeyException])
   @throws(classOf[IllegalBlockSizeException])
   @throws(classOf[IOException])
-  def decrypt(key: String, inputFile: File): TreeMap[String, Any] = {
+  def decrypt(key: String, inputFile: File): Map[String, Any] = {
 
     val cipherMode: Int = Cipher.DECRYPT_MODE
     val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
@@ -131,7 +131,7 @@ object CryptoUtils {
     inputStream.close()
 
     val in = new ObjectInputStream(new ByteArrayInputStream(outputBytes))
-    in.readObject().asInstanceOf[TreeMap[String, Any]]
+    in.readObject().asInstanceOf[Map[String, Any]]
 
   }
 
