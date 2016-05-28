@@ -97,7 +97,7 @@ trait RestApi extends HttpServiceBase with Authenticator {
     path("actorbase" / "\\S+".r / IntNumber / IntNumber ) { (collection, numberOfItems, millisecs) =>
       get {
         complete {
-          val coll = ActorbaseCollection(collection, "anonymous")
+          val coll = ActorbaseCollection(collection, "admin")
           // main ! CreateCollection(coll)
           for( a <- 1 to numberOfItems) {
             val key = scala.util.Random.alphanumeric.take(15).mkString.toLowerCase()

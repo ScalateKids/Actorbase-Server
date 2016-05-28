@@ -110,7 +110,8 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         * GetAllItem message, this actor will send back the collection name and all the collection.
         */
       case GetAll(parent) =>
-        parent ! PartialMapTransaction(sender, data)
+        if (data.nonEmpty)
+          parent ! PartialMapTransaction(sender, data)
 
       /**
         * RemoveItem message, when the actor receive this message it will erase the item associated with the
