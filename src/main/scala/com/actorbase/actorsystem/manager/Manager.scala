@@ -26,69 +26,39 @@
   * @since 1.0
   */
 
-/*package com.actorbase.actorsystem.manager
+package com.actorbase.actorsystem.manager
 
-import akka.actor.{Props, Actor, ActorLogging, ActorRef}
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.routing.{ ActorRefRoutee, AddRoutee }
 
-import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.storekeeper.Storekeeper
-import com.actorbase.actorsystem.manager.messages._
-
-import com.actorbase.actorsystem.main.messages.DuplicateSFNotify
-
-import scala.collection.immutable.TreeMap
+import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
 
 object Manager {
 
-  def props( sfRef: ActorRef ): Props = Props(new Manager( sfRef ))
+  case object OneMore
+
+  def props(collection: String, owner: String, router: ActorRef): Props = Props(classOf[Manager], collection, owner, router)
 
 }
 
 /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
+  * Try to maintain the equilibrium inside the SKs by tracing the number of
+  * entries stored in each map. If some SK actor is under heavy load, (number of
+  * entries is beyond a given threshold) they will create new actor of type SK
+  * to properly redistribute that load and add it to the SF router.
   */
 
 
-class Manager(private val parentRef: ActorRef) extends Actor with ActorLogging {
+class Manager(val collection: String, val owner: String, val router: ActorRef) extends Actor with ActorLogging {
+
+  import Manager._
 
   def receive = {
-
-    /**
-      * DuplicationRequestSK message. When the actor receive this message it means that a Storekeeper is full.
-      * This actor has to create a new Storekeeper using the map in input and then notify the Storefinder that the
-      * duplication happened sending the new ActorRef and new KeyRanges.
-      *
-      * @param oldKeyRange a KeyRange representing the KeyRange that was duplicated. this is needed by the
-      *                    Storefinder to understand which KeyRange needs to be updated
-      * @param leftRange a KeyRange representing the new KeyRange of the Storekeeper that was duplicated
-      * @param map a TreeMap[String, Any] representing the collection for the Storekeeper that has to be created
-      * @param rightRange a KeyRange representing the KeyRange of the Storekeeper that has to be created
-      *
-      */
-    case DuplicationRequestSK(oldKeyRange, leftRange, map, rightRange) => {
-      log.info("Manager "+self.path.name+": Duplication request SK")
-      // create a SK with the self refence, the map received and the KeyRange he represents
-      val newSk = context.actorOf(Props(new Storekeeper( self, map, rightRange)).withDispatcher("control-aware-dispatcher"))
-
-      // notify the SF that a duplication has happened, he needs to update his data structure
-      parentRef ! com.actorbase.actorsystem.storefinder.messages.DuplicateSKNotify( oldKeyRange, leftRange, newSk, rightRange)
-    }
-
-    /**
-      *
-       */
-    case DuplicationRequestSF(oldCollRange, leftCollRange, map, rightCollRange, mainActor) => {
-      log.info("Manager: Duplication request SF ")
-      // create che storefinder with ( mainactor ref, actorbaseCollection, Map[KeyRange, skRef], KeyRange )
-      val newSf = context.actorOf(Props(new Storefinder(mainActor, oldCollRange.getCollection, map, rightCollRange.getKeyRange)).withDispatcher("control-aware-dispatcher"))
-
-      // notify the mainActor that a duplication has happened, he needs to update his data structure
-      mainActor ! DuplicateSFNotify( oldCollRange, leftCollRange, newSf, rightCollRange )
-    }
+    case OneMore =>
+      log.info("new storekeeper added to [POOL]")
+      val newSk = context.actorOf(Storekeeper.props(collection, owner))
+      newSk ! InitMn(self)
+      router ! AddRoutee(ActorRefRoutee(newSk))
   }
 }
-*/

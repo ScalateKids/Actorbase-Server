@@ -28,7 +28,7 @@
 
 package com.actorbase.actorsystem.storekeeper
 
-import akka.actor.{Actor, ActorLogging, Cancellable, Props}
+import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, Props }
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
@@ -38,6 +38,7 @@ import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransac
 import com.actorbase.actorsystem.messages.WarehousemanMessages.{Init, Save}
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 import com.actorbase.actorsystem.warehouseman.Warehouseman
+import com.actorbase.actorsystem.manager.Manager.OneMore
 
 import scala.concurrent.duration._
 
@@ -61,6 +62,8 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
   private val intervalDelay = 160 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props( collectionOwner + collectionName ))
+  private var manager: Option[ActorRef] = None
+  private var checked = false
 
   warehouseman ! Init( collectionName, collectionOwner)
 
@@ -96,6 +99,10 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
   def running(data: Map[String, Array[Byte]]): Receive = {
 
     case message: StorekeeperMessage => message match {
+
+      case InitMn(mn) =>
+        log.info("new MN received")
+        manager = Some(mn)
 
       /**
         * GetItem message, this actor will send back a value associated with the input key
@@ -146,8 +153,13 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           */
         def insertOrUpdate(update: Boolean, key: String): Boolean = {
           var done = true
-          if (!update && !data.contains(key))
+          if (!update && !data.contains(key)) {
             sender ! UpdateCollectionSize(true)
+            if (data.size > 1024 && !checked) {
+              checked = true
+              manager map (_ ! OneMore) getOrElse(checked = false)
+            }
+          }
           else if (!update && data.contains(key)) {
             log.warning("SK: Duplicate key found, cannot insert")
             done = false

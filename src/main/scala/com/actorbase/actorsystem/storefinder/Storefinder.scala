@@ -35,15 +35,15 @@ import akka.actor.{Actor, ActorLogging, Props}
 
 import akka.cluster.routing.ClusterRouterPool
 import akka.cluster.routing.ClusterRouterPoolSettings
-import akka.routing.ConsistentHashingPool
+import akka.routing.{ ActorRefRoutee, ConsistentHashingPool, Router }
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
 
 import com.actorbase.actorsystem.messages.StorefinderMessages._
-import com.actorbase.actorsystem.messages.StorekeeperMessages.{GetItem, GetAll, InsertItem, RemoveItem}
+import com.actorbase.actorsystem.messages.StorekeeperMessages.{GetItem, GetAll, InsertItem, RemoveItem, InitMn}
 import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 import com.actorbase.actorsystem.storekeeper.Storekeeper
-// import com.actorbase.actorsystem.warehouseman.Warehouseman
+import com.actorbase.actorsystem.manager.Manager
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 object Storefinder {
@@ -64,6 +64,9 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
   val storekeepers = context.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
     ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
   // val storekeepers = context.actorOf(FromConfig.props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
+  val manager = context.actorOf(Manager.props(collection.getName, collection.getOwner, storekeepers))
+
+  storekeepers ! Broadcast(InitMn(manager))
 
   /**
     * Insert description here

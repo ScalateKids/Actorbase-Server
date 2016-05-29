@@ -36,6 +36,8 @@ sealed abstract trait StorekeeperMessage
 
 final case object Persist extends StorekeeperMessage with ControlMessage
 
+final case class InitMn(mn: ActorRef) extends StorekeeperMessage with ControlMessage
+
 final case class GetAll(parent: ActorRef) extends StorekeeperMessage
 
 // final case class Init(manager: ActorRef, range: KeyRange) extends StorekeeperMessage
