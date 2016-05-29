@@ -26,7 +26,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.clientactor.messages
+package com.actorbase.actorsystem.messages.ClientActorMessages
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
@@ -70,8 +70,7 @@ case object MapResponse {
     }
 
   }
-  implicit val mapResponseMarshall = jsonFormat2(MapResponse.apply)
 
-  // def goJson(m: MapResponse) = jsonFormat2(MapResponse.apply)
+  implicit val goJson = jsonFormat2(MapResponse.apply)
 
 }

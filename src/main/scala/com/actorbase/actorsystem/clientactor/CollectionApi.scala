@@ -1,6 +1,7 @@
 package com.actorbase.actorsystem.clientactor
 
 import akka.actor.ActorRef
+import com.actorbase.actorsystem.messages.MainMessages.ListCollections
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
@@ -11,7 +12,7 @@ import scala.concurrent.duration._
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages.{InsertTo, GetFrom, RemoveFrom, CreateCollection}
-import com.actorbase.actorsystem.clientactor.messages._
+import com.actorbase.actorsystem.messages.ClientActorMessages._
 
 trait CollectionApi extends HttpServiceBase with Authenticator {
 
@@ -50,6 +51,17 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       *
       * All routes return a standard marshallable of type Array[Byte]
       */
+    pathPrefix("listcollections") {
+      pathEndOrSingleSlash {
+        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+          get {
+            complete {
+              main.ask(ListCollections(authInfo.user.login))(5 seconds).mapTo[ListResponse]
+            }
+          }
+        }
+      }
+    } ~
     pathPrefix("collections" / "\\S+".r) { collection =>
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>

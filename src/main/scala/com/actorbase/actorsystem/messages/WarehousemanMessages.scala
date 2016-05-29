@@ -36,6 +36,6 @@ final case object Clean extends WarehousemanMessage
 
 final case class Init(collection: String, owner: String) extends WarehousemanMessage
 
-final case class Save(map: Map[String, Any]) extends WarehousemanMessage
+final case class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
 
 final case class Read(file: File) extends WarehousemanMessage

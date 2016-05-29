@@ -41,7 +41,7 @@ import scala.concurrent.duration._
 // import com.actorbase.actorsystem.main.Main.{CreateCollection, Insert, GetItemFrom, RemoveItemFrom}
 import com.actorbase.actorsystem.messages.MainMessages.{CreateCollection, InsertTo, GetFrom, RemoveFrom}
 import com.actorbase.actorsystem.main.messages._
-import com.actorbase.actorsystem.clientactor.messages._
+import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 /**

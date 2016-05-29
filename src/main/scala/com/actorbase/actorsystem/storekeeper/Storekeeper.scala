@@ -36,7 +36,7 @@ import ExecutionContext.Implicits.global
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransaction, UpdateCollectionSize}
 import com.actorbase.actorsystem.messages.WarehousemanMessages.{Init, Save}
-import com.actorbase.actorsystem.clientactor.messages.Response
+import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 import com.actorbase.actorsystem.warehouseman.Warehouseman
 
 import scala.concurrent.duration._
@@ -91,9 +91,9 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     */
   override def postStop(): Unit = scheduler.cancel()
 
-  def receive = running(Map[String, Any]().empty)
+  def receive = running(Map[String, Array[Byte]]().empty)
 
-  def running(data: Map[String, Any]): Receive = {
+  def running(data: Map[String, Array[Byte]]): Receive = {
 
     case message: StorekeeperMessage => message match {
 

@@ -39,6 +39,7 @@ import com.actorbase.actorsystem.storefinder.Storefinder
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
+import com.actorbase.actorsystem.messages.ClientActorMessages.{ListResponse, MapResponse}
 
 /**
   * Insert description here
@@ -66,6 +67,7 @@ object Main {
     * @return a String representing an UUID of a shard-region where the actor belongs to
     */
   val extractShardId: ExtractShardId = {
+    case ListCollections(owner) => (owner.hashCode % 100).toString
     case CreateCollection(collection) => (collection.getUUID.hashCode % 100).toString
     case RemoveFrom(uuid, _) => (uuid.hashCode % 100).toString
     case InsertTo(collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
@@ -81,6 +83,7 @@ object Main {
     * @return a String representing an UUID of an entity actor inside a shard-region
     */
   val extractEntityId: ExtractEntityId = {
+    case msg: ListCollections => (msg.owner, msg)
     case msg: CreateCollection => (msg.collection.getUUID, msg)
     case msg: RemoveFrom => (msg.uuid, msg)
     case msg: InsertTo => (msg.collection.getUUID, msg)
@@ -101,7 +104,7 @@ object Main {
 class Main extends Actor with ActorLogging {
 
   private var sfMap = mutable.Map[ActorbaseCollection, ActorRef]().empty
-  private var requestMap = mutable.Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Any]]]() // a bit clunky, should switch to a queue
+  private var requestMap = mutable.Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
 
   /**
     * Method that create a collection in Actorbase.
@@ -125,6 +128,16 @@ class Main extends Actor with ActorLogging {
     case message: MainMessage => message match {
 
       /**
+        * Build a list of collection names and reply it to the sender
+        *
+        * @param owner a String representing the owner of the requested collection name list
+        */
+      case ListCollections(owner) =>
+        val names = sfMap.filterKeys(_.getOwner == owner).keys map (collection => collection.getName)
+        log.info(s"found $names for user $owner")
+        sender ! ListResponse(names.toList)
+
+      /**
         * Insert message, insert a key/value into a designed collection, searching
         * if sfMap contains the collection I need, if it's present search for the
         * right keyrange
@@ -138,7 +151,7 @@ class Main extends Actor with ActorLogging {
         * updating the value)
         */
       case InsertTo(collection, key, value, update) =>
-        sfMap.find(x => x._1.compare(collection) == 0) map (_._2 ! Insert(key, value, update)) getOrElse (
+        sfMap.find(x => x._1 == collection) map (_._2 ! Insert(key, value, update)) getOrElse (
           createCollection(collection) map (_ ! Insert(key, value, update)) getOrElse log.error("Error retrieving storefinder ActorRef"))
 
       /**
@@ -159,16 +172,16 @@ class Main extends Actor with ActorLogging {
         */
       case GetFrom(collection, key) =>
         if (key.nonEmpty)
-          sfMap.find(_._1.compare(collection) == 0) map (_._2 forward Get(key)) getOrElse log.warning(s"Key $key not found")
+          sfMap.find(_._1 == collection) map (_._2 forward Get(key)) getOrElse log.warning(s"Key $key not found")
         else {
           // WIP: still completing
-          sfMap.find(x => x._1.compare(collection) == 0) map { coll =>
-            requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Any]())) getOrElse (
-              requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Any]](coll._1 -> mutable.Map[String, Any]())))
+          sfMap.find(x => x._1 == collection) map { coll =>
+            requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Array[Byte]]())) getOrElse (
+              requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Array[Byte]]](coll._1 -> mutable.Map[String, Array[Byte]]())))
             if (coll._1.getSize > 0)
               sfMap get collection map (_ forward GetAllItems) getOrElse log.warning (s"MAIN: key $key not found")
             else
-              sender ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, Map[String, Any]())
+              sender ! MapResponse(collection.getName, Map[String, Any]())
           }
         }
 
@@ -186,11 +199,11 @@ class Main extends Actor with ActorLogging {
         */
       case CompleteTransaction(clientRef, collection, items) =>
         requestMap.find(_._1 == collection.getOwner) map { ref =>
-          ref._2.find(_._1.compare(collection) == 0) map { colMap =>
+          ref._2.find(_._1 == collection) map { colMap =>
             colMap._2 ++= items
             log.info(s"${colMap._2.size} - ${collection.getSize} - ${colMap._1.getSize}")
             if (colMap._2.size == collection.getSize) {
-              clientRef ! com.actorbase.actorsystem.clientactor.messages.MapResponse(collection.getName, colMap._2.toMap)
+              clientRef ! MapResponse(collection.getName, colMap._2.toMap)
               colMap._2.clear
               ref._2.-(collection)
             }
