@@ -157,7 +157,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
             sender ! UpdateCollectionSize(true)
             if (data.size > 1024 && !checked) {
               checked = true
-              manager map (_ ! OneMore) getOrElse(checked = false)
+              manager map (_ ! OneMore) getOrElse (checked = false)
             }
           }
           else if (!update && data.contains(key)) {
