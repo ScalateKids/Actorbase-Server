@@ -54,11 +54,17 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
 
   import Manager._
 
+  var reports = 0
+
   def receive = {
     case OneMore =>
-      log.info("new storekeeper added to [POOL]")
-      val newSk = context.actorOf(Storekeeper.props(collection, owner))
-      newSk ! InitMn(self)
-      router ! AddRoutee(ActorRefRoutee(newSk))
+      reports += 1
+      if (reports == 5) {
+        log.info("new storekeeper added to [POOL]")
+        val newSk = context.actorOf(Storekeeper.props(collection, owner))
+        newSk ! InitMn(self)
+        router ! AddRoutee(ActorRefRoutee(newSk))
+        reports = 0
+      }
   }
 }
