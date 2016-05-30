@@ -97,7 +97,7 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         *
         */
       case ins: Insert =>
-        log.info("SF: inserting " + ins.key)
+        // log.info("SF: inserting " + ins.key)
         storekeepers ! (ConsistentHashableEnvelope(message = InsertItem(ins.key, ins.value, ins.update), hashKey = ins.key))
 
       /**
@@ -106,14 +106,14 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         * @param key a String representing the key of the item to be retrieved
         */
       case Get(key) =>
-        log.info(s"SF: getItem of key -> ${key}")
+        // log.info(s"SF: getItem of key -> ${key}")
         storekeepers forward (ConsistentHashableEnvelope(message = GetItem(key), hashKey = key))
 
       /**
         * Message that returns the entire collection mapped by this Storefinder
         */
       case GetAllItems =>
-        log.info("SF: getallitem")
+        // log.info("SF: getallitem")
         storekeepers forward Broadcast(GetAll(self))
 
       /**
@@ -122,7 +122,7 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         * @param key a String representing the key of the item to be removed
         */
       case rem: Remove =>
-        log.info("SF: remove")
+        // log.info("SF: remove")
         storekeepers ! RemoveItem(rem.key)
 
       /**

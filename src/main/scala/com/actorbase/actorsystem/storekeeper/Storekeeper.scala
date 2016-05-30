@@ -101,7 +101,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     case message: StorekeeperMessage => message match {
 
       case InitMn(mn) =>
-        log.info("new MN received")
+        // log.info("new MN received")
         manager = Some(mn)
 
       /**
@@ -141,7 +141,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         */
       case ins: InsertItem =>
-        log.info("SK: Inserting " + ins.key)
+        // log.info("SK: Inserting " + ins.key)
 
         /**
           * private method that insert an item to the collection, can allow the update of the item or not
@@ -161,7 +161,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
             }
           }
           else if (!update && data.contains(key)) {
-            log.warning("SK: Duplicate key found, cannot insert")
+            // log.warning("SK: Duplicate key found, cannot insert")
             done = false
           }
           done
