@@ -29,7 +29,7 @@
 
 package com.actorbase.actorsystem.clientactor
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{ Actor, ActorLogging, ActorRef }
 import spray.can.Http
 
 import scala.util.Try

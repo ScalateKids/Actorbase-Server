@@ -2,6 +2,7 @@
 target/
 
 actorbasedata
+payloads
 
 *.class
 *.log

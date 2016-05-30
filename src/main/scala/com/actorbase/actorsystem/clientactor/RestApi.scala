@@ -38,7 +38,6 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-// import com.actorbase.actorsystem.main.Main.{CreateCollection, Insert, GetItemFrom, RemoveItemFrom}
 import com.actorbase.actorsystem.messages.MainMessages.{CreateCollection, InsertTo, GetFrom, RemoveFrom}
 import com.actorbase.actorsystem.main.messages._
 import com.actorbase.actorsystem.messages.ClientActorMessages._

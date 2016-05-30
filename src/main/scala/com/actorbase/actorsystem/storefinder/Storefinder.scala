@@ -64,7 +64,7 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
   val storekeepers = context.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
     ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
   // val storekeepers = context.actorOf(FromConfig.props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
-  val manager = context.actorOf(Manager.props(collection.getName, collection.getOwner, storekeepers))
+  val manager = context.actorOf(Manager.props(collection.getName, collection.getOwner, storekeepers), collection.getUUID + "-manager")
 
   storekeepers ! Broadcast(InitMn(manager))
 
