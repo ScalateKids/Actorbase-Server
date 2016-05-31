@@ -111,7 +111,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         */
       case GetItem(key)  =>
-        sender ! Response(data.get(key).getOrElse("None").toString())
+        sender ! Response(data.get(key).getOrElse("None".getBytes))
 
       /**
         * GetAllItem message, this actor will send back the collection name and all the collection.
@@ -155,7 +155,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           var done = true
           if (!update && !data.contains(key)) {
             sender ! UpdateCollectionSize(true)
-            if (data.size > 1024 && !checked) {
+            if (data.size > 256 && !checked) {
               checked = true
               manager map (_ ! OneMore) getOrElse (checked = false)
             }

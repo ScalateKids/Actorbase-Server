@@ -48,8 +48,6 @@ object Manager {
   * entries is beyond a given threshold) they will create new actor of type SK
   * to properly redistribute that load and add it to the SF router.
   */
-
-
 class Manager(val collection: String, val owner: String, val router: ActorRef) extends Actor with ActorLogging {
 
   import Manager._
@@ -59,7 +57,7 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
   def receive = {
     case OneMore =>
       reports += 1
-      if (reports == 2) {
+      if (reports == 1) {
         log.info("new storekeeper added to [POOL]")
         val newSk = context.actorOf(Storekeeper.props(collection, owner))
         newSk ! InitMn(self)
