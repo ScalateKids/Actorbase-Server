@@ -54,17 +54,12 @@ class MainSpec extends TestKit(ActorSystem("testSystem"))
 
   //implicit val system = ActorSystem()
 
-  it should{
+  "Main actor" should{
     "list all collections" in {
       val mainActorRef = TestActorRef[Main]
-
       val p = TestProbe()
-      p.send( mainActorRef, "test" )
-      p.expectMsg("merda")
-
-      /*mainActorRef ! "test"
-
-      expectMsg("merda")*/
+      p.send( mainActorRef, ListCollections("lol") )
+      p.expectMsg(ListResponse(List()))
     }
   }
 }
