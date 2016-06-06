@@ -58,7 +58,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem"))
 
       val p = TestProbe()
       p.send( mainActorRef, ListCollections("test") )
-      p.expectMsg( ListResponse[String] )
+      p.expectMsg(ListResponse(List()))
     }
   }
 }
