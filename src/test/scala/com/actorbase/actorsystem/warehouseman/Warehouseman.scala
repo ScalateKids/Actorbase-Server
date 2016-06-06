@@ -25,7 +25,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.warehouseman
 
 import com.actorbase.actorsystem.messages.WarehousemanMessages._
@@ -71,3 +71,4 @@ class WarehousemanSpec extends ActorSystemUnitSpec {
     }
   }
 }
+*/

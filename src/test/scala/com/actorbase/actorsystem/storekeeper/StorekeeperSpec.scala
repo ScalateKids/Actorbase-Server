@@ -25,7 +25,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.main
 
 import akka.actor.ActorSystem
@@ -56,3 +56,4 @@ class StorekeeperSpec extends FlatSpec with Matchers {
     }
   }
 }
+*/
