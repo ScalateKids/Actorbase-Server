@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -28,25 +29,42 @@
 
 package com.actorbase.actorsystem.main
 
-import akka.actor.ActorSystem
-import akka.testkit.TestActorRef
 import akka.util.Timeout
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import scala.concurrent.duration._
 import org.scalatest.FlatSpec
 
-import com.actorbase.actorsystem.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.CreateCollection
+import akka.actor.ActorSystem
+import akka.actor.Actor
+import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
+import org.scalatest.matchers.MustMatchers
+import org.scalatest.WordSpecLike
 
-class MainSpec extends FlatSpec {
+import com.actorbase.actorsystem.actors.main.Main
+import com.actorbase.actorsystem.messages.MainMessages.ListCollections
+import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
+
+class MainSpec extends TestKit(ActorSystem("testSystem"))
+  // Using the ImplicitSender trait will automatically set `testActor` as the sender
+  with ImplicitSender
+  with WordSpecLike
+  with MustMatchers {
 
   implicit val timeout = Timeout(25 seconds)
 
-  implicit val system = ActorSystem()
+  //implicit val system = ActorSystem()
 
-  it should "create a new collection" in {
-    val mainActorRef = TestActorRef[Main]
-    mainActorRef ! CreateCollection(new ActorbaseCollection("testcollection", "test"))
-    val actor = mainActorRef.underlyingActor
+  it should{
+    "list all collections" in {
+      val mainActorRef = TestActorRef[Main]
+
+      val p = TestProbe()
+      p.send( mainActorRef, "test" )
+      p.expectMsg("merda")
+
+      /*mainActorRef ! "test"
+
+      expectMsg("merda")*/
+    }
   }
 }

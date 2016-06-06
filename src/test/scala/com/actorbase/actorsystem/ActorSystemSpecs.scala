@@ -25,7 +25,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem
 
 import org.scalatest._
@@ -52,3 +52,4 @@ object ActorSystemSpecs {
   abstract class ActorSystemUnitSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterAll
 
 }
+*/
