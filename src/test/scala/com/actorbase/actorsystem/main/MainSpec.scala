@@ -41,12 +41,10 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
 
 import com.actorbase.actorsystem.actors.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.ListCollections
+import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
 
 class MainSpec extends TestKit(ActorSystem("testSystem"))
-  // Using the ImplicitSender trait will automatically set `testActor` as the sender
-  with ImplicitSender
   with WordSpecLike
   with MustMatchers {
 
@@ -54,17 +52,13 @@ class MainSpec extends TestKit(ActorSystem("testSystem"))
 
   //implicit val system = ActorSystem()
 
-  it should{
+  "main" should{
     "list all collections" in {
       val mainActorRef = TestActorRef[Main]
 
       val p = TestProbe()
-      p.send( mainActorRef, "test" )
-      p.expectMsg("merda")
-
-      /*mainActorRef ! "test"
-
-      expectMsg("merda")*/
+      p.send( mainActorRef, ListCollections("test") )
+      p.expectMsg( ListResponse[String] )
     }
   }
 }
