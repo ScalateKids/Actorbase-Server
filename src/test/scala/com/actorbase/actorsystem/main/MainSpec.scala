@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.main
 
 import akka.util.Timeout
@@ -76,3 +76,4 @@ class MainSpec extends TestKit(ActorSystem("testSystem"))
     }
   }
 }
+*/
