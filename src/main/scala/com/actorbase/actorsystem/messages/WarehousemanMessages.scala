@@ -26,27 +26,16 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.main
+package com.actorbase.actorsystem.messages.WarehousemanMessages
 
-import akka.actor.ActorSystem
-import akka.testkit.TestActorRef
-import akka.util.Timeout
-import com.actorbase.actorsystem.utils.ActorbaseCollection
-import scala.concurrent.duration._
-import org.scalatest.FlatSpec
+import java.io.File
 
-import com.actorbase.actorsystem.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.CreateCollection
+sealed abstract trait WarehousemanMessage
 
-class MainSpec extends FlatSpec {
+final case object Clean extends WarehousemanMessage
 
-  implicit val timeout = Timeout(25 seconds)
+final case class Init(collection: String, owner: String) extends WarehousemanMessage
 
-  implicit val system = ActorSystem()
+final case class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
 
-  it should "create a new collection" in {
-    val mainActorRef = TestActorRef[Main]
-    mainActorRef ! CreateCollection(new ActorbaseCollection("testcollection", "test"))
-    val actor = mainActorRef.underlyingActor
-  }
-}
+final case class Read(file: File) extends WarehousemanMessage

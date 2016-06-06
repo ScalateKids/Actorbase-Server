@@ -33,10 +33,8 @@ import akka.actor.{Actor, ActorRef, ActorLogging, Props}
 import com.actorbase.actorsystem.userfinder.messages._
 import com.actorbase.actorsystem.userkeeper.Userkeeper
 import com.actorbase.actorsystem.userkeeper.Userkeeper._
-// import com.actorbase.actorsystem.manager.Manager
 
 import scala.collection.immutable.TreeMap
-// import scala.math.Ordered.orderingToOrdered
 
 object Userfinder {
   def props() : Props = Props(new Userfinder())
@@ -44,8 +42,7 @@ object Userfinder {
 
 class Userfinder extends Actor with ActorLogging {
 
-  // ukMap maps username of String-typed to the uk reference
-  private var ukMap = new TreeMap[String, ActorRef]()
+  def receive = running(TreeMap[String, ActorRef]().empty)
 
   /**
     * Insert description here
@@ -54,7 +51,7 @@ class Userfinder extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def receive = {
+  def running(ukMap: TreeMap[String, ActorRef]): Receive = {
 
     /**
       * Insert message, create an actor of type Userkeeper initializing it with
@@ -67,10 +64,9 @@ class Userfinder extends Actor with ActorLogging {
       */
     case InsertTo(username, password) =>
       log.info("UF: insert user into userkeeper")
-      if(!ukMap.contains(username)) {
-        val uk = context.actorOf(Userkeeper.props(username, password))
-        ukMap += (username -> uk)
-      } else
+      if(!ukMap.contains(username))
+        context become running(ukMap + (username -> context.actorOf(Userkeeper.props(username, password))))
+      else
         log.info(s"Duplicate insert for username $username: already exists")
 
     /**
@@ -142,6 +138,17 @@ class Userfinder extends Actor with ActorLogging {
       if(ukMap.contains(username))
         ukMap.get(username).get forward AddCollection(read, collection)
       else log.info(s"$username not found can't add collection")
+
+    /**
+      * Insert description here
+      *
+      * @param
+      * @return
+      * @throws
+      */
+    case UpdateCollectionSizeTo(collection, increment) =>
+      // log.info("UF: increment size")
+      ukMap.find(_._1 == collection.getOwner).head._2 ! UpdateCollectionSize(collection, increment)
   }
 
 }

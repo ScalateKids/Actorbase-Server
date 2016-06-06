@@ -26,27 +26,60 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.main
+package com.actorbase.actorsystem.actors.clientactor
 
-import akka.actor.ActorSystem
-import akka.testkit.TestActorRef
-import akka.util.Timeout
-import com.actorbase.actorsystem.utils.ActorbaseCollection
-import scala.concurrent.duration._
-import org.scalatest.FlatSpec
+import com.github.t3hnar.bcrypt._
+import org.mindrot.jbcrypt.BCrypt
 
-import com.actorbase.actorsystem.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.CreateCollection
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class MainSpec extends FlatSpec {
+/**
+  * Insert description here
+  *
+  * @param
+  * @return
+  * @throws
+  */
+object UserApi {
 
-  implicit val timeout = Timeout(25 seconds)
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case class User(login: String, hashedPassword: Option[String] = None) {
 
-  implicit val system = ActorSystem()
+    /**
+      * Basic password matching, will be implemented at least with
+      * bcrypt for hashing the password
+      *
+      * @param password a String representing the password to be tested
+      * @return a Boolean, true if the password matches, false otherwise
+      * @throws
+      */
+    def passwordMatches(password: String): Boolean = hashedPassword.exists(hash => BCrypt.checkpw(password, hash))
 
-  it should "create a new collection" in {
-    val mainActorRef = TestActorRef[Main]
-    mainActorRef ! CreateCollection(new ActorbaseCollection("testcollection", "test"))
-    val actor = mainActorRef.underlyingActor
   }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case class AuthInfo(val user: User) {
+
+    /**
+      * Verify wether the user has admin privileges for restricted area
+      * operations
+      *
+      * @return true if the user has admin privileges, false otherwise
+      * @throws
+      */
+    def hasAdminPermissions = true
+  }
+
 }

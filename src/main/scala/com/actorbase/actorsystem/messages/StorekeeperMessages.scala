@@ -26,27 +26,30 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.main
+package com.actorbase.actorsystem.messages.StorekeeperMessages
 
-import akka.actor.ActorSystem
-import akka.testkit.TestActorRef
-import akka.util.Timeout
-import com.actorbase.actorsystem.utils.ActorbaseCollection
-import scala.concurrent.duration._
-import org.scalatest.FlatSpec
+import akka.actor.ActorRef
+import akka.dispatch.ControlMessage
+import akka.routing.ConsistentHashingRouter.ConsistentHashable
 
-import com.actorbase.actorsystem.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.CreateCollection
+sealed abstract trait StorekeeperMessage
 
-class MainSpec extends FlatSpec {
+final case object Persist extends StorekeeperMessage with ControlMessage
 
-  implicit val timeout = Timeout(25 seconds)
+final case class InitMn(mn: ActorRef) extends StorekeeperMessage with ControlMessage
 
-  implicit val system = ActorSystem()
+final case class GetAll(parent: ActorRef) extends StorekeeperMessage
 
-  it should "create a new collection" in {
-    val mainActorRef = TestActorRef[Main]
-    mainActorRef ! CreateCollection(new ActorbaseCollection("testcollection", "test"))
-    val actor = mainActorRef.underlyingActor
-  }
+// final case class Init(manager: ActorRef, range: KeyRange) extends StorekeeperMessage
+
+final case class GetItem(key: String) extends ConsistentHashable with StorekeeperMessage {
+  override def consistentHashKey: Any = key
+}
+
+final case class InsertItem(key: String, value: Array[Byte], update: Boolean = false) extends ConsistentHashable with StorekeeperMessage {
+  override def consistentHashKey: Any = key
+}
+
+final case class RemoveItem(key: String) extends ConsistentHashable with StorekeeperMessage {
+  override def consistentHashKey: Any = key
 }

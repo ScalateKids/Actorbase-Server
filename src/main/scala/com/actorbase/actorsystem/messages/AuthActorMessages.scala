@@ -26,27 +26,14 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.main
+package com.actorbase.actorsystem.messages.AuthActorMessages
 
-import akka.actor.ActorSystem
-import akka.testkit.TestActorRef
-import akka.util.Timeout
-import com.actorbase.actorsystem.utils.ActorbaseCollection
-import scala.concurrent.duration._
-import org.scalatest.FlatSpec
+sealed trait AuthActorMessages
 
-import com.actorbase.actorsystem.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.CreateCollection
+final case class AddCredentials(username: String, password: String) extends AuthActorMessages
 
-class MainSpec extends FlatSpec {
+final case class UpdateCredentials(username: String, password: String, newPassword: String) extends AuthActorMessages
 
-  implicit val timeout = Timeout(25 seconds)
+final case class RemoveCredentials(username: String) extends AuthActorMessages
 
-  implicit val system = ActorSystem()
-
-  it should "create a new collection" in {
-    val mainActorRef = TestActorRef[Main]
-    mainActorRef ! CreateCollection(new ActorbaseCollection("testcollection", "test"))
-    val actor = mainActorRef.underlyingActor
-  }
-}
+final case class Authenticate(username: String, password: String) extends AuthActorMessages

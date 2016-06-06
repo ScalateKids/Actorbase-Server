@@ -1,0 +1,6 @@
+http://localhost:9999/collections/customers/keyOne
+http://localhost:9999/collections/customersB/keyTwo
+http://localhost:9999/collections/customers/keyThree
+http://localhost:9999/collections/customersB/keyFour
+http://localhost:9999/collections/customers/keyFive
+http://localhost:9999/collections/customersB/keySix

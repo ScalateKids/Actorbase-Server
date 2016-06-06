@@ -26,27 +26,21 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.main
+package com.actorbase.actorsystem.messages.StorefinderMessages
 
-import akka.actor.ActorSystem
-import akka.testkit.TestActorRef
-import akka.util.Timeout
-import com.actorbase.actorsystem.utils.ActorbaseCollection
-import scala.concurrent.duration._
-import org.scalatest.FlatSpec
+import akka.actor.ActorRef
+import akka.dispatch.ControlMessage
 
-import com.actorbase.actorsystem.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.CreateCollection
+sealed abstract trait StorefinderMessage
 
-class MainSpec extends FlatSpec {
+final case object GetAllItems extends StorefinderMessage
 
-  implicit val timeout = Timeout(25 seconds)
+final case class UpdateCollectionSize(increment: Boolean = true) extends StorefinderMessage with ControlMessage
 
-  implicit val system = ActorSystem()
+final case class Get(key: String) extends StorefinderMessage
 
-  it should "create a new collection" in {
-    val mainActorRef = TestActorRef[Main]
-    mainActorRef ! CreateCollection(new ActorbaseCollection("testcollection", "test"))
-    val actor = mainActorRef.underlyingActor
-  }
-}
+final case class PartialMapTransaction(clientRef: ActorRef, items: Map[String, Array[Byte]]) extends StorefinderMessage with ControlMessage
+
+final case class Remove(key: String) extends StorefinderMessage
+
+final case class Insert(key: String, value: Array[Byte], update: Boolean = false) extends StorefinderMessage

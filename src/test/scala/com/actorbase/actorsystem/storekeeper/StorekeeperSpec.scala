@@ -29,24 +29,30 @@
 package com.actorbase.actorsystem.main
 
 import akka.actor.ActorSystem
+import akka.pattern.ask
 import akka.testkit.TestActorRef
 import akka.util.Timeout
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import scala.concurrent.duration._
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.concurrent.ScalaFutures
 
-import com.actorbase.actorsystem.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.CreateCollection
+import com.actorbase.actorsystem.storekeeper.Storekeeper
+import com.actorbase.actorsystem.messages.StorekeeperMessages._
 
-class MainSpec extends FlatSpec {
+class StorekeeperSpec extends FlatSpec with Matchers {
 
-  implicit val timeout = Timeout(25 seconds)
+  implicit val timeout = Timeout(5 seconds)
 
   implicit val system = ActorSystem()
 
-  it should "create a new collection" in {
-    val mainActorRef = TestActorRef[Main]
-    mainActorRef ! CreateCollection(new ActorbaseCollection("testcollection", "test"))
-    val actor = mainActorRef.underlyingActor
+  it should "add a key-value pair to the underlying map" in {
+    val skActorRef = TestActorRef(new Storekeeper("testcollection", "testowner"))
+    skActorRef ! InsertItem("key", "value".getBytes, false)
+    val future = skActorRef ? GetItem("key")
+
+    ScalaFutures.whenReady(future) {
+      response => response.asInstanceOf[String] should be("""""")
+    }
   }
 }

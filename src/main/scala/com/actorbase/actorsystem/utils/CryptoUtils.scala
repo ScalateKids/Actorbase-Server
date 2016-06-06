@@ -28,13 +28,16 @@
 
 package com.actorbase.actorsystem.utils
 
-import java.io.{File, ByteArrayOutputStream, FileOutputStream, IOException, ObjectOutputStream}
+import java.io.{File, ByteArrayInputStream, ByteArrayOutputStream, FileInputStream, FileOutputStream, IOException, ObjectInputStream, ObjectOutputStream}
 import java.security.{InvalidKeyException, NoSuchAlgorithmException}
 import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoSuchPaddingException}
 import javax.crypto.spec.SecretKeySpec
 
 import scala.collection.immutable.TreeMap
 
+/**
+  * Cryptography service object
+  */
 object CryptoUtils {
 
   /** configuration init */
@@ -42,40 +45,28 @@ object CryptoUtils {
   val Transformation = "AES"
 
   /**
-    * Insert description here
+    * Encryption method, currently uses AES algorithm
     *
-    * @param
+    * @param key represents a 16 bit key to generate the secret-key
+    * @param inputData a TreeMap[String, Any] representing a collection shard
+    * @param outputFile the file that will be encrypted and persisted to disk
     * @return
-    * @throws
+    * @throws NoSuchAlgorithmException, NoSuchPaddingException,
+    * InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
+    * IOException
     */
-  def encrypt(key: String, inputData: TreeMap[String, Any], outputFile: File) = doCrypt(Cipher.ENCRYPT_MODE, key, inputData, outputFile)
+  def encrypt(key: String, inputData: Map[String, Any], outputFile: File): Unit = {
 
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def decrypt(key: String, inputData: TreeMap[String, Any], outputFile: File) = doCrypt(Cipher.DECRYPT_MODE, key, inputData, outputFile)
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def doCrypt(cipherMode: Int, key: String, inputData: TreeMap[String, Any], outputFile: File) = {
+    val cipherMode: Int = Cipher.ENCRYPT_MODE
 
     /**
-      * Insert description here
+      * Translate a map of String and Any to an array of bytes
       *
-      * @param
-      * @return
+      * @param o TreeMap object of type String and Any
+      * @return an array of bytes representing the object binarized
       * @throws
       */
-    def binarize(o: TreeMap[String, Any]): Array[Byte] = {
+    def binarize(o: Map[String, Any]): Array[Byte] = {
       val bos = new ByteArrayOutputStream()
       var out = new ObjectOutputStream(bos)
       out.writeObject(o);
@@ -106,5 +97,42 @@ object CryptoUtils {
       case ib: IllegalBlockSizeException => println(s"Error encrypting/decrypting file $ib")
       case io: IOException => println(s"Error encrypting/decrypting file $io")
     }
+
   }
+
+  /**
+    * Decryption method, currently uses AES algorithm
+    *
+    * @param key a 16 bit key used to decrypt the content of the encrypted file
+    * @param inputFile a file read from filesystem
+    * @return a TreeMap of type String and Any
+    * @throws NoSuchAlgorithmException, NoSuchPaddingException,
+    * InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException
+    */
+  @throws(classOf[NoSuchAlgorithmException])
+  @throws(classOf[NoSuchPaddingException])
+  @throws(classOf[BadPaddingException])
+  @throws(classOf[InvalidKeyException])
+  @throws(classOf[IllegalBlockSizeException])
+  @throws(classOf[IOException])
+  def decrypt(key: String, inputFile: File): Map[String, Any] = {
+
+    val cipherMode: Int = Cipher.DECRYPT_MODE
+    val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
+    val cipher = Cipher.getInstance(Transformation)
+    cipher.init(cipherMode, secretKey)
+
+    val inputStream = new FileInputStream(inputFile);
+    val inputBytes = new Array[Byte](inputFile.length().toInt);
+    inputStream.read(inputBytes);
+
+    val outputBytes = cipher.doFinal(inputBytes)
+
+    inputStream.close()
+
+    val in = new ObjectInputStream(new ByteArrayInputStream(outputBytes))
+    in.readObject().asInstanceOf[Map[String, Any]]
+
+  }
+
 }
