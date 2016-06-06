@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.main
 
 import akka.util.Timeout
@@ -39,6 +39,7 @@ import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
+import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
@@ -46,11 +47,16 @@ import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
 
 class MainSpec extends TestKit(ActorSystem("testSystem"))
   with WordSpecLike
-  with MustMatchers {
+  with MustMatchers
+  with BeforeAndAfterAll {
 
   implicit val timeout = Timeout(25 seconds)
 
   //implicit val system = ActorSystem()
+
+  override def afterAll {
+    TestKit.shutdownActorSystem(system)
+  }
 
   "main" should{
     "list all collections" in {
@@ -58,7 +64,8 @@ class MainSpec extends TestKit(ActorSystem("testSystem"))
 
       val p = TestProbe()
       p.send( mainActorRef, ListCollections("test") )
-      p.expectMsg(ListResponse(List()))
+      p.expectMsg( ListResponse(List()) )
     }
   }
 }
+*/
