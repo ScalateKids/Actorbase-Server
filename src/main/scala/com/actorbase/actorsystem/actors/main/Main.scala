@@ -103,8 +103,8 @@ object Main {
   */
 class Main extends Actor with ActorLogging {
 
-  private var sfMap = mutable.Map[ActorbaseCollection, ActorRef]().empty
-  private var requestMap = mutable.Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
+  private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
+  private var requestMap = Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
 
   /**
     * Method that create a collection in Actorbase.

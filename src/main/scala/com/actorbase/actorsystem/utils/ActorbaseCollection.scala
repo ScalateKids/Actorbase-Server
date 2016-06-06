@@ -29,7 +29,6 @@
 package com.actorbase.actorsystem.utils
 
 import scala.math.Ordered.orderingToOrdered
-import scala.collection.mutable
 
 case object ActorbaseCollection {
 
@@ -52,7 +51,7 @@ case class ActorbaseCollection (private var name: String,
 
   private val uuid: String = owner + name
 
-  private var contributors = mutable.Map[String, ActorbaseCollection.Permissions]().empty
+  private var contributors = Map[String, ActorbaseCollection.Permissions]("admin" -> ActorbaseCollection.ReadWrite)
 
   /**
     * @return a String representing the name of the collection

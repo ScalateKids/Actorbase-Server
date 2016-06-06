@@ -37,3 +37,7 @@ final case class UpdateCredentials(username: String, password: String, newPasswo
 final case class RemoveCredentials(username: String) extends AuthActorMessages
 
 final case class Authenticate(username: String, password: String) extends AuthActorMessages
+
+final case class AddCollection(username: String, collectionUUID: String) extends AuthActorMessages
+
+final case class RemoveCollection(username: String, collectionUUID: String) extends AuthActorMessages

@@ -29,7 +29,10 @@
 package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
+import akka.routing.Broadcast
 import com.actorbase.actorsystem.messages.MainMessages.ListCollections
+import scala.concurrent.Future
+import scala.util.Success
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
@@ -83,8 +86,13 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
+            var results = ""
+            val list: Future[Seq[ListResponse]] = Future.sequence(Seq(main.ask(Broadcast(ListCollections(authInfo.user.login)))(5 seconds).mapTo[ListResponse]))
+            list onComplete {
+              case Success(value) => results += value
+            }
             complete {
-              main.ask(ListCollections(authInfo.user.login))(5 seconds).mapTo[ListResponse]
+              results
             }
           }
         }

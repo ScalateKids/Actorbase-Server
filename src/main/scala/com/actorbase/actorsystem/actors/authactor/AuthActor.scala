@@ -37,6 +37,10 @@ import com.github.t3hnar.bcrypt._
 
 import java.io.File
 
+object AuthActor {
+  case class Credentials(username: String, password: String)
+}
+
 class AuthActor extends Actor with ActorLogging {
 
   private val rootFolder = "actorbasedata/usersdata/"
@@ -48,7 +52,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  override def receive = running(Map[String, String]("admin" -> "actorbase"))
+  override def receive = running(Map[AuthActor.Credentials, Set[String]](AuthActor.Credentials("admin","actorbase") -> Set.empty[String]))
 
   /**
     * Insert description here
@@ -57,7 +61,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def persist(credentials: Map[String, String]): Unit = {
+  def persist(credentials: Map[AuthActor.Credentials, Set[String]]): Unit = {
     val key = "Dummy implicit k"
     val encryptedCredentialsFile = new File(rootFolder + "/usersdata.shadow")
     encryptedCredentialsFile.getParentFile.mkdirs
@@ -71,7 +75,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def running(credentials: Map[String, String]): Receive = {
+  def running(credentials: Map[AuthActor.Credentials, Set[String]]): Receive = {
 
     case message: AuthActorMessages => message match {
 
@@ -84,9 +88,9 @@ class AuthActor extends Actor with ActorLogging {
         */
       case AddCredentials(username, password) =>
         log.info(s"$username added")
-        val salt = password//.bcrypt(generateSalt)
-          persist(credentials + (username -> salt))
-        context become running(credentials + (username -> salt))
+        val salt = password
+        persist(credentials + (AuthActor.Credentials(username, password) -> Set.empty[String]))
+        context become running(credentials + (AuthActor.Credentials(username, password) -> Set.empty[String]))
 
       /**
         * Change the password associated to an user given his username and
@@ -99,7 +103,10 @@ class AuthActor extends Actor with ActorLogging {
         * the requested username
         */
       case UpdateCredentials(username, password, newPassword) =>
-        credentials get username map (pwd => if (pwd == password) context become running(credentials + (username -> newPassword)) else sender ! "None") getOrElse(sender ! "None")
+        var optSet: Option[Set[String]] = None
+        val key = AuthActor.Credentials(username, password)
+        optSet = credentials get key
+        optSet map (set => context become running(credentials - key + (AuthActor.Credentials(username, newPassword) -> set))) getOrElse (sender ! "None")
 
       /**
         * Insert description here
@@ -109,9 +116,10 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case RemoveCredentials(username) =>
-        log.info(s"$username removed")
-        persist(credentials - username)
-        context become running(credentials - username)
+        val opt = credentials find (_._1.username == username)
+        opt map { x =>
+          persist(credentials - x._1)
+          context become running(credentials - x._1) } getOrElse log.error(s"AuthActor: $username key not found")
 
       /**
         * Insert description here
@@ -121,10 +129,40 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case Authenticate(username, password) =>
-        if (credentials.contains(username))
-          credentials get username map (pwd => if (pwd == password) sender ! "OK" else sender ! "None") getOrElse(sender ! "None")
+        val key = AuthActor.Credentials(username, password)
+        if (credentials.contains(key))
+          credentials get key map (_ => sender ! "OK") getOrElse (sender ! "None")
         else sender ! "None"
 
+      /**
+        * Insert description here
+        *
+        * @param
+        * @return
+        * @throws
+        */
+      case AddCollection(username, collectionUUID) =>
+        val optKey = credentials find (_._1.username == username)
+        optKey map { x =>
+          persist(credentials + (x._1 -> (x._2 + collectionUUID)))
+          context become running (credentials + (x._1 -> (x._2 + collectionUUID)))
+        } getOrElse log.error(s"AuthActor: Failed to add $collectionUUID to $username")
+
+      /**
+        * Insert description here
+        *
+        * @param
+        * @return
+        * @throws
+        */
+      case RemoveCollection(username, collectionUUID) =>
+        val optKey = credentials find (_._1.username == username)
+        optKey map { x =>
+          if (x._2.contains(collectionUUID)) {
+            persist(credentials + (x._1 -> (x._2 - collectionUUID)))
+            context become running (credentials + (x._1 -> (x._2 - collectionUUID)))
+          }
+        } getOrElse log.error(s"AuthActor: Failed to add $collectionUUID to $username")
     }
   }
 }

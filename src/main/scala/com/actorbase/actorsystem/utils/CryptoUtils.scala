@@ -32,8 +32,7 @@ import java.io.{File, ByteArrayInputStream, ByteArrayOutputStream, FileInputStre
 import java.security.{InvalidKeyException, NoSuchAlgorithmException}
 import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoSuchPaddingException}
 import javax.crypto.spec.SecretKeySpec
-
-import scala.collection.immutable.TreeMap
+import scala.collection.immutable.Iterable
 
 /**
   * Cryptography service object
@@ -55,7 +54,7 @@ object CryptoUtils {
     * InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
     * IOException
     */
-  def encrypt(key: String, inputData: Map[String, Any], outputFile: File): Unit = {
+  def encrypt(key: String, inputData: Any, outputFile: File): Unit = {
 
     val cipherMode: Int = Cipher.ENCRYPT_MODE
 
@@ -66,7 +65,7 @@ object CryptoUtils {
       * @return an array of bytes representing the object binarized
       * @throws
       */
-    def binarize(o: Map[String, Any]): Array[Byte] = {
+    def binarize(o: Any): Array[Byte] = {
       val bos = new ByteArrayOutputStream()
       var out = new ObjectOutputStream(bos)
       out.writeObject(o);
