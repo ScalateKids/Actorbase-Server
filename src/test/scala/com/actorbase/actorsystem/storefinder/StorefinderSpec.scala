@@ -26,54 +26,74 @@
   * @version 1.0
   * @since 1.0
   */
-/*
-package com.actorbase.actorsystem.main
+
+package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
-import com.actorbase.actorsystem.utils.ActorbaseCollection
 import scala.concurrent.duration._
-import org.scalatest.FlatSpec
 
 import akka.actor.ActorSystem
 import akka.actor.Actor
-import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
+import akka.testkit.{TestKit, TestActorRef, TestProbe}
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
-import org.scalatest.BeforeAndAfterAll
 
-import com.actorbase.actorsystem.actors.main.Main
-import com.actorbase.actorsystem.messages.MainMessages._
+import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages._
+import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 
-class MainSpec extends TestKit(ActorSystem("testSystem"))
+class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
   with WordSpecLike
-  with MustMatchers
-  with ImplicitSender  {
+  with MustMatchers {
 
   implicit val timeout = Timeout(25 seconds)
 
-  //implicit val system = ActorSystem()
-
-  val mainActorRef = TestActorRef[Main]
-
+  val actbColl = new ActorbaseCollection("testOwner","testName")
+  val sfRef = TestActorRef(new Storefinder( actbColl ))
   val p = TestProbe()
 
-  "main" should{
-    "list all collections" in {
-      p.send( mainActorRef, ListCollections("test") )
-      p.expectMsg( ListResponse(List()) )
+  "Storefinder" should {
+    "insert and get an item" in {
+      val value = "value".getBytes()
+      p.send( sfRef, Insert("key", value , false) )
+      p.send( sfRef, Get("key") )
+      p.expectMsg( Response( value ) )
     }
   }
 
-  it should{
-    "insert and retrieve an item" in {
-      val testColl = new ActorbaseCollection("testCollection", "anonymous")
-      val value = "testValue".getBytes
-      p.send( mainActorRef, InsertTo(testColl, "testKey",  value, false))
-      p.send( mainActorRef, GetFrom(testColl, "testKey"))
-      p.expectMsg(Response(value))
+  /*  TODO SBAGLIATO
+  it should {
+    "get all items" in {
+      val value = "value".getBytes()
+      p.send( sfRef, Insert("key", value , false) )
+      p.send( sfRef, GetAllItems )
+      val m: Map[String, Array[Byte]] = Map("key" -> value )
+      p.expectMsg( 5 seconds, MapResponse( "testName",  m ) )
     }
   }
+  */
+
+  // None.get non è uguale a None.get ritornato dallo SK
+  it should {
+    "remove an item" in {
+      val value = "value".getBytes()
+      val none = "None".getBytes
+      p.send( sfRef, Insert("key", value , false) )
+      p.send( sfRef, Remove("key"))
+      p.send( sfRef, Get("key") )
+      p.expectMsg( 5 seconds, Response( none ) )
+    }
+  }
+
+  // non è giusto, non controlla niente
+  it should {
+    "update the collection size" in {
+      //val size = sfRef.underlyingActor.collection.size
+      p.send( sfRef, UpdateCollectionSize( true ) )
+      //assert ( size = sfRef.underlyingActor.collection.size -1 )
+    }
+  }
+
 }
-*/

@@ -126,7 +126,6 @@ class Main extends Actor with ActorLogging {
   def receive: Receive = {
 
     case message: MainMessage => message match {
-
       /**
         * Build a list of collection names and reply it to the sender
         *
