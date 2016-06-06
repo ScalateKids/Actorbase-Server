@@ -29,7 +29,7 @@
 
 // TEMPORARY BRIDGE BETWEEN MAIN AND STOREKEEPER
 
-package com.actorbase.actorsystem.storefinder
+package com.actorbase.actorsystem.actors.storefinder
 
 import akka.actor.{Actor, ActorLogging, Props}
 
@@ -42,8 +42,8 @@ import akka.routing.Broadcast
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.StorekeeperMessages.{GetItem, GetAll, InsertItem, RemoveItem, InitMn}
 import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
-import com.actorbase.actorsystem.storekeeper.Storekeeper
-import com.actorbase.actorsystem.manager.Manager
+import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
+import com.actorbase.actorsystem.actors.manager.Manager
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
 object Storefinder {

@@ -27,7 +27,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.clientactor
+package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
 import spray.httpx.SprayJsonSupport._
@@ -39,7 +39,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 import com.actorbase.actorsystem.messages.MainMessages.{CreateCollection, InsertTo, GetFrom, RemoveFrom}
-import com.actorbase.actorsystem.main.messages._
 import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
@@ -110,14 +109,15 @@ trait RestApi extends HttpServiceBase with Authenticator {
       }
     } ~
     // test miniotta
-    path("actorbase" / "debugmaps") {
-      get {
-        complete {
-          main.ask(DebugMaps)(5 seconds).mapTo[Response]
-          "boh"
-        }
-      }
-    } ~
+    // path("actorbase" / "debugmaps") {
+    //   get {
+    //     complete {
+    //       // main.ask(DebugMaps)(5 seconds).mapTo[Response]
+    //       "boh"
+    //     }
+    //   }
+    // }
+    // ~
     path("actorbase" / "\\S+".r) { resource =>
       get {
         complete {

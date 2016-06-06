@@ -27,7 +27,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.main
+package com.actorbase.actorsystem.actors.main
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, PoisonPill, Props }
 import akka.cluster.sharding.ShardRegion
@@ -35,7 +35,7 @@ import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
 
 import scala.collection.mutable
 
-import com.actorbase.actorsystem.storefinder.Storefinder
+import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._

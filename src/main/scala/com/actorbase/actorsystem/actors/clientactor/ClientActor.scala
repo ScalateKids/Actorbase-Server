@@ -27,7 +27,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.clientactor
+package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
 import spray.can.Http

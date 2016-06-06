@@ -26,7 +26,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.clientactor
+package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
 import akka.pattern.ask
@@ -40,7 +40,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.clientactor.UserApi.{User, AuthInfo}
+import com.actorbase.actorsystem.actors.clientactor.UserApi.{User, AuthInfo}
 import com.actorbase.actorsystem.messages.AuthActorMessages.Authenticate
 
 /**

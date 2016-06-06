@@ -26,7 +26,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.storekeeper
+package com.actorbase.actorsystem.actors.storekeeper
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, Props }
 
@@ -37,8 +37,8 @@ import com.actorbase.actorsystem.messages.StorekeeperMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransaction, UpdateCollectionSize}
 import com.actorbase.actorsystem.messages.WarehousemanMessages.{Init, Save}
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
-import com.actorbase.actorsystem.warehouseman.Warehouseman
-import com.actorbase.actorsystem.manager.Manager.OneMore
+import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
+import com.actorbase.actorsystem.actors.manager.Manager.OneMore
 
 import scala.concurrent.duration._
 

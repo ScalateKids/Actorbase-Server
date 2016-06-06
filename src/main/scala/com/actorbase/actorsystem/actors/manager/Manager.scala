@@ -26,12 +26,43 @@
   * @since 1.0
   */
 
-/*package com.actorbase.actorsystem.manager.messages
+package com.actorbase.actorsystem.actors.manager
 
-import akka.actor.ActorRef
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.routing.{ ActorRefRoutee, AddRoutee }
 
-import scala.collection.immutable.TreeMap
+import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
+import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
 
-import com.actorbase.actorsystem.utils.{KeyRange, CollectionRange}
+object Manager {
 
-*/
+  case object OneMore
+
+  def props(collection: String, owner: String, router: ActorRef): Props = Props(classOf[Manager], collection, owner, router)
+
+}
+
+/**
+  * Try to maintain the equilibrium inside the SKs by tracing the number of
+  * entries stored in each map. If some SK actor is under heavy load, (number of
+  * entries is beyond a given threshold) they will create new actor of type SK
+  * to properly redistribute that load and add it to the SF router.
+  */
+class Manager(val collection: String, val owner: String, val router: ActorRef) extends Actor with ActorLogging {
+
+  import Manager._
+
+  var reports = 0
+
+  def receive = {
+    case OneMore =>
+      reports += 1
+      if (reports == 1) {
+        log.info("new storekeeper added to [POOL]")
+        val newSk = context.actorOf(Storekeeper.props(collection, owner))
+        newSk ! InitMn(self)
+        router ! AddRoutee(ActorRefRoutee(newSk))
+        reports = 0
+      }
+  }
+}

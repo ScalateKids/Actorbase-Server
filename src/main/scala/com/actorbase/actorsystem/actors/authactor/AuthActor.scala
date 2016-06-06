@@ -26,7 +26,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.authactor
+package com.actorbase.actorsystem.actors.authactor
 
 import akka.actor.{Actor, ActorLogging}
 

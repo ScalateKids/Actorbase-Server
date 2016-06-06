@@ -27,7 +27,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.httpserver
+package com.actorbase.actorsystem.actors.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
@@ -42,9 +42,9 @@ import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerS
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import com.typesafe.config.ConfigFactory
 
-import com.actorbase.actorsystem.clientactor.ClientActor
-import com.actorbase.actorsystem.authactor.AuthActor
-import com.actorbase.actorsystem.main.Main
+import com.actorbase.actorsystem.actors.clientactor.ClientActor
+import com.actorbase.actorsystem.actors.authactor.AuthActor
+import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 

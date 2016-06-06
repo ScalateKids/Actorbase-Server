@@ -26,19 +26,60 @@
   * @since 1.0
   */
 
+package com.actorbase.actorsystem.actors.clientactor
 
-package com.actorbase.actorsystem.main.messages
+import com.github.t3hnar.bcrypt._
+import org.mindrot.jbcrypt.BCrypt
 
-import akka.actor.ActorRef
-import com.actorbase.actorsystem.utils.{ActorbaseCollection, CollectionRange, KeyRange}
-import akka.dispatch.ControlMessage
-import scala.collection.immutable.TreeMap
+import scala.concurrent.ExecutionContext.Implicits.global
 
-case class DuplicationRequestSF(oldCollRange: CollectionRange, leftCollRange: CollectionRange, map: TreeMap[KeyRange, ActorRef],
-                                rightCollRange: CollectionRange) extends ControlMessage
+/**
+  * Insert description here
+  *
+  * @param
+  * @return
+  * @throws
+  */
+object UserApi {
 
-case class Ack() extends ControlMessage // TODO vedere se c'è differenza con i control message
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case class User(login: String, hashedPassword: Option[String] = None) {
 
-case class UpdateCollectionSize(collectionName: ActorbaseCollection, increment: Boolean = true)
+    /**
+      * Basic password matching, will be implemented at least with
+      * bcrypt for hashing the password
+      *
+      * @param password a String representing the password to be tested
+      * @return a Boolean, true if the password matches, false otherwise
+      * @throws
+      */
+    def passwordMatches(password: String): Boolean = hashedPassword.exists(hash => BCrypt.checkpw(password, hash))
 
-case object DebugMaps
+  }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case class AuthInfo(val user: User) {
+
+    /**
+      * Verify wether the user has admin privileges for restricted area
+      * operations
+      *
+      * @return true if the user has admin privileges, false otherwise
+      * @throws
+      */
+    def hasAdminPermissions = true
+  }
+
+}

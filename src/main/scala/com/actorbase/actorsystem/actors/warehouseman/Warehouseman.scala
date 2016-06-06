@@ -27,7 +27,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.warehouseman
+package com.actorbase.actorsystem.actors.warehouseman
 
 import akka.actor.{Actor, ActorLogging, Props}
 import java.io.File
