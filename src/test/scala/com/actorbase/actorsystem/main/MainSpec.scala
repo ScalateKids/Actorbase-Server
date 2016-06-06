@@ -42,23 +42,36 @@ import org.scalatest.WordSpecLike
 
 import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
+import com.actorbase.actorsystem.messages.StorefinderMessages._
+import com.actorbase.actorsystem.messages.ClientActorMessages._
 
 class MainSpec extends TestKit(ActorSystem("testSystem"))
   with WordSpecLike
-  with MustMatchers {
+  with MustMatchers
+  with ImplicitSender  {
 
   implicit val timeout = Timeout(25 seconds)
 
   //implicit val system = ActorSystem()
 
+  val mainActorRef = TestActorRef[Main]
+
+  val p = TestProbe()
+  
   "main" should{
     "list all collections" in {
-      val mainActorRef = TestActorRef[Main]
-
-      val p = TestProbe()
       p.send( mainActorRef, ListCollections("test") )
       p.expectMsg(ListResponse(List()))
     }
+  }
+  
+  it should{
+    "insert and retrieve an item" in {
+	  val testColl = new ActorbaseCollection("testCollection", "anonymous")
+	  val value = "testValue".getBytes
+	  p.send( mainActorRef, InsertTo(testColl, "testKey",  value, false))
+	  p.send( mainActorRef, GetFrom(testColl, "testKey"))
+	  p.expectMsg(Response(value))
+	}
   }
 }
