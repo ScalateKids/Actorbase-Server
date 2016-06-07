@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
@@ -55,6 +55,12 @@ class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
   val p = TestProbe()
 
   "Storefinder" should {
+    "be created" in{
+      assert(sfRef != None)
+    }
+  }
+
+  it should {
     "insert and get an item" in {
       val value = "value".getBytes()
       p.send( sfRef, Insert("key", value , false) )
@@ -96,4 +102,4 @@ class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
     }
   }
 
-}
+}*/
