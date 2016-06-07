@@ -27,7 +27,7 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.storefinder
+package com.actorbase.actorsystem.manager
 
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -40,68 +40,42 @@ import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
-import com.actorbase.actorsystem.actors.storefinder.Storefinder
-import com.actorbase.actorsystem.messages.StorefinderMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages._
-import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
+import com.actorbase.actorsystem.actors.manager.Manager
+import com.actorbase.actorsystem.actors.manager.Manager.OneMore
+import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
+import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
+import com.actorbase.actorsystem.actors.main.Main
 
-class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
+import akka.cluster.routing.ClusterRouterPool
+import akka.cluster.routing.ClusterRouterPoolSettings
+import akka.routing.{ ActorRefRoutee, ConsistentHashingPool, FromConfig, Router }
+import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
+import akka.routing.Broadcast
+
+class ManagerSpec extends TestKit(ActorSystem("testSystem"))
   with WordSpecLike
   with MustMatchers
   with BeforeAndAfterAll{
 
-  implicit val timeout = Timeout(25 seconds)
+  val collName = "testColl"
+  val collOwner = "testOwner"
+  val storekeepers = system.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
+    ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props( collName, collOwner)) )
 
-  val actbColl = new ActorbaseCollection("testOwner","testName")
-  val sfRef = TestActorRef(new Storefinder( actbColl ))
+  val mnRef = TestActorRef(new Manager( collName, collOwner, storekeepers ))
   val p = TestProbe()
 
-  "Storefinder" should {
+  "Manager" should {
     "be created" in{
-      assert(sfRef != None)
+      assert(mnRef != None)
     }
   }
 
+  // fails, it goes in timeout...
   it should {
-    "insert and get an item" in {
-      val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, Get("key") )
-      p.expectMsg( Response( value ) )
-    }
-  }
-
-  /*  TODO SBAGLIATO
-  it should {
-    "get all items" in {
-      val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, GetAllItems )
-      val m: Map[String, Array[Byte]] = Map("key" -> value )
-      p.expectMsg( 5 seconds, MapResponse( "testName",  m ) )
-    }
-  }
-  */
-
-  // None.get non è uguale a None.get ritornato dallo SK
-  it should {
-    "remove an item" in {
-      val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, Remove("key"))
-      p.send( sfRef, Get("key") )
-      val testMessage = p.receiveOne(3 seconds)
-      assert( value != testMessage.asInstanceOf[Response].response )
-      //p.expectMsg( 5 seconds, Response( none ) )
-    }
-  }
-
-  // non è giusto, non controlla niente
-  it should {
-    "update the collection size" in {
-      //val size = sfRef.underlyingActor.collection.size
-      p.send( sfRef, UpdateCollectionSize( true ) )
-      //assert ( size = sfRef.underlyingActor.collection.size -1 )
+    "create one storekeeper" in {
+      p.send( mnRef, OneMore )
+      p.expectMsg( InitMn( mnRef ) )
     }
   }
 
