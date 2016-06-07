@@ -21,15 +21,17 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
-
-package com.actorbase.actorsystem.storefinder
+/*
+package com.actorbase.actorsystem.warehouseman
 
 import akka.util.Timeout
+import java.io.File
+import akka.pattern.ask
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
@@ -40,72 +42,50 @@ import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
-import com.actorbase.actorsystem.actors.storefinder.Storefinder
-import com.actorbase.actorsystem.messages.StorefinderMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages._
-import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
+import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
+import com.actorbase.actorsystem.messages.WarehousemanMessages._
 
-class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
+class WarehousemanSpec extends TestKit(ActorSystem("testSystem2"))
   with WordSpecLike
   with MustMatchers
   with BeforeAndAfterAll{
 
-  implicit val timeout = Timeout(25 seconds)
-
-  val actbColl = new ActorbaseCollection("testOwner","testName")
-  val sfRef = TestActorRef(new Storefinder( actbColl ))
+  val collUuid = "testUuid"
+  val wareRef = TestActorRef(new Warehouseman( collUuid ))
   val p = TestProbe()
 
-  "Storefinder" should {
-    "be created" in{
-      assert(sfRef != None)
+  "Warehouseman" should {
+    "be created" in {
+      assert(wareRef != None)
     }
   }
 
   it should {
-    "insert and get an item" in {
-      val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, Get("key") )
-      p.expectMsg( Response( value ) )
+    "save encrypted data" in {
+      def delete(file: File) {
+        if (file.isDirectory)
+          Option(file.listFiles).map(_.toList).getOrElse(Nil).foreach(delete(_))
+        file.delete
+      }
+      delete( new File("actorbasedata/testUuid/") )
+      val map = Map[String, Array[Byte]]("key0" -> "zero".getBytes(), "key1" -> "one".getBytes(), "key2" -> "two".getBytes())
+      Await.result(wareRef.ask(Save(map))(5 seconds).mapTo[Int], Duration.Inf)
+      val nfiles = new File("actorbasedata/testUuid/").list.size
+      assert( nfiles == 1) //should be(true)
     }
   }
 
-  /*  TODO SBAGLIATO
   it should {
-    "get all items" in {
-      val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, GetAllItems )
-      val m: Map[String, Array[Byte]] = Map("key" -> value )
-      p.expectMsg( 5 seconds, MapResponse( "testName",  m ) )
-    }
-  }
-  */
-
-  // None.get non è uguale a None.get ritornato dallo SK
-  it should {
-    "remove an item" in {
-      val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, Remove("key"))
-      p.send( sfRef, Get("key") )
-      val testMessage = p.receiveOne(3 seconds)
-      assert( value != testMessage.asInstanceOf[Response].response )
-      //p.expectMsg( 5 seconds, Response( none ) )
-    }
-  }
-
-  // non è giusto, non controlla niente
-  it should {
-    "update the collection size" in {
-      //val size = sfRef.underlyingActor.collection.size
-      p.send( sfRef, UpdateCollectionSize( true ) )
-      //assert ( size = sfRef.underlyingActor.collection.size -1 )
+    "read and decrypt data" in {
+      val dir = new File("actorbasedata/testUuid/")
+      val f = Option(dir.listFiles).map(_.toList).getOrElse(Nil)
+      val map = Await.result(wareRef.ask(Read(f.head))(5 seconds).mapTo[Map[String, Any]], Duration.Inf)
+      assert(map.size == 3) // should have size 3
     }
   }
 
   override def afterAll {
     TestKit.shutdownActorSystem(system)
   }
-}
+
+}*/
