@@ -78,8 +78,8 @@ trait Authenticator {
       for {
         p <- userPass
         auth = Await.result(authProxy.ask(Authenticate(p.user, p.pass)).mapTo[String], Duration.Inf) // ugly as f**k
-        if (auth == "OK")
-          } yield new AuthInfo(UserApi.User(userPass.get.user, Some(userPass.get.pass)))
+        if (auth == "Common" || auth == "Admin")
+          } yield AuthInfo(UserApi.User(userPass.get.user))
     }
 
     /**

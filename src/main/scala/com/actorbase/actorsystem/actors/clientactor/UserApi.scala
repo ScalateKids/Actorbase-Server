@@ -49,19 +49,7 @@ object UserApi {
     * @return
     * @throws
     */
-  case class User(login: String, hashedPassword: Option[String] = None) {
-
-    /**
-      * Basic password matching, will be implemented at least with
-      * bcrypt for hashing the password
-      *
-      * @param password a String representing the password to be tested
-      * @return a Boolean, true if the password matches, false otherwise
-      * @throws
-      */
-    def passwordMatches(password: String): Boolean = hashedPassword.exists(hash => BCrypt.checkpw(password, hash))
-
-  }
+  case class User(login: String)
 
   /**
     * Insert description here
@@ -79,7 +67,10 @@ object UserApi {
       * @return true if the user has admin privileges, false otherwise
       * @throws
       */
-    def hasAdminPermissions = true
+    def hasAdminPermissions = {
+      if (user.login == "admin") true
+      else false
+    }
   }
 
 }

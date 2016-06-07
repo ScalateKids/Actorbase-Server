@@ -34,7 +34,7 @@ import com.actorbase.actorsystem.messages.AuthActorMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
 import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
 import com.github.t3hnar.bcrypt._
-// import org.mindrot.jbcrypt.BCrypt
+import org.mindrot.jbcrypt.BCrypt
 
 import java.io.File
 
@@ -49,7 +49,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  override def receive = running(Set[Profile](Profile("admin", "actorbase", Set.empty[ActorbaseCollection])))
+  override def receive = running(Set[Profile](Profile("admin", "actorbase".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
 
   /**
     * Insert description here
@@ -59,10 +59,12 @@ class AuthActor extends Actor with ActorLogging {
     * @throws
     */
   def persist(profiles: Set[Profile]): Unit = {
+    var profileMap = Map.empty[String, String]
+    profiles map (x => profileMap += (x.username -> x.password))
     val key = "Dummy implicit k"
     val encryptedProfilesFile = new File(rootFolder + "/usersdata.shadow")
     encryptedProfilesFile.getParentFile.mkdirs
-    CryptoUtils.encryptSetData(key, profiles, encryptedProfilesFile)
+    CryptoUtils.encrypt(key, profileMap, encryptedProfilesFile)
   }
 
   /**
@@ -85,9 +87,11 @@ class AuthActor extends Actor with ActorLogging {
         */
       case AddCredentials(username, password) =>
         log.info(s"$username added")
-        val salt = password
-        persist(profiles + (Profile(username, password, Set.empty[ActorbaseCollection])))
-        context become running(profiles + (Profile(username, password, Set.empty[ActorbaseCollection])))
+        val salt = password.bcrypt(generateSalt)
+        if (!profiles.contains(Profile(username, salt))) {
+          persist(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
+          context become running(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
+        }
 
       /**
         * Change the password associated to an user given his username and
@@ -100,8 +104,9 @@ class AuthActor extends Actor with ActorLogging {
         * the requested username
         */
       case UpdateCredentials(username, password, newPassword) =>
-        val optElem = profiles find (elem => (elem.username == username) && (elem.password == password))
-        optElem map (elem => context become running (profiles - elem + elem.copy(password = newPassword))) getOrElse (sender ! "None")
+        val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
+        val salt = newPassword.bcrypt(generateSalt)
+        optElem map (elem => context become running (profiles - elem + elem.copy(password = salt))) getOrElse (sender ! "None")
 
       /**
         * Insert description here
@@ -124,8 +129,8 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case Authenticate(username, password) =>
-        val optElem = profiles find (elem => (elem.username == username) && (elem.password == password))
-        optElem map (_ => sender ! "OK") getOrElse sender ! "None"
+        val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
+        optElem map (_ => if (username == "admin") sender ! "Admin" else sender ! "Common") getOrElse sender ! "None"
 
       /**
         * Insert description here
@@ -162,15 +167,6 @@ class AuthActor extends Actor with ActorLogging {
         } getOrElse log.error(s"AuthActor: Failed to add ${collection.getUUID} to $username")
 
       /**
-        * Insert description here
-        *
-        * @param
-        * @return
-        * @throws
-        */
-      case AddProfile(profile) =>
-        context become running(profiles + profile)
-      /**
         * Build a list of collection names and reply it to the sender
         *
         * @param owner a String representing the owner of the requested collection name list
@@ -181,6 +177,14 @@ class AuthActor extends Actor with ActorLogging {
           val names = set.getCollections map (collection => collection.getName)
           sender ! ListResponse(names.toList)
         }
+
+      /**
+        * Return all users contained in the system as a List[String]
+        */
+      case ListUsers =>
+        var users = List.empty[String]
+        profiles map (profile => users ::= profile.username)
+        sender ! ListResponse(users)
 
     }
   }

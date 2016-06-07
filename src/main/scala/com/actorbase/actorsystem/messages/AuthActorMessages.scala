@@ -29,9 +29,10 @@
 package com.actorbase.actorsystem.messages.AuthActorMessages
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
-import com.actorbase.actorsystem.actors.authactor.Profile
 
 sealed trait AuthActorMessages
+
+case object ListUsers extends AuthActorMessages
 
 final case class AddCredentials(username: String, password: String) extends AuthActorMessages
 
@@ -42,8 +43,6 @@ final case class RemoveCredentials(username: String) extends AuthActorMessages
 final case class Authenticate(username: String, password: String) extends AuthActorMessages
 
 final case class AddCollectionTo(username: String, collection: ActorbaseCollection) extends AuthActorMessages
-
-final case class AddProfile(profile: Profile) extends AuthActorMessages
 
 final case class RemoveCollectionFrom(username: String, collection: ActorbaseCollection) extends AuthActorMessages
 

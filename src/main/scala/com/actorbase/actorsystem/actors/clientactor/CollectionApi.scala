@@ -29,9 +29,6 @@
 package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
-import akka.routing.Broadcast
-import scala.concurrent.Future
-import scala.util.Success
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask

@@ -31,8 +31,6 @@ package com.actorbase.actorsystem.actors.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
-import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, AddProfile }
-import scala.collection.immutable.TreeMap
 import spray.can.Http
 import akka.event.LoggingReceive
 
@@ -47,6 +45,7 @@ import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
 
 /**
   * Insert description here
@@ -75,39 +74,26 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
 
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
-      // log.info("dirs")
       var (name, owner) = ("", "")
       root.listFiles.filter(_.isDirectory).foreach {
         x => {
-          // log.info("FOLDER " + x.getName)
           x.listFiles.filter(_.isFile).foreach {
             x => {
               x match {
                 case meta if meta.getName.endsWith("actbmeta") =>
-                  val metaData = CryptoUtils.decryptMapData("Dummy implicit k", meta)
+                  val metaData = CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", meta)
                   name = metaData.get("collection").get.asInstanceOf[String]
                   owner = metaData.get("owner").get.toString
                   main ! CreateCollection(ActorbaseCollection(name, owner))
                 case user if user.getName.endsWith("shadow") =>
-                  CryptoUtils.decryptSetData("Dummy implicit k", user) foreach { x => authProxy ! AddProfile(x) }
-                case _ => dataShard ++= CryptoUtils.decryptMapData("Dummy implicit k", x)
+                  CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user) map { x => if (x._1 != "admin") authProxy ! AddCredentials(x._1, x._2) }
+                case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", x)
               }
-              // should insert all the items in the files
-              // log.info("FILE " + x.getName)
-              // if (x.getName.endsWith("actbmeta")) {
-              //   val metaData = CryptoUtils.decrypt("Dummy implicit k", x)
-              //   name = metaData.get("collection").get.asInstanceOf[String]
-              //   owner = metaData.get("owner").get.toString
-              //   main ! CreateCollection(ActorbaseCollection(name, owner))
-              // } else {
-              //   dataShard ++= CryptoUtils.decrypt("Dummy implicit k", x)
-              // }
             }
           }
           val collection = new ActorbaseCollection(name, owner)
           dataShard.foreach {
-            case(k, v) =>
-              // log.info("key is " + k + " value is " + v)
+            case (k, v) =>
               main ! InsertTo(collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
           }
           dataShard = dataShard.empty

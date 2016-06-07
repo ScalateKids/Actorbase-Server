@@ -30,11 +30,15 @@
 package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
+import akka.pattern.ask
 import spray.can.Http
+import spray.httpx.SprayJsonSupport._
 
+import scala.concurrent.duration._
 import scala.util.Try
 
-import com.actorbase.actorsystem.messages.AuthActorMessages.{AddCredentials, RemoveCredentials}
+import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, RemoveCredentials, ListUsers }
 
 
 /**
@@ -54,7 +58,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
     * @throws
     */
   // private area
-  val adminDirectives = {
+   val adminDirectives = {
     /**
       * User management route, only administrator users can enter here and make
       * operations, a GET request equals listing all users of the system
@@ -65,7 +69,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
           authorize(authInfo.hasAdminPermissions) {
             // only admin users can enter here
             complete {
-              "list users"
+              authProxy.ask(ListUsers)(5 seconds).mapTo[ListResponse]
             }
           }
         }

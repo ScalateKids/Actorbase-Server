@@ -30,6 +30,9 @@ package com.actorbase.actorsystem.actors.authactor
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
+case object Profile {
+  def apply(u: String, p: String): Profile = Profile(u, p, Set.empty[ActorbaseCollection])
+}
 
 case class Profile(username: String, password: String, private var collections: Set[ActorbaseCollection]) {
 
