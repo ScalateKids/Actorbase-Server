@@ -122,6 +122,8 @@ class Main extends Actor with ActorLogging {
       Some(sf)
     }
   }
+  
+  def getSize(): Int = sfMap.size
 
   def receive: Receive = {
 
