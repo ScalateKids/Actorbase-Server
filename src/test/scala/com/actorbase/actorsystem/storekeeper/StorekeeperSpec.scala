@@ -21,39 +21,90 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
-/*
-package com.actorbase.actorsystem.main
+
+package com.actorbase.actorsystem.storefinder
+
+import akka.util.Timeout
+import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
-import akka.pattern.ask
-import akka.testkit.TestActorRef
-import akka.util.Timeout
+import akka.actor.Actor
+import akka.testkit.{TestKit, TestActorRef, TestProbe}
+import org.scalatest.matchers.MustMatchers
+import org.scalatest.WordSpecLike
+
 import com.actorbase.actorsystem.utils.ActorbaseCollection
-import scala.concurrent.duration._
-import org.scalatest.{FlatSpec, Matchers}
-import org.scalatest.concurrent.ScalaFutures
-
-import com.actorbase.actorsystem.storekeeper.Storekeeper
+import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
+import com.actorbase.actorsystem.messages.StorefinderMessages.{UpdateCollectionSize, PartialMapTransaction}
+import com.actorbase.actorsystem.messages.WarehousemanMessages.Save
+import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 
-class StorekeeperSpec extends FlatSpec with Matchers {
+class StorekeeperSpec extends TestKit(ActorSystem("testSystem"))
+  with WordSpecLike
+  with MustMatchers {
 
-  implicit val timeout = Timeout(5 seconds)
+  implicit val timeout = Timeout(25 seconds)
 
-  implicit val system = ActorSystem()
+  //val actbColl = new ActorbaseCollection("testOwner","testName")
+  val collName = "testName"
+  val collOwner = "testOwner"
+  val skRef = TestActorRef(new Storekeeper( collName, collOwner ))
+  val p = TestProbe()
 
-  it should "add a key-value pair to the underlying map" in {
-    val skActorRef = TestActorRef(new Storekeeper("testcollection", "testowner"))
-    skActorRef ! InsertItem("key", "value".getBytes, false)
-    val future = skActorRef ? GetItem("key")
+  val valore = "value".getBytes()
 
-    ScalaFutures.whenReady(future) {
-      response => response.asInstanceOf[String] should be("""""")
+  "Storekeeper" should {
+    "be created" in {
+      assert(skRef != None)
     }
   }
+
+  it should {
+    "insert get an item" in {
+      p.send( skRef, InsertItem("key", valore , false) )
+      p.expectMsg( UpdateCollectionSize( true ) )
+    }
+  }
+
+  it should {
+    "get an item" in {
+      p.send( skRef, InsertItem("key", valore , false) )
+      p.send( skRef, GetItem("key") )
+      p.expectMsg( Response( valore ) )
+    }
+  }
+
+  it should {
+    "remove an item" in {
+      p.send( skRef, InsertItem("key", valore , false) )
+      p.send( skRef, RemoveItem("key") )
+      p.expectMsg( UpdateCollectionSize( false ) )
+    }
+  }
+
+  it should {
+    "return all items" in {
+      p.send( skRef, InsertItem("key", valore , false) )
+      p.expectMsg( UpdateCollectionSize( true ) )
+      p.send( skRef, GetAll( p.ref ) )
+      p.expectMsg( PartialMapTransaction( p.ref, Map[String, Array[Byte]]("key" -> valore) ) )
+    }
+  }
+
+  //this fails, it goes in timeout
+  it should {
+    "persist data sending message to the warehouseman" in {
+     // p.send( skRef, InsertItem("key", valore , false) )
+     // p.expectMsg( UpdateCollectionSize( true ) )
+      p.send( skRef, Persist )
+      p.expectMsg( Save( Map[String, Array[Byte]]("key" -> valore) ) )
+    }
+  }
+
 }
-*/
