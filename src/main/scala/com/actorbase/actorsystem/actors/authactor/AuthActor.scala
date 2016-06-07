@@ -30,6 +30,7 @@ package com.actorbase.actorsystem.actors.authactor
 
 import akka.actor.{Actor, ActorLogging}
 
+import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.messages.AuthActorMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
 import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
@@ -41,7 +42,7 @@ import java.io.File
 class AuthActor extends Actor with ActorLogging {
 
   private val rootFolder = "actorbasedata/usersdata/"
-
+  private val warehouseman = context.actorOf(Warehouseman.props)
   /**
     * Insert description here
     *

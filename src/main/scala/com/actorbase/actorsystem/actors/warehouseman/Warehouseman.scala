@@ -37,7 +37,9 @@ import com.actorbase.actorsystem.utils.CryptoUtils
 
 object Warehouseman {
 
-  def props(s: String) : Props = Props(new Warehouseman(s))
+  def props(s: String) : Props = Props(classOf[Warehouseman], s)
+
+  def props: Props = Props(classOf[Warehouseman])
 
 }
 

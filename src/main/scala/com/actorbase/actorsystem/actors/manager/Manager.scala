@@ -28,8 +28,9 @@
 
 package com.actorbase.actorsystem.actors.manager
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, Address, AddressFromURIString, Deploy, Props }
 import akka.routing.{ ActorRefRoutee, AddRoutee }
+import akka.remote.RemoteScope
 
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
@@ -56,13 +57,15 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
 
   def receive = {
     case OneMore =>
+      println(sender.path.toString)
       reports += 1
-      if (reports == 1) {
+      // if (reports == 1) {
         log.info("new storekeeper added to [POOL]")
-        val newSk = context.actorOf(Storekeeper.props(collection, owner))
+        val newSk = context.actorOf(Storekeeper.props(collection, owner), s"managerStorekeeper-$reports")
+        // val newSk = context.actorOf(Storekeeper.props(collection, owner).withDeploy(Deploy(scope = RemoteScope(AddressFromURIString(sender.path.toString())))))
         newSk ! InitMn(self)
         router ! AddRoutee(ActorRefRoutee(newSk))
-        reports = 0
-      }
+        // reports = 0
+      // }
   }
 }

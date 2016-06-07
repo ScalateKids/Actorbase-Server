@@ -100,6 +100,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
         }
       }
       // should probably delete actorbasedata here
+      root.delete
     } else log.warning("Directory not found!")
   }
 

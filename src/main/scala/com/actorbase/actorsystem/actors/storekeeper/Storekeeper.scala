@@ -31,6 +31,8 @@ package com.actorbase.actorsystem.actors.storekeeper
 import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, Props }
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.MemberUp
+import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
+import akka.cluster.pubsub.DistributedPubSub
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
@@ -59,6 +61,10 @@ object Storekeeper {
   * @param maxSize
   */
 class Storekeeper(private val collectionName: String, private val collectionOwner: String) extends Actor with ActorLogging {
+
+  val mediator = DistributedPubSub(context.system).mediator
+  // subscribe to the topic named "persist-data"
+  mediator ! Subscribe("persist-data", self)
 
   private val initDelay = 130 seconds       // delay for the first persistence message to be sent
   private val intervalDelay = 130 seconds   // interval in-between each persistence message has to be sent
