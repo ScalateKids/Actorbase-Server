@@ -75,5 +75,35 @@ class MainSpec extends TestKit(ActorSystem("testSystem"))
       p.expectMsg(Response(value))
     }
   }
+  
+  it should{
+    "create a new collection" in {
+	  val testCreate = new ActorbaseCollection("testColl", "anonymous")
+	  val size = mainActorRef.underlyingActor.getSize
+	  p.send(mainActorRef, CreateCollection(testCreate))
+	  assert(mainActorRef.underlyingActor.getSize === size+1)
+	}
+  }
+  
+  it should{
+    "remove an item" in {
+	  val testColl = new ActorbaseCollection("testCollection", "anonymous")
+      val value = "testValue".getBytes
+      p.send( mainActorRef, InsertTo(testColl, "testKey",  value, false))
+      p.send( mainActorRef, GetFrom(testColl, "testKey"))
+	  p.send(mainActorRef, RemoveFrom(testColl.getUUID, "testKey"))
+      p.send( mainActorRef, GetFrom(testColl, "testKey"))
+      val testMessage = p.receiveOne(25 seconds)
+	  assert( value != testMessage.asInstanceOf[Response].response)
+	}
+  }
+  
+  /*it should{
+    "add a contributor" in {
+	  p.send( mainActorRef, addContributor(new ActorbaseCollection("testCollection", "anonymous"), "testContributor"))
+	  p.send( mainActorRef, InsertTo(new ActorbaseCollection("testCollection", "anonymous"), "test"))
+	  //get e controlla e fine test
+	}
+  } TODO quando sarà fatta*/
 }
 */
