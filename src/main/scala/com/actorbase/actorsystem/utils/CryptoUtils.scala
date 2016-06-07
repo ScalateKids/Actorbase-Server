@@ -32,7 +32,8 @@ import java.io.{File, ByteArrayInputStream, ByteArrayOutputStream, FileInputStre
 import java.security.{InvalidKeyException, NoSuchAlgorithmException}
 import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoSuchPaddingException}
 import javax.crypto.spec.SecretKeySpec
-import scala.collection.immutable.Iterable
+
+import com.actorbase.actorsystem.actors.authactor.Profile
 
 /**
   * Cryptography service object
@@ -99,6 +100,51 @@ object CryptoUtils {
 
   }
 
+    def encryptSetData(key: String, inputData: Set[Profile], outputFile: File): Unit = {
+
+    val cipherMode: Int = Cipher.ENCRYPT_MODE
+
+    /**
+      * Translate a map of String and Any to an array of bytes
+      *
+      * @param o TreeMap object of type String and Any
+      * @return an array of bytes representing the object binarized
+      * @throws
+      */
+    def binarize(o: Any): Array[Byte] = {
+      val bos = new ByteArrayOutputStream()
+      var out = new ObjectOutputStream(bos)
+      out.writeObject(o);
+      val bytes = bos.toByteArray()
+      out.close();
+      bos.close();
+      bytes
+    }
+
+    try {
+
+      val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
+      val cipher = Cipher.getInstance(Transformation)
+      cipher.init(cipherMode, secretKey)
+
+      val outputBytes = cipher.doFinal(binarize(inputData))
+
+      val outputStream = new FileOutputStream(outputFile)
+      outputStream.write(outputBytes)
+
+      outputStream.close()
+
+    } catch {
+      case na: NoSuchAlgorithmException => println(s"Error encrypting/decrypting file $na")
+      case np: NoSuchPaddingException => println(s"Error encrypting/decrypting file $np")
+      case ik: InvalidKeyException => println(s"Error encrypting/decrypting file $ik")
+      case bp: BadPaddingException => println(s"Error encrypting/decrypting file $bp")
+      case ib: IllegalBlockSizeException => println(s"Error encrypting/decrypting file $ib")
+      case io: IOException => println(s"Error encrypting/decrypting file $io")
+    }
+
+  }
+
   /**
     * Decryption method, currently uses AES algorithm
     *
@@ -114,7 +160,7 @@ object CryptoUtils {
   @throws(classOf[InvalidKeyException])
   @throws(classOf[IllegalBlockSizeException])
   @throws(classOf[IOException])
-  def decrypt(key: String, inputFile: File): Map[String, Any] = {
+  def decryptMapData(key: String, inputFile: File): Map[String, Any] = {
 
     val cipherMode: Int = Cipher.DECRYPT_MODE
     val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
@@ -131,6 +177,41 @@ object CryptoUtils {
 
     val in = new ObjectInputStream(new ByteArrayInputStream(outputBytes))
     in.readObject().asInstanceOf[Map[String, Any]]
+
+  }
+
+   /**
+    * Decryption method, currently uses AES algorithm
+    *
+    * @param key a 16 bit key used to decrypt the content of the encrypted file
+    * @param inputFile a file read from filesystem
+    * @return a TreeMap of type String and Any
+    * @throws NoSuchAlgorithmException, NoSuchPaddingException,
+    * InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException
+    */
+  @throws(classOf[NoSuchAlgorithmException])
+  @throws(classOf[NoSuchPaddingException])
+  @throws(classOf[BadPaddingException])
+  @throws(classOf[InvalidKeyException])
+  @throws(classOf[IllegalBlockSizeException])
+  @throws(classOf[IOException])
+  def decryptSetData(key: String, inputFile: File): Set[Profile] = {
+
+    val cipherMode: Int = Cipher.DECRYPT_MODE
+    val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
+    val cipher = Cipher.getInstance(Transformation)
+    cipher.init(cipherMode, secretKey)
+
+    val inputStream = new FileInputStream(inputFile);
+    val inputBytes = new Array[Byte](inputFile.length().toInt);
+    inputStream.read(inputBytes);
+
+    val outputBytes = cipher.doFinal(inputBytes)
+
+    inputStream.close()
+
+    val in = new ObjectInputStream(new ByteArrayInputStream(outputBytes))
+    in.readObject().asInstanceOf[Set[Profile]]
 
   }
 

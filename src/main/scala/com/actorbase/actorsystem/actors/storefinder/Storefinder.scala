@@ -33,6 +33,8 @@ package com.actorbase.actorsystem.actors.storefinder
 
 import akka.actor.{Actor, ActorLogging, Props}
 
+import akka.cluster.Cluster
+import akka.cluster.ClusterEvent.MemberUp
 import akka.cluster.routing.ClusterRouterPool
 import akka.cluster.routing.ClusterRouterPoolSettings
 import akka.routing.{ ActorRefRoutee, ConsistentHashingPool, FromConfig, Router }
@@ -45,6 +47,7 @@ import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 import com.actorbase.actorsystem.actors.manager.Manager
 import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.typesafe.config.ConfigFactory
 
 object Storefinder {
   def props(collection: ActorbaseCollection): Props = Props(new Storefinder(collection)).withDispatcher("control-aware-dispatcher")
@@ -60,13 +63,17 @@ object Storefinder {
   */
 class Storefinder(private var collection: ActorbaseCollection) extends Actor with ActorLogging {
 
-  // val storekeepers = context.actorOf(ConsistentHashingPool(20).props(Props(new Storekeeper(context.actorOf(Warehouseman.props(collection.getName))))), name = "storekeepers")
+  val cluster = Cluster(context.system)
+  val config = ConfigFactory.load()
   val storekeepers = context.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
-    ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
+    ClusterRouterPoolSettings(config getInt "max-instances", config getInt "storekeepers-per-node", true, None)).props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
   // val storekeepers = context.actorOf(FromConfig.props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
   val manager = context.actorOf(Manager.props(collection.getName, collection.getOwner, storekeepers), collection.getUUID + "-manager")
 
   storekeepers ! Broadcast(InitMn(manager))
+
+  override def preStart(): Unit = cluster.subscribe(self, classOf[MemberUp])
+  override def postStop(): Unit = cluster.unsubscribe(self)
 
   /**
     * Insert description here

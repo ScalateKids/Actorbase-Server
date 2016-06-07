@@ -29,6 +29,8 @@
 package com.actorbase.actorsystem.actors.storekeeper
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, Props }
+import akka.cluster.Cluster
+import akka.cluster.ClusterEvent.MemberUp
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
@@ -58,12 +60,13 @@ object Storekeeper {
   */
 class Storekeeper(private val collectionName: String, private val collectionOwner: String) extends Actor with ActorLogging {
 
-  private val initDelay = 160 seconds       // delay for the first persistence message to be sent
-  private val intervalDelay = 160 seconds   // interval in-between each persistence message has to be sent
+  private val initDelay = 30 seconds       // delay for the first persistence message to be sent
+  private val intervalDelay = 30 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props( collectionOwner + collectionName ))
   private var manager: Option[ActorRef] = None
   private var checked = false
+  val cluster = Cluster(context.system)
 
   warehouseman ! Init( collectionName, collectionOwner)
 
@@ -76,6 +79,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * @throws
     */
   override def preStart(): Unit = {
+    cluster.subscribe(self, classOf[MemberUp])
     scheduler = context.system.scheduler.schedule(
       initialDelay = initDelay,
       interval = intervalDelay,
@@ -92,7 +96,10 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * @return
     * @throws
     */
-  override def postStop(): Unit = scheduler.cancel()
+  override def postStop(): Unit = {
+    scheduler.cancel()
+    cluster.unsubscribe(self)
+  }
 
   def receive = running(Map[String, Array[Byte]]().empty)
 

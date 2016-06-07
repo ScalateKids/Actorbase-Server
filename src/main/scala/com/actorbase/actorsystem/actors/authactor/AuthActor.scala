@@ -31,15 +31,12 @@ package com.actorbase.actorsystem.actors.authactor
 import akka.actor.{Actor, ActorLogging}
 
 import com.actorbase.actorsystem.messages.AuthActorMessages._
-import com.actorbase.actorsystem.utils.CryptoUtils
+import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
+import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
 import com.github.t3hnar.bcrypt._
 // import org.mindrot.jbcrypt.BCrypt
 
 import java.io.File
-
-object AuthActor {
-  case class Credentials(username: String, password: String)
-}
 
 class AuthActor extends Actor with ActorLogging {
 
@@ -52,7 +49,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  override def receive = running(Map[AuthActor.Credentials, Set[String]](AuthActor.Credentials("admin","actorbase") -> Set.empty[String]))
+  override def receive = running(Set[Profile](Profile("admin", "actorbase", Set.empty[ActorbaseCollection])))
 
   /**
     * Insert description here
@@ -61,11 +58,11 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def persist(credentials: Map[AuthActor.Credentials, Set[String]]): Unit = {
+  def persist(profiles: Set[Profile]): Unit = {
     val key = "Dummy implicit k"
-    val encryptedCredentialsFile = new File(rootFolder + "/usersdata.shadow")
-    encryptedCredentialsFile.getParentFile.mkdirs
-    CryptoUtils.encrypt(key, credentials, encryptedCredentialsFile)
+    val encryptedProfilesFile = new File(rootFolder + "/usersdata.shadow")
+    encryptedProfilesFile.getParentFile.mkdirs
+    CryptoUtils.encryptSetData(key, profiles, encryptedProfilesFile)
   }
 
   /**
@@ -75,7 +72,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  def running(credentials: Map[AuthActor.Credentials, Set[String]]): Receive = {
+  def running(profiles: Set[Profile]): Receive = {
 
     case message: AuthActorMessages => message match {
 
@@ -89,8 +86,8 @@ class AuthActor extends Actor with ActorLogging {
       case AddCredentials(username, password) =>
         log.info(s"$username added")
         val salt = password
-        persist(credentials + (AuthActor.Credentials(username, password) -> Set.empty[String]))
-        context become running(credentials + (AuthActor.Credentials(username, password) -> Set.empty[String]))
+        persist(profiles + (Profile(username, password, Set.empty[ActorbaseCollection])))
+        context become running(profiles + (Profile(username, password, Set.empty[ActorbaseCollection])))
 
       /**
         * Change the password associated to an user given his username and
@@ -103,10 +100,8 @@ class AuthActor extends Actor with ActorLogging {
         * the requested username
         */
       case UpdateCredentials(username, password, newPassword) =>
-        var optSet: Option[Set[String]] = None
-        val key = AuthActor.Credentials(username, password)
-        optSet = credentials get key
-        optSet map (set => context become running(credentials - key + (AuthActor.Credentials(username, newPassword) -> set))) getOrElse (sender ! "None")
+        val optElem = profiles find (elem => (elem.username == username) && (elem.password == password))
+        optElem map (elem => context become running (profiles - elem + elem.copy(password = newPassword))) getOrElse (sender ! "None")
 
       /**
         * Insert description here
@@ -116,10 +111,10 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case RemoveCredentials(username) =>
-        val opt = credentials find (_._1.username == username)
-        opt map { x =>
-          persist(credentials - x._1)
-          context become running(credentials - x._1) } getOrElse log.error(s"AuthActor: $username key not found")
+        val optElem = profiles find (_.username == username)
+        optElem map { x =>
+          persist(profiles - x)
+          context become running(profiles - x) } getOrElse log.error(s"AuthActor: $username elem not found")
 
       /**
         * Insert description here
@@ -129,10 +124,8 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case Authenticate(username, password) =>
-        val key = AuthActor.Credentials(username, password)
-        if (credentials.contains(key))
-          credentials get key map (_ => sender ! "OK") getOrElse (sender ! "None")
-        else sender ! "None"
+        val optElem = profiles find (elem => (elem.username == username) && (elem.password == password))
+        optElem map (_ => sender ! "OK") getOrElse sender ! "None"
 
       /**
         * Insert description here
@@ -141,12 +134,14 @@ class AuthActor extends Actor with ActorLogging {
         * @return
         * @throws
         */
-      case AddCollection(username, collectionUUID) =>
-        val optKey = credentials find (_._1.username == username)
-        optKey map { x =>
-          persist(credentials + (x._1 -> (x._2 + collectionUUID)))
-          context become running (credentials + (x._1 -> (x._2 + collectionUUID)))
-        } getOrElse log.error(s"AuthActor: Failed to add $collectionUUID to $username")
+      case AddCollectionTo(username, collection) =>
+        val optElem = profiles find (_.username == username)
+        optElem map { x =>
+          // val tempSet = x.collections + collection
+          x.addCollection(collection)
+          persist(profiles + x)
+          context become running (profiles + x)
+        } getOrElse log.error(s"AuthActor: Failed to add ${collection.getUUID} to $username")
 
       /**
         * Insert description here
@@ -155,14 +150,38 @@ class AuthActor extends Actor with ActorLogging {
         * @return
         * @throws
         */
-      case RemoveCollection(username, collectionUUID) =>
-        val optKey = credentials find (_._1.username == username)
-        optKey map { x =>
-          if (x._2.contains(collectionUUID)) {
-            persist(credentials + (x._1 -> (x._2 - collectionUUID)))
-            context become running (credentials + (x._1 -> (x._2 - collectionUUID)))
+      case RemoveCollectionFrom(username, collection) =>
+        val optElem = profiles find (_.username == username)
+        optElem map { x =>
+          if (x.contains(collection)) {
+            // val tempSet = x.collections - collection
+            x.removeCollection(collection)
+            persist(profiles + x)
+            context become running (profiles + x)
           }
-        } getOrElse log.error(s"AuthActor: Failed to add $collectionUUID to $username")
+        } getOrElse log.error(s"AuthActor: Failed to add ${collection.getUUID} to $username")
+
+      /**
+        * Insert description here
+        *
+        * @param
+        * @return
+        * @throws
+        */
+      case AddProfile(profile) =>
+        context become running(profiles + profile)
+      /**
+        * Build a list of collection names and reply it to the sender
+        *
+        * @param owner a String representing the owner of the requested collection name list
+        */
+      case ListCollectionsOf(username) =>
+        val optElem = profiles find (_.username == username)
+        optElem map { set =>
+          val names = set.getCollections map (collection => collection.getName)
+          sender ! ListResponse(names.toList)
+        }
+
     }
   }
 }

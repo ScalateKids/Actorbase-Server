@@ -26,25 +26,71 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.messages.AuthActorMessages
+package com.actorbase.actorsystem.actors.authactor
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
-import com.actorbase.actorsystem.actors.authactor.Profile
 
-sealed trait AuthActorMessages
 
-final case class AddCredentials(username: String, password: String) extends AuthActorMessages
+case class Profile(username: String, password: String, private var collections: Set[ActorbaseCollection]) {
 
-final case class UpdateCredentials(username: String, password: String, newPassword: String) extends AuthActorMessages
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def getCollections: Set[ActorbaseCollection] = collections
 
-final case class RemoveCredentials(username: String) extends AuthActorMessages
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def addCollection(collection: ActorbaseCollection): Unit = collections += collection
 
-final case class Authenticate(username: String, password: String) extends AuthActorMessages
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def removeCollection(collection: ActorbaseCollection): Unit = {
+    if (collections.contains(collection))
+      collections -= collection
+  }
 
-final case class AddCollectionTo(username: String, collection: ActorbaseCollection) extends AuthActorMessages
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  def contains(collection: ActorbaseCollection): Boolean = collections.contains(collection)
 
-final case class AddProfile(profile: Profile) extends AuthActorMessages
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  override def equals(o: Any) = o match {
+    case that: Profile => that.username.equals(this.username) && that.password.equals(this.password)
+    case _ => false
+  }
 
-final case class RemoveCollectionFrom(username: String, collection: ActorbaseCollection) extends AuthActorMessages
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  override def hashCode = username.hashCode
 
-final case class ListCollectionsOf(username: String) extends AuthActorMessages
+}

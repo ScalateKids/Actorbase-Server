@@ -30,7 +30,6 @@ package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
 import akka.routing.Broadcast
-import com.actorbase.actorsystem.messages.MainMessages.ListCollections
 import scala.concurrent.Future
 import scala.util.Success
 import spray.httpx.SprayJsonSupport._
@@ -44,6 +43,7 @@ import scala.concurrent.duration._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages.{InsertTo, GetFrom, RemoveFrom, CreateCollection}
 import com.actorbase.actorsystem.messages.ClientActorMessages._
+import com.actorbase.actorsystem.messages.AuthActorMessages.ListCollectionsOf
 
 trait CollectionApi extends HttpServiceBase with Authenticator {
 
@@ -86,13 +86,8 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
-            var results = ""
-            val list: Future[Seq[ListResponse]] = Future.sequence(Seq(main.ask(Broadcast(ListCollections(authInfo.user.login)))(5 seconds).mapTo[ListResponse]))
-            list onComplete {
-              case Success(value) => results += value
-            }
             complete {
-              results
+              authProxy.ask(ListCollectionsOf(authInfo.user.login))(5 seconds).mapTo[ListResponse]
             }
           }
         }

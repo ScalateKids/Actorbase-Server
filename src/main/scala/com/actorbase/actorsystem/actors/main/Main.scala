@@ -32,6 +32,7 @@ package com.actorbase.actorsystem.actors.main
 import akka.actor.{ Actor, ActorLogging, ActorRef, PoisonPill, Props }
 import akka.cluster.sharding.ShardRegion
 import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, RemoveCollectionFrom }
 
 import scala.collection.mutable
 
@@ -55,7 +56,7 @@ object Main {
     *
     * @return an object of type Props, usable directly with an actorsystem running
     */
-  def props = Props[Main].withDispatcher("control-aware-dispatcher")
+  def props(authProxy: ActorRef) = Props(classOf[Main], authProxy).withDispatcher("control-aware-dispatcher")
 
   /** name of the sharded entity */
   def shardName = "mainActor"
@@ -67,7 +68,6 @@ object Main {
     * @return a String representing an UUID of a shard-region where the actor belongs to
     */
   val extractShardId: ExtractShardId = {
-    case ListCollections(owner) => (owner.hashCode % 100).toString
     case CreateCollection(collection) => (collection.getUUID.hashCode % 100).toString
     case RemoveFrom(uuid, _) => (uuid.hashCode % 100).toString
     case InsertTo(collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
@@ -83,7 +83,6 @@ object Main {
     * @return a String representing an UUID of an entity actor inside a shard-region
     */
   val extractEntityId: ExtractEntityId = {
-    case msg: ListCollections => (msg.owner, msg)
     case msg: CreateCollection => (msg.collection.getUUID, msg)
     case msg: RemoveFrom => (msg.uuid, msg)
     case msg: InsertTo => (msg.collection.getUUID, msg)
@@ -101,7 +100,7 @@ object Main {
   * @return
   * @throws
   */
-class Main extends Actor with ActorLogging {
+class Main(authProxy: ActorRef) extends Actor with ActorLogging {
 
   private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
   private var requestMap = Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
@@ -119,6 +118,7 @@ class Main extends Actor with ActorLogging {
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
       sfMap += (collection -> sf)
+      authProxy ! AddCollectionTo("admin", collection)
       Some(sf)
     }
   }
@@ -126,15 +126,6 @@ class Main extends Actor with ActorLogging {
   def receive: Receive = {
 
     case message: MainMessage => message match {
-      /**
-        * Build a list of collection names and reply it to the sender
-        *
-        * @param owner a String representing the owner of the requested collection name list
-        */
-      case ListCollections(owner) =>
-        val names = sfMap.filterKeys(_.getOwner == owner).keys map (collection => collection.getName)
-        log.info(s"found $names for user $owner")
-        sender ! ListResponse(names.toList)
 
       /**
         * Insert message, insert a key/value into a designed collection, searching
@@ -229,7 +220,7 @@ class Main extends Actor with ActorLogging {
 
       /**
         * Add Contributor from collection, given username of Contributor and read
-        * ore readWrite permission
+        * or readWrite permission
         *
         * @param username a String to identify the contributor to add
         * @param permission a boolean representing the permission : (true = readWrite , false = readOnly)
@@ -238,6 +229,9 @@ class Main extends Actor with ActorLogging {
         */
       case AddContributor(username, permission, uuid) =>
         sfMap.find(_._1.getUUID == uuid) map (_._1.addContributor(username, permission)) getOrElse log.error(s"cannot add $username as contributor to $uuid collection")
+        val optColl = sfMap find (_._1.getUUID == uuid)
+        optColl map (x => authProxy ! AddCollectionTo(username, x._1)) getOrElse log.error(s"$username collection with $uuid id not found")
+
 
       /**
         * Remove Contributor from collection, given username of Contributor , and permission
@@ -248,6 +242,8 @@ class Main extends Actor with ActorLogging {
         */
       case RemoveContributor(username, uuid) =>
         sfMap.find(_._1.getUUID == uuid) map (_._1.removeContributor(username)) getOrElse log.error(s"cannot remove $username as contributor to $uuid collection")
+        val optColl = sfMap find (_._1.getUUID == uuid)
+        optColl map (x => authProxy ! RemoveCollectionFrom(username, x._1)) getOrElse log.error(s"$username collection with $uuid id not found")
 
     }
   }

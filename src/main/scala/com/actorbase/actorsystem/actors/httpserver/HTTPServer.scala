@@ -31,7 +31,7 @@ package com.actorbase.actorsystem.actors.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
-import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, AddProfile }
 import scala.collection.immutable.TreeMap
 import spray.can.Http
 import akka.event.LoggingReceive
@@ -71,7 +71,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     import java.io.File
 
     val root = new File("actorbasedata/")
-    var dataShard = TreeMap[String, Any]().empty
+    var dataShard = Map[String, Any]().empty
 
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
@@ -84,13 +84,13 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
             x => {
               x match {
                 case meta if meta.getName.endsWith("actbmeta") =>
-                  val metaData = CryptoUtils.decrypt("Dummy implicit k", meta)
+                  val metaData = CryptoUtils.decryptMapData("Dummy implicit k", meta)
                   name = metaData.get("collection").get.asInstanceOf[String]
                   owner = metaData.get("owner").get.toString
                   main ! CreateCollection(ActorbaseCollection(name, owner))
                 case user if user.getName.endsWith("shadow") =>
-                  CryptoUtils.decrypt("Dummy implicit k", user) map { case (u, p) => authProxy ! AddCredentials(u, p.asInstanceOf[String])}
-                case _ => dataShard ++= CryptoUtils.decrypt("Dummy implicit k", x)
+                  CryptoUtils.decryptSetData("Dummy implicit k", user) foreach { x => authProxy ! AddProfile(x) }
+                case _ => dataShard ++= CryptoUtils.decryptMapData("Dummy implicit k", x)
               }
               // should insert all the items in the files
               // log.info("FILE " + x.getName)
@@ -158,7 +158,7 @@ object HTTPServer extends App {
   // main sharding
   ClusterSharding(system).start(
     typeName = Main.shardName,
-    entityProps = Main.props,
+    entityProps = Main.props(authProxy),
     settings = ClusterShardingSettings(system),
     extractShardId = Main.extractShardId,
     extractEntityId = Main.extractEntityId)

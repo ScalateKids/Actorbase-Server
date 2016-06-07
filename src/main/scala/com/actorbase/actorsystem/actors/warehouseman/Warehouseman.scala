@@ -102,7 +102,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
       case Read(f) =>
         log.info("warehouseman: read")
         val key = "Dummy implicit k"
-        val m = CryptoUtils.decrypt(key, f)
+        val m = CryptoUtils.decryptMapData(key, f)
         sender ! m // ok reply
     }
 
