@@ -60,8 +60,8 @@ object Storekeeper {
   */
 class Storekeeper(private val collectionName: String, private val collectionOwner: String) extends Actor with ActorLogging {
 
-  private val initDelay = 30 seconds       // delay for the first persistence message to be sent
-  private val intervalDelay = 30 seconds   // interval in-between each persistence message has to be sent
+  private val initDelay = 130 seconds       // delay for the first persistence message to be sent
+  private val intervalDelay = 130 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props( collectionOwner + collectionName ))
   private var manager: Option[ActorRef] = None
@@ -148,8 +148,6 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         */
       case ins: InsertItem =>
-        // log.info("SK: Inserting " + ins.key)
-
         /**
           * private method that insert an item to the collection, can allow the update of the item or not
           * changing the param update
@@ -161,6 +159,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         def insertOrUpdate(update: Boolean, key: String): Boolean = {
           var done = true
           if (!update && !data.contains(key)) {
+            log.info("SK: Inserting " + ins.key)
             sender ! UpdateCollectionSize(true)
             if (data.size > 256 && !checked) {
               checked = true
@@ -168,7 +167,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
             }
           }
           else if (!update && data.contains(key)) {
-            // log.warning("SK: Duplicate key found, cannot insert")
+            log.warning(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
           done

@@ -40,7 +40,7 @@ import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages.{ListResponse, MapResponse}
+import com.actorbase.actorsystem.messages.ClientActorMessages.MapResponse
 
 /**
   * Insert description here
@@ -103,7 +103,7 @@ object Main {
 class Main(authProxy: ActorRef) extends Actor with ActorLogging {
 
   private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
-  private var requestMap = Map[String, mutable.Map[ActorbaseCollection, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
+  private var requestMap = Map[String, mutable.Map[String, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
 
   /**
     * Method that create a collection in Actorbase.
@@ -122,7 +122,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       Some(sf)
     }
   }
-  
+
   def getSize(): Int = sfMap.size
 
   def receive: Receive = {
@@ -164,16 +164,16 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         */
       case GetFrom(collection, key) =>
         if (key.nonEmpty)
-          sfMap.find(_._1 == collection) map (_._2 forward Get(key)) getOrElse log.warning(s"Key $key not found")
+          sfMap.find(_._1 == collection) map (_._2 forward Get(key)) getOrElse log.error (s"Key $key not found")
         else {
           // WIP: still completing
-          sfMap.find(x => x._1 == collection) map { coll =>
-            requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1 -> mutable.Map[String, Array[Byte]]())) getOrElse (
-              requestMap += (collection.getOwner -> mutable.Map[ActorbaseCollection, mutable.Map[String, Array[Byte]]](coll._1 -> mutable.Map[String, Array[Byte]]())))
+          sfMap.find(_._1 == collection) map { coll =>
+            requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1.getUUID -> mutable.Map[String, Array[Byte]]())) getOrElse (
+              requestMap += (collection.getOwner -> mutable.Map(coll._1.getUUID -> mutable.Map[String, Array[Byte]]())))
             if (coll._1.getSize > 0)
-              sfMap get collection map (_ forward GetAllItems) getOrElse log.warning (s"MAIN: key $key not found")
+              sfMap get collection map (_ forward GetAllItems) getOrElse log.error (s"MAIN: key $key not found")
             else
-              sender ! MapResponse(collection.getName, Map[String, Any]())
+              sender ! MapResponse(collection.getName, Map[String, Array[Byte]]())
           }
         }
 
@@ -191,13 +191,13 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         */
       case CompleteTransaction(clientRef, collection, items) =>
         requestMap.find(_._1 == collection.getOwner) map { ref =>
-          ref._2.find(_._1 == collection) map { colMap =>
+          ref._2.find(_._1 == collection.getUUID) map { colMap =>
             colMap._2 ++= items
-            log.info(s"${colMap._2.size} - ${collection.getSize} - ${colMap._1.getSize}")
+            log.info(s"${colMap._2.size} - ${collection.getSize}")
             if (colMap._2.size == collection.getSize) {
               clientRef ! MapResponse(collection.getName, colMap._2.toMap)
               colMap._2.clear
-              ref._2.-(collection)
+              ref._2.-(collection.getUUID)
             }
           } getOrElse log.warning("GetItemFromResponse: collectionMap not found")
         } getOrElse log.warning("GetItemFromResponse: refPair not found")
