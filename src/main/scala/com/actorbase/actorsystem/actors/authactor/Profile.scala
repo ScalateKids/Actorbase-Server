@@ -26,47 +26,15 @@
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.utils
+package com.actorbase.actorsystem.actors.authactor
 
-import scala.math.Ordered.orderingToOrdered
+import com.actorbase.actorsystem.utils.ActorbaseCollection
 
-case object ActorbaseCollection {
-
-  sealed trait Permissions
-
-  case object Read extends Permissions
-
-  case object ReadWrite extends Permissions
+case object Profile {
+  def apply(u: String, p: String): Profile = Profile(u, p, Set.empty[ActorbaseCollection])
 }
 
-/**
-  * Class representing a collection of actorbase
-  *
-  * @param name a String representing the name of the collection
-  * @param owner a String representing the username of the owner of this collection
-  */
-case class ActorbaseCollection (private var name: String,
-  private var owner: String,
-  private var size: Int = 0) extends Ordered[ActorbaseCollection] {
-
-  private val uuid: String = owner + name
-
-  private var contributors = Map[String, ActorbaseCollection.Permissions]("admin" -> ActorbaseCollection.ReadWrite)
-
-  /**
-    * @return a String representing the name of the collection
-    */
-  def getName: String = name
-
-  /**
-    * @return a String representing the username of the owner of this collection
-    */
-  def getOwner: String = owner
-
-  /**
-    * @return a String representing a universal-unique-identified ID
-    */
-  def getUUID: String = uuid
+case class Profile(username: String, password: String, private var collections: Set[ActorbaseCollection]) {
 
   /**
     * Insert description here
@@ -75,7 +43,7 @@ case class ActorbaseCollection (private var name: String,
     * @return
     * @throws
     */
-  def getSize: Int = size
+  def getCollections: Set[ActorbaseCollection] = collections
 
   /**
     * Insert description here
@@ -84,7 +52,7 @@ case class ActorbaseCollection (private var name: String,
     * @return
     * @throws
     */
-  def addContributor(username: String, permission: ActorbaseCollection.Permissions): Unit = contributors += (username -> permission)
+  def addCollection(collection: ActorbaseCollection): Unit = collections += collection
 
   /**
     * Insert description here
@@ -93,35 +61,9 @@ case class ActorbaseCollection (private var name: String,
     * @return
     * @throws
     */
-  def removeContributor(username: String): Unit = contributors -= username
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def incrementSize = size += 1
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  def decrementSize = size -= 1
-
-  /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  override def compare(that: ActorbaseCollection): Int = {
-    (this.name + this.owner) compare (that.name + that.owner)
+  def removeCollection(collection: ActorbaseCollection): Unit = {
+    if (collections.contains(collection))
+      collections -= collection
   }
 
   /**
@@ -131,8 +73,17 @@ case class ActorbaseCollection (private var name: String,
     * @return
     * @throws
     */
+  def contains(collection: ActorbaseCollection): Boolean = collections.contains(collection)
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
   override def equals(o: Any) = o match {
-    case that: ActorbaseCollection => that.uuid.equals(this.uuid)
+    case that: Profile => that.username.equals(this.username) && that.password.equals(this.password)
     case _ => false
   }
 
@@ -143,6 +94,6 @@ case class ActorbaseCollection (private var name: String,
     * @return
     * @throws
     */
-  override def hashCode = uuid.hashCode
+  override def hashCode = username.hashCode
 
 }

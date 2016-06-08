@@ -25,31 +25,49 @@
   * @version 1.0
   * @since 1.0
   */
-/*
-package com.actorbase.actorsystem
 
-import org.scalatest._
-import org.scalatest.concurrent._
+package com.actorbase.actorsystem.actors.clientactor
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  * Module containing all specifications for testing driver components.
-  * All types of specifications and tests related to the Driver component
-  * should be added here.
+  * Insert description here
   *
   * @param
   * @return
   * @throws
   */
-object ActorSystemSpecs {
+object UserApi {
 
   /**
-    * Basic unit-testing class with Future capabilities
+    * Insert description here
     *
     * @param
     * @return
     * @throws
     */
-  abstract class ActorSystemUnitSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterAll
+  case class User(login: String)
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  case class AuthInfo(val user: User) {
+
+    /**
+      * Verify wether the user has admin privileges for restricted area
+      * operations
+      *
+      * @return true if the user has admin privileges, false otherwise
+      * @throws
+      */
+    def hasAdminPermissions = {
+      if (user.login == "admin") true
+      else false
+    }
+  }
 
 }
-*/

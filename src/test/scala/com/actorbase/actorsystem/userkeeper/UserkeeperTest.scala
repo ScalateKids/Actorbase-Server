@@ -25,7 +25,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.userkeeper
 
 import akka.actor.{ActorSystem, Props}
@@ -124,3 +124,4 @@ class UserkeeperSpec extends ActorSystemUnitSpec {
   }
 
 }
+*/

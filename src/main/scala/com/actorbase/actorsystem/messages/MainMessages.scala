@@ -36,8 +36,6 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
 
 sealed abstract trait MainMessage
 
-final case class ListCollections(owner: String) extends MainMessage
-
 final case class InsertTo(collection: ActorbaseCollection, key: String, value: Array[Byte], update: Boolean = false) extends MainMessage
 
 final case class GetFrom(collection: ActorbaseCollection, key: String = "") extends MainMessage

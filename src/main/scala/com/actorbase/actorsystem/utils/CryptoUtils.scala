@@ -33,8 +33,6 @@ import java.security.{InvalidKeyException, NoSuchAlgorithmException}
 import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoSuchPaddingException}
 import javax.crypto.spec.SecretKeySpec
 
-import scala.collection.immutable.TreeMap
-
 /**
   * Cryptography service object
   */
@@ -43,6 +41,54 @@ object CryptoUtils {
   /** configuration init */
   val Algorithm = "AES"
   val Transformation = "AES"
+
+  /**
+    * Translate a map of String and Any to an array of bytes
+    *
+    * @param o TreeMap object of type String and Any
+    * @return an array of bytes representing the object binarized
+    * @throws
+    */
+  def anyToBytes(o: Any): Array[Byte] = {
+    val bos = new ByteArrayOutputStream()
+    var out = new ObjectOutputStream(bos)
+    out.writeObject(o);
+    val bytes = bos.toByteArray()
+    out.close();
+    bos.close();
+    bytes
+  }
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  @throws(classOf[NoSuchAlgorithmException])
+  @throws(classOf[NoSuchPaddingException])
+  @throws(classOf[BadPaddingException])
+  @throws(classOf[InvalidKeyException])
+  @throws(classOf[IllegalBlockSizeException])
+  @throws(classOf[IOException])
+  def bytesToAny(key: String, inputFile: File): Any = {
+    val cipherMode: Int = Cipher.DECRYPT_MODE
+    val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
+    val cipher = Cipher.getInstance(Transformation)
+    cipher.init(cipherMode, secretKey)
+
+    val inputStream = new FileInputStream(inputFile);
+    val inputBytes = new Array[Byte](inputFile.length().toInt);
+    inputStream.read(inputBytes);
+
+    val outputBytes = cipher.doFinal(inputBytes)
+
+    inputStream.close()
+
+    val in = new ObjectInputStream(new ByteArrayInputStream(outputBytes))
+    in.readObject()
+  }
 
   /**
     * Encryption method, currently uses AES algorithm
@@ -55,26 +101,9 @@ object CryptoUtils {
     * InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
     * IOException
     */
-  def encrypt(key: String, inputData: Map[String, Any], outputFile: File): Unit = {
+  def encrypt(key: String, inputData: Any, outputFile: File): Unit = {
 
     val cipherMode: Int = Cipher.ENCRYPT_MODE
-
-    /**
-      * Translate a map of String and Any to an array of bytes
-      *
-      * @param o TreeMap object of type String and Any
-      * @return an array of bytes representing the object binarized
-      * @throws
-      */
-    def binarize(o: Map[String, Any]): Array[Byte] = {
-      val bos = new ByteArrayOutputStream()
-      var out = new ObjectOutputStream(bos)
-      out.writeObject(o);
-      val bytes = bos.toByteArray()
-      out.close();
-      bos.close();
-      bytes
-    }
 
     try {
 
@@ -82,7 +111,7 @@ object CryptoUtils {
       val cipher = Cipher.getInstance(Transformation)
       cipher.init(cipherMode, secretKey)
 
-      val outputBytes = cipher.doFinal(binarize(inputData))
+      val outputBytes = cipher.doFinal(anyToBytes(inputData))
 
       val outputStream = new FileOutputStream(outputFile)
       outputStream.write(outputBytes)
@@ -109,30 +138,6 @@ object CryptoUtils {
     * @throws NoSuchAlgorithmException, NoSuchPaddingException,
     * InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException
     */
-  @throws(classOf[NoSuchAlgorithmException])
-  @throws(classOf[NoSuchPaddingException])
-  @throws(classOf[BadPaddingException])
-  @throws(classOf[InvalidKeyException])
-  @throws(classOf[IllegalBlockSizeException])
-  @throws(classOf[IOException])
-  def decrypt(key: String, inputFile: File): Map[String, Any] = {
-
-    val cipherMode: Int = Cipher.DECRYPT_MODE
-    val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
-    val cipher = Cipher.getInstance(Transformation)
-    cipher.init(cipherMode, secretKey)
-
-    val inputStream = new FileInputStream(inputFile);
-    val inputBytes = new Array[Byte](inputFile.length().toInt);
-    inputStream.read(inputBytes);
-
-    val outputBytes = cipher.doFinal(inputBytes)
-
-    inputStream.close()
-
-    val in = new ObjectInputStream(new ByteArrayInputStream(outputBytes))
-    in.readObject().asInstanceOf[Map[String, Any]]
-
-  }
+  def decrypt[T <: Any](key: String, inputFile: File): T = bytesToAny(key, inputFile).asInstanceOf[T]
 
 }
