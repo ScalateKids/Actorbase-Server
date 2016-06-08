@@ -39,8 +39,6 @@ object Warehouseman {
 
   def props(s: String) : Props = Props(classOf[Warehouseman], s)
 
-  def props: Props = Props(classOf[Warehouseman])
-
 }
 
 class Warehouseman(collectionUUID: String = "namecollection-owner") extends Actor with ActorLogging {

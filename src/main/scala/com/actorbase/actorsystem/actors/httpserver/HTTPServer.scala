@@ -60,7 +60,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
   implicit val system = context.system
   IO(Http)(system) ! Http.Bind(self, interface = address, port = listenPort)
 
-  private val initLoad: Unit = loadData
+  val initLoad: Unit = loadData
 
   /**
     *
@@ -152,5 +152,4 @@ object HTTPServer extends App {
 
   val main = ClusterSharding(system).shardRegion(Main.shardName)
   val http = system.actorOf(Props(classOf[HTTPServer], main, authProxy, config getString "listen-on", config getInt "exposed-port"))
-
 }

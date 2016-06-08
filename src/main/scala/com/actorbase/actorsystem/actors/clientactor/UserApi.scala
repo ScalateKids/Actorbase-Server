@@ -28,9 +28,6 @@
 
 package com.actorbase.actorsystem.actors.clientactor
 
-import com.github.t3hnar.bcrypt._
-import org.mindrot.jbcrypt.BCrypt
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**

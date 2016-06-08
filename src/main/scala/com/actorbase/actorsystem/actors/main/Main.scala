@@ -113,7 +113,10 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
     * @return an ActorRef pointing to the Storefinder just created that maps the collection
     */
   private def createCollection(collection: ActorbaseCollection): Option[ActorRef] = {
-    if (sfMap.contains(collection)) sfMap.get(collection) // to be tested, probably uses equals, fuck up with different sizes
+    if (sfMap.contains(collection)) {
+      log.warning("contained")
+      sfMap.get(collection) // to be tested, probably uses equals, fuck up with different sizes
+    }
     else {
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))

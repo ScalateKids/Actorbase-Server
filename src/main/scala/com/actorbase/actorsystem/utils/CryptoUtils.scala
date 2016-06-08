@@ -33,8 +33,6 @@ import java.security.{InvalidKeyException, NoSuchAlgorithmException}
 import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoSuchPaddingException}
 import javax.crypto.spec.SecretKeySpec
 
-import com.actorbase.actorsystem.actors.authactor.Profile
-
 /**
   * Cryptography service object
   */

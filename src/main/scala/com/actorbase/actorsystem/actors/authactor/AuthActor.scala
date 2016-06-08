@@ -42,7 +42,8 @@ import java.io.File
 class AuthActor extends Actor with ActorLogging {
 
   private val rootFolder = "actorbasedata/usersdata/"
-  private val warehouseman = context.actorOf(Warehouseman.props)
+  // private val warehouseman = context.actorOf(Warehouseman.props())
+
   /**
     * Insert description here
     *
@@ -50,7 +51,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  override def receive = running(Set[Profile](Profile("admin", "actorbase".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
+  override def receive = running(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
 
   /**
     * Insert description here
@@ -88,11 +89,15 @@ class AuthActor extends Actor with ActorLogging {
         */
       case AddCredentials(username, password) =>
         log.info(s"$username added")
-        val salt = password.bcrypt(generateSalt)
-        if (!profiles.contains(Profile(username, salt))) {
-          persist(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
-          context become running(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
-        }
+        val passwordCheck = """^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$""".r
+        val check = passwordCheck findFirstIn password
+        check map { p =>
+          val salt = password.bcrypt(generateSalt)
+          if (!profiles.contains(Profile(username, salt))) {
+            persist(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
+            context become running(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
+          }
+        } getOrElse log.error(s"$password does not meet criteria")
 
       /**
         * Change the password associated to an user given his username and
