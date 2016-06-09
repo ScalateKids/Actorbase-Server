@@ -58,7 +58,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
     * @throws
     */
   // private area
-   val adminDirectives = {
+  val adminDirectives = {
     /**
       * User management route, only administrator users can enter here and make
       * operations, a GET request equals listing all users of the system

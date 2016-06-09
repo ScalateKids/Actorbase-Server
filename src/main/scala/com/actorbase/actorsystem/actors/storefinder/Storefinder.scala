@@ -65,8 +65,11 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
 
   val cluster = Cluster(context.system)
   val config = ConfigFactory.load()
+  val role =
+    if (config.getString("role") == "") None
+    else Some(config getString "role")
   val storekeepers = context.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
-    ClusterRouterPoolSettings(config getInt "max-instances", config getInt "storekeepers-per-node", true, None)).props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
+    ClusterRouterPoolSettings(config getInt "max-instances", config getInt "storekeepers-per-node", true, useRole = role)).props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
   // val storekeepers = context.actorOf(FromConfig.props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
   val manager = context.actorOf(Manager.props(collection.getName, collection.getOwner, storekeepers), collection.getUUID + "-manager")
 

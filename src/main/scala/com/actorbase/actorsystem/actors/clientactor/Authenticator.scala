@@ -55,6 +55,8 @@ trait Authenticator {
 
   implicit val timeout = Timeout(5 seconds)
 
+  var authInfo: Option[AuthInfo] = None
+
   /**
     * Basic authentication method
     *
@@ -75,11 +77,19 @@ trait Authenticator {
       * @throws
       */
     def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
-      for {
-        p <- userPass
-        auth = Await.result(authProxy.ask(Authenticate(p.user, p.pass)).mapTo[String], Duration.Inf) // ugly as f**k
-        if (auth == "Common" || auth == "Admin")
-          } yield AuthInfo(UserApi.User(userPass.get.user))
+      if (authInfo != None) {
+        println("err")
+        authInfo
+      }
+      else {
+        val x = for {
+          p <- userPass
+          auth = Await.result(authProxy.ask(Authenticate(p.user, p.pass)).mapTo[String], Duration.Inf) // ugly as f**k
+          if (auth == "Common" || auth == "Admin")
+            } yield AuthInfo(UserApi.User(userPass.get.user))
+        authInfo = x
+        authInfo
+      }
     }
 
     /**

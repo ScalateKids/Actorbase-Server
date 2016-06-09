@@ -128,28 +128,40 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
   * @return
   * @throws
   */
-object HTTPServer extends App {
-  val config = ConfigFactory.load()
-  val system = ActorSystem(config getString "name", config)
-  // singleton userkeeper
-  system.actorOf(ClusterSingletonManager.props(
-    singletonProps = Props(classOf[AuthActor]),
-    terminationMessage = PoisonPill,
-    settings = ClusterSingletonManagerSettings(system)),
-    name = "authactor")
-  // proxy
-  val authProxy = system.actorOf(ClusterSingletonProxy.props(
-    singletonManagerPath = "/user/authactor",
-    settings = ClusterSingletonProxySettings(system)),
-    name = "authProxy")
-  // main sharding
-  ClusterSharding(system).start(
-    typeName = Main.shardName,
-    entityProps = Main.props(authProxy),
-    settings = ClusterShardingSettings(system),
-    extractShardId = Main.extractShardId,
-    extractEntityId = Main.extractEntityId)
+object HTTPServer {
+  def main(args: Array[String]) = {
+    val (hostname, port) =
+      if (args.nonEmpty)
+        (args(0), args(1))
+      else
+        ("127.0.0.1", 2500)
+    val config = ConfigFactory.parseString(s"""
+akka.remote.netty.tcp.hostname=${hostname}
+akka.remote.netty.tcp.port=${port}
+listen-on=${hostname}
+""").withFallback(ConfigFactory.load())
+    ConfigFactory.load()
+    val system = ActorSystem(config getString "name", config)
+    // singleton authactor
+    system.actorOf(ClusterSingletonManager.props(
+      singletonProps = Props(classOf[AuthActor]),
+      terminationMessage = PoisonPill,
+      settings = ClusterSingletonManagerSettings(system)),
+      name = "authactor")
+    // proxy
+    val authProxy = system.actorOf(ClusterSingletonProxy.props(
+      singletonManagerPath = "/user/authactor",
+      settings = ClusterSingletonProxySettings(system)),
+      name = "authProxy")
+    // main sharding
+    ClusterSharding(system).start(
+      typeName = Main.shardName,
+      entityProps = Main.props(authProxy),
+      settings = ClusterShardingSettings(system),
+      extractShardId = Main.extractShardId,
+      extractEntityId = Main.extractEntityId)
 
-  val main = ClusterSharding(system).shardRegion(Main.shardName)
-  val http = system.actorOf(Props(classOf[HTTPServer], main, authProxy, config getString "listen-on", config getInt "exposed-port"))
+    val main = ClusterSharding(system).shardRegion(Main.shardName)
+    val http = system.actorOf(Props(classOf[HTTPServer], main, authProxy, config getString "listen-on", config getInt "exposed-port"))
+  }
 }

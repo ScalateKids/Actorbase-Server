@@ -96,7 +96,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           val coll = ActorbaseCollection(collection, authInfo.user.login)
           get {
             complete {
-              main.ask(GetFrom(coll))(5 seconds).mapTo[MapResponse]
+              main.ask(GetFrom(coll))(60 seconds).mapTo[MapResponse]
             }
           } ~
           post {
