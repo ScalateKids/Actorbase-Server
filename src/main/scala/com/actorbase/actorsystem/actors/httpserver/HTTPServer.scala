@@ -146,7 +146,7 @@ object HTTPServer extends App {
   ClusterSharding(system).start(
     typeName = Main.shardName,
     entityProps = Main.props(authProxy),
-    settings = ClusterShardingSettings(system),
+    settings = ClusterShardingSettings(system).withRole("master"),
     extractShardId = Main.extractShardId,
     extractEntityId = Main.extractEntityId)
 
