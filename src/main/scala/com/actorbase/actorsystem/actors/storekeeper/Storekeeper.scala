@@ -165,7 +165,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         def insertOrUpdate(update: Boolean, key: String): Boolean = {
           var done = true
           if (!update && !data.contains(key)) {
-            // log.info("SK: Inserting " + ins.key)
+            log.info("SK: got work!")
             sender ! UpdateCollectionSize(true)
             if (data.size > 256 && !checked) {
               checked = true

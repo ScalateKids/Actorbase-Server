@@ -146,7 +146,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * updating the value)
         */
       case InsertTo(collection, key, value, update) =>
-        // log.info("MAIN insert")
+        log.info("MAIN: got work!")
         sfMap.find(x => x._1 == collection) map (_._2 ! Insert(key, value, update)) getOrElse (
           createCollection(collection) map (_ ! Insert(key, value, update)) getOrElse log.error("Error retrieving storefinder ActorRef"))
 
