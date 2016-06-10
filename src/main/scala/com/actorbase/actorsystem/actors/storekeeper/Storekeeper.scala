@@ -114,7 +114,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     case message: StorekeeperMessage => message match {
 
       case InitMn(mn) =>
-        // log.info("new MN received")
+        log.info("new MN received")
         manager = Some(mn)
 
       /**

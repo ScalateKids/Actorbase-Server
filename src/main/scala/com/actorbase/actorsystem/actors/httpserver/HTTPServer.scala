@@ -133,14 +133,15 @@ object HTTPServer {
     val (hostname, port) =
       if (args.nonEmpty)
         (args(0), args(1))
-      else
+	  else {
+		println("errore")
         ("127.0.0.1", 2500)
+		}
     val config = ConfigFactory.parseString(s"""
 akka.remote.netty.tcp.hostname=${hostname}
 akka.remote.netty.tcp.port=${port}
 listen-on=${hostname}
 """).withFallback(ConfigFactory.load())
-    ConfigFactory.load()
     val system = ActorSystem(config getString "name", config)
     // singleton authactor
     system.actorOf(ClusterSingletonManager.props(
