@@ -140,7 +140,6 @@ akka.remote.netty.tcp.hostname=${hostname}
 akka.remote.netty.tcp.port=${port}
 listen-on=${hostname}
 """).withFallback(ConfigFactory.load())
-    ConfigFactory.load()
     val system = ActorSystem(config getString "name", config)
     // singleton authactor
     system.actorOf(ClusterSingletonManager.props(
