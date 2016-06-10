@@ -57,7 +57,7 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
 
   def receive = {
     case OneMore =>
-      println(sender.path.toString)
+      println(akka.serialization.Serialization.serializedActorPath(sender))
       reports += 1
       // if (reports == 1) {
         log.info("new storekeeper added to [POOL]")
