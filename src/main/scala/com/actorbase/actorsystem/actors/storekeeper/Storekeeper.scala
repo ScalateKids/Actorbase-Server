@@ -165,7 +165,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         def insertOrUpdate(update: Boolean, key: String): Boolean = {
           var done = true
           if (!update && !data.contains(key)) {
-            log.info("SK: Inserting " + ins.key)
+            // log.info("SK: Inserting " + ins.key)
             sender ! UpdateCollectionSize(true)
             if (data.size > 256 && !checked) {
               checked = true
@@ -173,7 +173,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
             }
           }
           else if (!update && data.contains(key)) {
-            log.warning(s"SK: Duplicate key found, cannot insert $key")
+            // log.warning(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
           done
