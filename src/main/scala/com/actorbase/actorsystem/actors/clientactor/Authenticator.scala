@@ -77,10 +77,8 @@ trait Authenticator {
       * @throws
       */
     def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
-      if (authInfo != None) {
-        println("err")
+      if (authInfo != None)
         authInfo
-      }
       else {
         val x = for {
           p <- userPass
