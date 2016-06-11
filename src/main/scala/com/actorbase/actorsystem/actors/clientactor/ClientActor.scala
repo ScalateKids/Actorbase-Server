@@ -62,10 +62,10 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
     pathPrefix("auth" / "\\S+".r) { user =>
       post {
         decompressRequest() {
-          entity(as[String]) { value =>
+          entity(as[Array[Byte]]) { value =>
             detach() {
               complete {
-                authProxy.ask(Authenticate(user, value))(5 seconds).mapTo[String]
+                authProxy.ask(Authenticate(user, new String(value, "UTF-8")))(5 seconds).mapTo[String]
               }
             }
           }
@@ -167,7 +167,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
   /**
     * Handle all directives to manage and query the system
     */
-  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy) ~ route(main) ~ adminDirectives)
+  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy) ~ route(main) ~ authDirectives ~ adminDirectives)
 
   override def receive = handleHttpRequests orElse httpReceive
 
