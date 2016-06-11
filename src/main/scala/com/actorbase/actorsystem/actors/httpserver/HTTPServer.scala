@@ -94,7 +94,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
           val collection = new ActorbaseCollection(name, owner)
           dataShard.foreach {
             case (k, v) =>
-              main ! InsertTo(collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
+              main ! InsertTo(owner, collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
           }
           dataShard = dataShard.empty
         }

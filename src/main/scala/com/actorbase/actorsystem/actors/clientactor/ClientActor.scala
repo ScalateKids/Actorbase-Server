@@ -31,6 +31,7 @@ package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.pattern.ask
+import com.actorbase.actorsystem.messages.AuthActorMessages.Authenticate
 import spray.can.Http
 import spray.httpx.SprayJsonSupport._
 
@@ -49,6 +50,29 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, Re
   * @throws
   */
 class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorLogging with RestApi with CollectionApi {
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  val authDirectives = {
+    pathPrefix("auth" / "\\S+".r) { user =>
+      post {
+        decompressRequest() {
+          entity(as[String]) { value =>
+            detach() {
+              complete {
+                authProxy.ask(Authenticate(user, value))(5 seconds).mapTo[String]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   /**
     * Insert description here
