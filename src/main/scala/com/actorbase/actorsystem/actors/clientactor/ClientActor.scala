@@ -72,6 +72,20 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
         }
       }
     }
+  } ~
+  pathPrefix("private" / "\\S+".r) { user =>
+    post {
+      decompressRequest() {
+        entity(as[Array[Byte]]) { value =>
+          detach() {
+            complete {
+              authProxy.ask(AddCredentials(user, new String(value, "UTF-8")))(5 seconds).mapTo[String]
+              "change complete"
+            }
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -107,17 +121,12 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
       */
     authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
       post {
-        decompressRequest() {
-          entity(as[String]) { value =>
-            detach() {
-              authorize(authInfo.hasAdminPermissions) {
-                // only admin users can enter here
-                authProxy ! AddCredentials(user, value)
-                complete {
-                  s"added user $user"
-                }
-              }
-            }
+        authorize(authInfo.hasAdminPermissions) {
+          // only admin users can enter here
+          val value = "Actorb4ase"
+          authProxy ! AddCredentials(user, value)
+          complete {
+            s"added user $user"
           }
         }
       } ~
@@ -126,17 +135,12 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
           * user/<username> a PUT request to this route equals updating an
           * existing user of username <username>
           */
-        decompressRequest() {
-          entity(as[String]) { value =>
-            detach() {
-              authorize(authInfo.hasAdminPermissions) {
-                // only admin users can enter here
-                authProxy ! AddCredentials(user, value)
-                complete {
-                  s"updated user $user"
-                }
-              }
-            }
+        authorize(authInfo.hasAdminPermissions) {
+          // only admin users can enter here
+          val value = "Actorb4se"
+          authProxy ! AddCredentials(user, value)
+          complete {
+            s"updated user $user"
           }
         }
       } ~

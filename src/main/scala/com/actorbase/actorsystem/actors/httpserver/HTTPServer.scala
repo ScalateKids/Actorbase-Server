@@ -31,6 +31,7 @@ package com.actorbase.actorsystem.actors.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
+import com.actorbase.actorsystem.messages.AuthActorMessages.AddCollectionTo
 import spray.can.Http
 import akka.event.LoggingReceive
 
@@ -70,7 +71,8 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     import java.io.File
 
     val root = new File("actorbasedata/")
-    var dataShard = Map[String, Any]().empty
+    var dataShard = Map[String, Array[Byte]]().empty
+    var contributors = Map.empty[String, Set[ActorbaseCollection]]
 
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
@@ -82,21 +84,30 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
               x match {
                 case meta if meta.getName.endsWith("actbmeta") =>
                   val metaData = CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", meta)
-                  name = metaData.get("collection").get.asInstanceOf[String]
-                  owner = metaData.get("owner").get.toString
+                  metaData get "collection" map (c => name = c.asInstanceOf[String])
+                  metaData get "owner" map (o => owner = o.toString())
+                  // name = metaData.get("collection").get.asInstanceOf[String]
+                  // owner = metaData.get("owner").get.toString
                   main ! CreateCollection(ActorbaseCollection(name, owner))
-                case user if user.getName.endsWith("shadow") =>
+                case user if (user.getName == "userdata.shadow") =>
                   CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user) map { x => if (x._1 != "admin") authProxy ! AddCredentials(x._1, x._2) }
-                case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", x)
+                case contributor if (contributor.getName == "contributors.shadow") =>
+                  contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]]("Dummy implicit k", contributor)
+                case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Array[Byte]]]("Dummy implicit k", x)
               }
             }
           }
           val collection = new ActorbaseCollection(name, owner)
           dataShard.foreach {
             case (k, v) =>
-              main ! InsertTo(owner, collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
+              main ! InsertTo(owner, collection, k, v, false) // check and remove cast
+          }
+          contributors.foreach {
+            case (k, v) =>
+              v.foreach (entry => authProxy ! AddCollectionTo(k, entry)) // check and remove cast
           }
           dataShard = dataShard.empty
+          contributors = contributors.empty
         }
       }
       // should probably delete actorbasedata here
