@@ -158,7 +158,9 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param name a String representing the name of the collection
         * @param owner a String representing the owner of the collection
         */
-      case CreateCollection(collection) => createCollection(collection)
+      case CreateCollection(collection) =>
+        createCollection(collection)
+        sender ! "OK"
 
       /**
         * Get item from collection message, given a key of type String, retrieve
@@ -173,8 +175,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
           sfMap.find(_._1 == collection) map { c =>
             if (c._1.getOwner == requester || c._1.containsReadWriteContributor(requester) || c._1.containsReadContributor(requester))
               c._2 forward Get(key)
-            else sender ! "NoPrivileges"
-          } getOrElse sender ! "UndefinedCollection"
+            else sender ! Left("NoPrivileges")
+          } getOrElse sender ! Left("UndefinedCollection")
         else {
           // WIP: still completing
           sfMap.find(_._1 == collection) map { coll =>
@@ -182,11 +184,11 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
               requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1.getUUID -> mutable.Map[String, Array[Byte]]())) getOrElse (
                 requestMap += (collection.getOwner -> mutable.Map(coll._1.getUUID -> mutable.Map[String, Array[Byte]]())))
               if (coll._1.getSize > 0)
-                sfMap get collection map (_ forward GetAllItems) getOrElse sender ! "UndefinedCollection"
+                sfMap get collection map (_ forward GetAllItems) getOrElse sender ! Left("UndefinedCollection")
               else
-                sender ! MapResponse(collection.getName, Map[String, Array[Byte]]())
-            } else sender ! "UndefinedCollection"
-          }
+                sender ! Right(MapResponse(collection.getName, Map[String, Array[Byte]]()))
+            } else sender ! Left("UndefinedCollection")
+          } getOrElse sender ! Left("UndefinedCollection")
         }
 
       /**
@@ -207,7 +209,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
             colMap._2 ++= items
             log.info(s"${colMap._2.size} - ${collection.getSize}")
             if (colMap._2.size == collection.getSize) {
-              clientRef ! MapResponse(collection.getName, colMap._2.toMap)
+              clientRef ! Right(MapResponse(collection.getName, colMap._2.toMap))
               colMap._2.clear
               ref._2.-(collection.getUUID)
             }
@@ -227,15 +229,15 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
           sfMap.find(_._1.getUUID == uuid) map { c =>
             if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
               c._2 forward Remove(key)
-            else log.error(s"$requester is not the owner of the collection, nor a contributor")
-          } getOrElse log.error(s"$uuid collection not found")
+            else sender ! "NoPrivileges"
+          } getOrElse sender ! "UndefinedCollection"
         else {
           sfMap find (_._1.getUUID == uuid) map { coll =>
             if (requester == coll._1.getOwner || coll._1.containsReadWriteContributor(requester)) {
               coll._2 ! PoisonPill
               sfMap = sfMap - coll._1
-            } else log.error(s"$requester is not the owner of the collection, nor a contributor")
-          } getOrElse log.warning(s"Collection with $uuid not found")
+            } else sender ! "NoPrivileges"
+          } getOrElse sender ! "UndefinedCollection"
         }
 
       /**
@@ -248,13 +250,13 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         *
         */
       case AddContributor(requester, username, permission, uuid) =>
-        sfMap.find(_._1.getUUID == uuid) map (_._1.addContributor(username, permission)) getOrElse log.error(s"cannot add $username as contributor to $uuid collection")
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
+          x._1.addContributor(username, permission)
           if (x._1.getOwner == requester)
             authProxy ! AddCollectionTo(username, x._1)
-          else log.error(s"$requester is not the owner of the collection")
-        } getOrElse log.error(s"$username collection with $uuid id not found")
+          else sender ! "NoPrivileges"
+        } getOrElse sender ! "UndefinedCollection"
 
 
       /**
@@ -265,13 +267,13 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         *
         */
       case RemoveContributor(requester, username, uuid) =>
-        sfMap.find(_._1.getUUID == uuid) map (_._1.removeContributor(username)) getOrElse log.error(s"cannot remove $username as contributor to $uuid collection")
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
+          x._1.removeContributor(username)
           if (x._1.getOwner == requester)
             authProxy ! RemoveCollectionFrom(username, x._1)
-          else log.error(s"$requester is not the owner of the collection")
-        } getOrElse log.error(s"$username collection with $uuid id not found")
+          else sender ! "NoPrivileges"
+        } getOrElse sender ! "UndefinedCollection"
 
     }
   }

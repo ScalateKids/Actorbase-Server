@@ -124,7 +124,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         */
       case GetItem(key)  =>
-        sender ! Response(data.get(key).getOrElse("None".getBytes))
+        data get key map (_ => sender ! Right(Response(_))) getOrElse sender ! Left("UndefinedKey")
 
       /**
         * GetAllItem message, this actor will send back the collection name and all the collection.

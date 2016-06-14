@@ -30,7 +30,10 @@ package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
 import akka.util.Timeout
+import spray.http.{ HttpEntity, HttpResponse, StatusCodes }
 import spray.httpx.SprayJsonSupport._
+import spray.httpx.marshalling.ToResponseMarshallable
+import spray.httpx.marshalling._
 import spray.routing._
 import akka.pattern.ask
 
@@ -100,9 +103,13 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           get {
             complete {
               (main ? GetFrom(authInfo.user.login, coll))
-                .mapTo[MapResponse]
-                // .map(result => result)
-                // .recover
+                .mapTo[Either[String, MapResponse]]
+                .map { result =>
+                result match {
+                  case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                  case Right(map) => map: ToResponseMarshallable
+                }
+              }
             }
           } ~
           post {
@@ -122,7 +129,14 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           val coll = ActorbaseCollection(collection, authInfo.user.login)
           get {
             complete {
-              (main ? GetFrom(authInfo.user.login, coll, key)).mapTo[Response]
+              (main ? GetFrom(authInfo.user.login, coll, key))
+                .mapTo[Either[String, Response]]
+                .map { result =>
+                result match {
+                  case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                  case Right(response) => response: ToResponseMarshallable
+                }
+              }
             }
           } ~
           delete {

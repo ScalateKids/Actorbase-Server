@@ -110,7 +110,7 @@ class AuthActor extends Actor with ActorLogging {
             persist(profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
             context become running (profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
           }
-        } getOrElse log.error(s"$password does not meet criteria")
+        } getOrElse sender ! "WrongCredentials"
 
       /**
         * Change the password associated to an user given his username and
@@ -161,7 +161,6 @@ class AuthActor extends Actor with ActorLogging {
       case AddCollectionTo(username, collection) =>
         val optElem = profiles find (_.username == username)
         optElem map { x =>
-          // val tempSet = x.collections + collection
           x.addCollection(collection)
           persist(profiles + x)
           context become running (profiles + x)
@@ -178,7 +177,6 @@ class AuthActor extends Actor with ActorLogging {
         val optElem = profiles find (_.username == username)
         optElem map { x =>
           if (x.contains(collection)) {
-            // val tempSet = x.collections - collection
             x.removeCollection(collection)
             persist(profiles + x)
             context become running (profiles + x)
