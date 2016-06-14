@@ -66,8 +66,8 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
   // subscribe to the topic named "persist-data"
   mediator ! Subscribe("persist-data", self)
 
-  private val initDelay = 130 seconds       // delay for the first persistence message to be sent
-  private val intervalDelay = 130 seconds   // interval in-between each persistence message has to be sent
+  private val initDelay = 25 seconds       // delay for the first persistence message to be sent
+  private val intervalDelay = 50 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props( collectionOwner + collectionName ))
   private var manager: Option[ActorRef] = None

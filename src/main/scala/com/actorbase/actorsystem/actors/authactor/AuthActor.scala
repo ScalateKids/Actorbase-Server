@@ -44,6 +44,8 @@ class AuthActor extends Actor with ActorLogging {
   private val rootFolder = "actorbasedata/usersdata/"
   // private val warehouseman = context.actorOf(Warehouseman.props())
 
+  self ! AddCredentials("admin", "Actorb4se")
+
   /**
     * Insert description here
     *
@@ -51,7 +53,7 @@ class AuthActor extends Actor with ActorLogging {
     * @return
     * @throws
     */
-  override def receive = running(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
+  override def receive = running(Set.empty[Profile])//(Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
 
   /**
     * Insert description here
