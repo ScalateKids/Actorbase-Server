@@ -68,12 +68,12 @@ object Main {
     * @return a String representing an UUID of a shard-region where the actor belongs to
     */
   val extractShardId: ExtractShardId = {
-    case CreateCollection(collection) => (collection.getUUID.hashCode % 100).toString
-    case RemoveFrom(_, uuid, _) => (uuid.hashCode % 100).toString
-    case InsertTo(_,collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
-    case GetFrom(_,collection, _) => (collection.getUUID.hashCode % 100).toString
-    case AddContributor(_, _, _, uuid) => (uuid.hashCode % 100).toString
-    case RemoveContributor(_, _, uuid) => (uuid.hashCode % 100).toString
+    case CreateCollection(collection) => (collection.getUUID.hashCode % 30).toString
+    case RemoveFrom(_, uuid, _) => (uuid.hashCode % 30).toString
+    case InsertTo(_,collection, _, _, _) => (collection.getUUID.hashCode % 30).toString
+    case GetFrom(_,collection, _) => (collection.getUUID.hashCode % 30).toString
+    case AddContributor(_, _, _, uuid) => (uuid.hashCode % 30).toString
+    case RemoveContributor(_, _, uuid) => (uuid.hashCode % 30).toString
   }
 
   /**
