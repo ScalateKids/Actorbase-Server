@@ -121,6 +121,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
       sfMap += (collection -> sf)
+      authProxy ! AddCollectionTo(collection.getOwner, collection)
       authProxy ! AddCollectionTo("admin", collection)
       Some(sf)
     }

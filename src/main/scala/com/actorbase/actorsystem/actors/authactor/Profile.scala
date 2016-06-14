@@ -83,7 +83,7 @@ case class Profile(username: String, password: String, private var collections: 
     * @throws
     */
   override def equals(o: Any) = o match {
-    case that: Profile => that.username.equals(this.username) && that.password.equals(this.password)
+    case that: Profile => that.username.equals(this.username) //&& that.password.equals(this.password)
     case _ => false
   }
 

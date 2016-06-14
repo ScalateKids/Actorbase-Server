@@ -88,8 +88,8 @@ case class ActorbaseCollection (private var name: String,
     var contains = false
     contributors get (contributor) map { c =>
       c match {
-        case ActorbaseCollection.Read => contains = false
-        case ActorbaseCollection.ReadWrite => contains = true
+        case ActorbaseCollection.Read => contains = true
+        case ActorbaseCollection.ReadWrite => contains = false
       }
     } getOrElse (contains = false)
     contains
@@ -106,8 +106,8 @@ case class ActorbaseCollection (private var name: String,
     var contains = false
     contributors get (contributor) map { c =>
       c match {
-        case ActorbaseCollection.Read => contains = true
-        case ActorbaseCollection.ReadWrite => contains = false
+        case ActorbaseCollection.Read => contains = false
+        case ActorbaseCollection.ReadWrite => contains = true
       }
     } getOrElse (contains = false)
     contains
