@@ -96,7 +96,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           val coll = ActorbaseCollection(collection, authInfo.user.login)
           get {
             complete {
-              main.ask(GetFrom(coll))(60 seconds).mapTo[MapResponse]
+              main.ask(GetFrom(authInfo.user.login, coll))(60 seconds).mapTo[MapResponse]
             }
           } ~
           post {
@@ -109,7 +109,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           delete {
             complete {
               //TODO controllare, se non esiste inutile mandare il messaggio
-              main ! RemoveFrom(authInfo.user.login + collection)
+              main ! RemoveFrom(authInfo.user.login, authInfo.user.login + collection)
               "Remove collection complete"
             }
           }
@@ -121,13 +121,13 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           get {
             complete {
               //TODO controllare, se collection non esiste, inutile instradare
-              main.ask(GetFrom(coll, key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
+              main.ask(GetFrom(authInfo.user.login, coll, key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
             }
           } ~
           delete {
             complete {
               //TODO controllare, se collection non esiste, inutile instradare
-              main ! RemoveFrom(authInfo.user.login + collection, key)
+              main ! RemoveFrom(authInfo.user.login, authInfo.user.login + collection, key)
               "Remove complete"
             }
           } ~
@@ -137,7 +137,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                 detach() {
                   complete {
                     //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                    main ! InsertTo(coll, key, value)
+                    main ! InsertTo(authInfo.user.login, coll, key, value)
                     "Insert complete"
                   }
                 }
@@ -150,7 +150,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                 detach() {
                   complete {
                     //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                    main ! InsertTo(coll, key, value, true)
+                    main ! InsertTo(authInfo.user.login, coll, key, value, true)
                     "Update complete"
                   }
                 }

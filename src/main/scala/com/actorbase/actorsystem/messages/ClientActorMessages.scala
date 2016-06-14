@@ -31,13 +31,13 @@ package com.actorbase.actorsystem.messages.ClientActorMessages
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
-case class ListResponse(list: List[String])
+final case class ListResponse(list: List[String])
 
 case object ListResponse {
   implicit val goJson = jsonFormat1(ListResponse.apply)
 }
 
-case class Response(response: Array[Byte])
+final case class Response(response: Array[Byte])
 
 case object Response {
   implicit object AnyJsonFormat extends JsonFormat[Any] {
@@ -66,7 +66,7 @@ case object Response {
   implicit val goJson = jsonFormat1(Response.apply)
 }
 
-case class MapResponse(collection: String, map: Map[String, Any])
+final case class MapResponse(collection: String, map: Map[String, Any])
 
 case object MapResponse {
   implicit object AnyJsonFormat extends JsonFormat[Any] {

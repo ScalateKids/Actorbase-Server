@@ -69,11 +69,11 @@ object Main {
     */
   val extractShardId: ExtractShardId = {
     case CreateCollection(collection) => (collection.getUUID.hashCode % 100).toString
-    case RemoveFrom(uuid, _) => (uuid.hashCode % 100).toString
-    case InsertTo(collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
-    case GetFrom(collection, _) => (collection.getUUID.hashCode % 100).toString
-    case AddContributor(_, _, uuid) => (uuid.hashCode % 100).toString
-    case RemoveContributor(_, uuid) => (uuid.hashCode % 100).toString
+    case RemoveFrom(_, uuid, _) => (uuid.hashCode % 100).toString
+    case InsertTo(_,collection, _, _, _) => (collection.getUUID.hashCode % 100).toString
+    case GetFrom(_,collection, _) => (collection.getUUID.hashCode % 100).toString
+    case AddContributor(_, _, _, uuid) => (uuid.hashCode % 100).toString
+    case RemoveContributor(_, _, uuid) => (uuid.hashCode % 100).toString
   }
 
   /**
@@ -145,10 +145,13 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param update a Boolean flag, define the insert behavior (with or without
         * updating the value)
         */
-      case InsertTo(collection, key, value, update) =>
+      case InsertTo(requester, collection, key, value, update) =>
         log.info("MAIN: got work!")
-        sfMap.find(x => x._1 == collection) map (_._2 ! Insert(key, value, update)) getOrElse (
-          createCollection(collection) map (_ ! Insert(key, value, update)) getOrElse log.error("Error retrieving storefinder ActorRef"))
+        sfMap.find(x => x._1 == collection) map { c =>
+          if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
+            c._2 ! Insert(key, value, update)
+        } getOrElse (
+          createCollection(collection) map (_ ! Insert(key, value, update)) getOrElse log.error("Error retrieving storefinder ActorRef")) // perhaps-fix
 
       /**
         * Create a collection in the system
@@ -166,18 +169,24 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param collection a String representing the collection name
         * @param key a String representing the key to be retrieved
         */
-      case GetFrom(collection, key) =>
+      case GetFrom(requester, collection, key) =>
         if (key.nonEmpty)
-          sfMap.find(_._1 == collection) map (_._2 forward Get(key)) getOrElse log.error (s"Key $key not found")
+          sfMap.find(_._1 == collection) map { c =>
+            if (c._1.getOwner == requester || c._1.containsReadWriteContributor(requester) || c._1.containsReadContributor(requester))
+              c._2 forward Get(key)
+            else log.error(s"$requester is not the owner of the collection, nor a contributor")
+          } getOrElse log.error (s"Key $key not found")
         else {
           // WIP: still completing
           sfMap.find(_._1 == collection) map { coll =>
-            requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1.getUUID -> mutable.Map[String, Array[Byte]]())) getOrElse (
-              requestMap += (collection.getOwner -> mutable.Map(coll._1.getUUID -> mutable.Map[String, Array[Byte]]())))
-            if (coll._1.getSize > 0)
-              sfMap get collection map (_ forward GetAllItems) getOrElse log.error (s"MAIN: key $key not found")
-            else
-              sender ! MapResponse(collection.getName, Map[String, Array[Byte]]())
+            if (coll._1.getOwner == requester || coll._1.containsReadWriteContributor(requester) || coll._1.containsReadContributor(requester)) {
+              requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1.getUUID -> mutable.Map[String, Array[Byte]]())) getOrElse (
+                requestMap += (collection.getOwner -> mutable.Map(coll._1.getUUID -> mutable.Map[String, Array[Byte]]())))
+              if (coll._1.getSize > 0)
+                sfMap get collection map (_ forward GetAllItems) getOrElse log.error (s"MAIN: key $key not found")
+              else
+                sender ! MapResponse(collection.getName, Map[String, Array[Byte]]())
+            } else log.error(s"$requester is not the owner of the collection, nor a contributor")
           }
         }
 
@@ -214,13 +223,19 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param key a String representing the key to be deleted
         *
         */
-      case RemoveFrom(uuid, key) =>
+      case RemoveFrom(requester, uuid, key) =>
         if (key.nonEmpty)
-          sfMap.find(_._1.getUUID == uuid) map (_._2 ! Remove(key)) getOrElse log.error(s"$uuid collection not found")
+          sfMap.find(_._1.getUUID == uuid) map { c =>
+            if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
+              c._2 ! Remove(key)
+            else log.error(s"$requester is not the owner of the collection, nor a contributor")
+          } getOrElse log.error(s"$uuid collection not found")
         else {
           sfMap find (_._1.getUUID == uuid) map { coll =>
-            coll._2 ! PoisonPill
-            sfMap = sfMap - coll._1
+            if (requester == coll._1.getOwner || coll._1.containsReadWriteContributor(requester)) {
+              coll._2 ! PoisonPill
+              sfMap = sfMap - coll._1
+            } else log.error(s"$requester is not the owner of the collection, nor a contributor")
           } getOrElse log.warning(s"Collection with $uuid not found")
         }
 
@@ -233,10 +248,14 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param collection a String representing the collection name
         *
         */
-      case AddContributor(username, permission, uuid) =>
+      case AddContributor(requester, username, permission, uuid) =>
         sfMap.find(_._1.getUUID == uuid) map (_._1.addContributor(username, permission)) getOrElse log.error(s"cannot add $username as contributor to $uuid collection")
         val optColl = sfMap find (_._1.getUUID == uuid)
-        optColl map (x => authProxy ! AddCollectionTo(username, x._1)) getOrElse log.error(s"$username collection with $uuid id not found")
+        optColl map { x =>
+          if (x._1.getOwner == requester)
+            authProxy ! AddCollectionTo(username, x._1)
+          else log.error(s"$requester is not the owner of the collection")
+        } getOrElse log.error(s"$username collection with $uuid id not found")
 
 
       /**
@@ -246,10 +265,14 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param collection a String representing the collection name
         *
         */
-      case RemoveContributor(username, uuid) =>
+      case RemoveContributor(requester, username, uuid) =>
         sfMap.find(_._1.getUUID == uuid) map (_._1.removeContributor(username)) getOrElse log.error(s"cannot remove $username as contributor to $uuid collection")
         val optColl = sfMap find (_._1.getUUID == uuid)
-        optColl map (x => authProxy ! RemoveCollectionFrom(username, x._1)) getOrElse log.error(s"$username collection with $uuid id not found")
+        optColl map  { x =>
+          if (x._1.getOwner == requester)
+            authProxy ! RemoveCollectionFrom(username, x._1)
+          else log.error(s"$requester is not the owner of the collection")
+        } getOrElse log.error(s"$username collection with $uuid id not found")
 
     }
   }

@@ -36,16 +36,16 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
 
 sealed abstract trait MainMessage
 
-final case class InsertTo(collection: ActorbaseCollection, key: String, value: Array[Byte], update: Boolean = false) extends MainMessage
+final case class InsertTo(requester: String, collection: ActorbaseCollection, key: String, value: Array[Byte], update: Boolean = false) extends MainMessage
 
-final case class GetFrom(collection: ActorbaseCollection, key: String = "") extends MainMessage
+final case class GetFrom(requester: String, collection: ActorbaseCollection, key: String = "") extends MainMessage
 
 final case class CompleteTransaction(clientRef: ActorRef, collection: ActorbaseCollection, items: Map[String, Array[Byte]]) extends MainMessage with ControlMessage
 
-final case class RemoveFrom(uuid: String, key: String = "") extends MainMessage
+final case class RemoveFrom(requester: String, uuid: String, key: String = "") extends MainMessage
 
-final case class AddContributor(username: String, permission: Permissions, uuid: String) extends MainMessage
+final case class AddContributor(requester: String, username: String, permission: Permissions, uuid: String) extends MainMessage
 
-final case class RemoveContributor(username: String, uuid: String) extends MainMessage
+final case class RemoveContributor(requester: String, username: String, uuid: String) extends MainMessage
 
 final case class CreateCollection(collection: ActorbaseCollection) extends MainMessage

@@ -31,6 +31,7 @@ package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.pattern.ask
+import com.actorbase.actorsystem.messages.AuthActorMessages.Authenticate
 import spray.can.Http
 import spray.httpx.SprayJsonSupport._
 
@@ -49,6 +50,43 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, Re
   * @throws
   */
 class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorLogging with RestApi with CollectionApi {
+
+  /**
+    * Insert description here
+    *
+    * @param
+    * @return
+    * @throws
+    */
+  val authDirectives = {
+    pathPrefix("auth" / "\\S+".r) { user =>
+      post {
+        decompressRequest() {
+          entity(as[Array[Byte]]) { value =>
+            detach() {
+              complete {
+                authProxy.ask(Authenticate(user, new String(value, "UTF-8")))(5 seconds).mapTo[String]
+              }
+            }
+          }
+        }
+      }
+    }
+  } ~
+  pathPrefix("private" / "\\S+".r) { user =>
+    post {
+      decompressRequest() {
+        entity(as[Array[Byte]]) { value =>
+          detach() {
+            complete {
+              authProxy.ask(AddCredentials(user, new String(value, "UTF-8")))(5 seconds).mapTo[String]
+              "change complete"
+            }
+          }
+        }
+      }
+    }
+  }
 
   /**
     * Insert description here
@@ -83,17 +121,12 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
       */
     authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
       post {
-        decompressRequest() {
-          entity(as[String]) { value =>
-            detach() {
-              authorize(authInfo.hasAdminPermissions) {
-                // only admin users can enter here
-                authProxy ! AddCredentials(user, value)
-                complete {
-                  s"added user $user"
-                }
-              }
-            }
+        authorize(authInfo.hasAdminPermissions) {
+          // only admin users can enter here
+          val value = "Actorb4ase"
+          authProxy ! AddCredentials(user, value)
+          complete {
+            s"added user $user"
           }
         }
       } ~
@@ -102,17 +135,12 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
           * user/<username> a PUT request to this route equals updating an
           * existing user of username <username>
           */
-        decompressRequest() {
-          entity(as[String]) { value =>
-            detach() {
-              authorize(authInfo.hasAdminPermissions) {
-                // only admin users can enter here
-                authProxy ! AddCredentials(user, value)
-                complete {
-                  s"updated user $user"
-                }
-              }
-            }
+        authorize(authInfo.hasAdminPermissions) {
+          // only admin users can enter here
+          val value = "Actorb4se"
+          authProxy ! AddCredentials(user, value)
+          complete {
+            s"updated user $user"
           }
         }
       } ~
@@ -143,7 +171,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
   /**
     * Handle all directives to manage and query the system
     */
-  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy) ~ route(main) ~ adminDirectives)
+  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy) ~ route(main) ~ authDirectives ~ adminDirectives)
 
   override def receive = handleHttpRequests orElse httpReceive
 
