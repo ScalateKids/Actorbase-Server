@@ -85,13 +85,13 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * @throws
     */
   override def preStart(): Unit = {
-    cluster.subscribe(self, classOf[MemberUp])
-    scheduler = context.system.scheduler.schedule(
-      initialDelay = initDelay,
-      interval = intervalDelay,
-      receiver = self,
-      message = Persist
-    )
+    // cluster.subscribe(self, classOf[MemberUp])
+    // scheduler = context.system.scheduler.schedule(
+    //   initialDelay = initDelay,
+    //   interval = intervalDelay,
+    //   receiver = self,
+    //   message = Persist
+    // )
   }
 
   /**
@@ -103,8 +103,8 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * @throws
     */
   override def postStop(): Unit = {
-    scheduler.cancel()
-    cluster.unsubscribe(self)
+    // scheduler.cancel()
+    // cluster.unsubscribe(self)
   }
 
   def receive = running(Map[String, Array[Byte]]().empty)
@@ -140,6 +140,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
       case RemoveItem(key) =>
         if (data contains(key)) {
           sender ! UpdateCollectionSize(false)
+          warehouseman ! Save( data )
           context become running(data - key)
         }
 
@@ -179,8 +180,10 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           done
         }
 
-        if (insertOrUpdate(ins.update, ins.key) == true)
+        if (insertOrUpdate(ins.update, ins.key) == true) {
+          warehouseman ! Save( data )
           context become running(data + (ins.key -> ins.value))
+        }
 
       /**
         * Persist data to disk
