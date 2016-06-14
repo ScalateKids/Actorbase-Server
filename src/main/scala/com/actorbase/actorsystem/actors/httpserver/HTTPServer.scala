@@ -71,9 +71,10 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     import java.io.File
 
     val root = new File("actorbasedata/")
-    var dataShard = Map[String, Array[Byte]]().empty
+    var dataShard = Map[String, Any]().empty
+    var usersmap = Map[String, String]().empty
     var contributors = Map.empty[String, Set[ActorbaseCollection]]
-
+    var data = Map.empty[ActorbaseCollection, Map[String, Any]]
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
       var (name, owner) = ("", "")
@@ -86,22 +87,22 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
                   val metaData = CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", meta)
                   metaData get "collection" map (c => name = c.asInstanceOf[String])
                   metaData get "owner" map (o => owner = o.toString())
-                  // name = metaData.get("collection").get.asInstanceOf[String]
-                  // owner = metaData.get("owner").get.toString
                   main ! CreateCollection(ActorbaseCollection(name, owner))
-                case user if (user.getName == "userdata.shadow") =>
-                  CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user) map { x => if (x._1 != "admin") authProxy ! AddCredentials(x._1, x._2) }
+                case user if (user.getName == "usersdata.shadow") =>
+                  usersmap ++= CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user)
+                //CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user) map { x => if (x._1 != "admin") authProxy ! AddCredentials(x._1, x._2) }
                 case contributor if (contributor.getName == "contributors.shadow") =>
                   contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]]("Dummy implicit k", contributor)
-                case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Array[Byte]]]("Dummy implicit k", x)
+                case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", x)
               }
             }
           }
           val collection = new ActorbaseCollection(name, owner)
-          dataShard.foreach {
-            case (k, v) =>
-              main ! InsertTo(owner, collection, k, v, false) // check and remove cast
-          }
+          data += (collection -> dataShard)
+          // dataShard.foreach {
+          //   case (k, v) =>
+          //     main ! InsertTo(owner, collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
+          // }
           contributors.foreach {
             case (k, v) =>
               v.foreach (entry => authProxy ! AddCollectionTo(k, entry)) // check and remove cast
@@ -110,8 +111,36 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
           contributors = contributors.empty
         }
       }
+      data.foreach {
+        case (k, v) =>
+          v.foreach {
+            case (kk, vv) =>
+              main ! InsertTo(k.getOwner, k, kk, vv.asInstanceOf[Array[Byte]], false)
+          }
+      }
+      // dataShard.foreach {
+      //   case (k, v) =>
+      //     main ! InsertTo(owner, collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
+      // }
+      dataShard = dataShard.empty
       // should probably delete actorbasedata here
-      root.delete
+      //private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
+
+      def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+      getRecursively( root ).foreach { f =>
+        if (!f.getName.endsWith("shadow") && f.getName != "usersdata")
+          f.delete()
+      }
+      // root.delete()
+
+      // persist the users
+      usersmap.map { x =>
+        if (x._1 != "admin")
+          authProxy ! AddCredentials(x._1, x._2)
+      }
+
+      //}
+      //root.delete
     } else log.warning("Directory not found!")
   }
 
@@ -144,8 +173,10 @@ object HTTPServer {
     val (hostname, port) =
       if (args.nonEmpty)
         (args(0), args(1))
-      else
+      else {
+        println("errore")
         ("127.0.0.1", 2500)
+      }
     val config = ConfigFactory.parseString(s"""
 akka.remote.netty.tcp.hostname=${hostname}
 akka.remote.netty.tcp.port=${port}

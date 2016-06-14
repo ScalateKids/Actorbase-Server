@@ -66,8 +66,8 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
   // subscribe to the topic named "persist-data"
   mediator ! Subscribe("persist-data", self)
 
-  private val initDelay = 130 seconds       // delay for the first persistence message to be sent
-  private val intervalDelay = 130 seconds   // interval in-between each persistence message has to be sent
+  private val initDelay = 40 seconds       // delay for the first persistence message to be sent
+  private val intervalDelay = 50 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props( collectionOwner + collectionName ))
   private var manager: Option[ActorRef] = None
@@ -85,13 +85,13 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * @throws
     */
   override def preStart(): Unit = {
-    cluster.subscribe(self, classOf[MemberUp])
-    scheduler = context.system.scheduler.schedule(
-      initialDelay = initDelay,
-      interval = intervalDelay,
-      receiver = self,
-      message = Persist
-    )
+    // cluster.subscribe(self, classOf[MemberUp])
+    // scheduler = context.system.scheduler.schedule(
+    //   initialDelay = initDelay,
+    //   interval = intervalDelay,
+    //   receiver = self,
+    //   message = Persist
+    // )
   }
 
   /**
@@ -103,8 +103,8 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * @throws
     */
   override def postStop(): Unit = {
-    scheduler.cancel()
-    cluster.unsubscribe(self)
+    // scheduler.cancel()
+    // cluster.unsubscribe(self)
   }
 
   def receive = running(Map[String, Array[Byte]]().empty)
@@ -114,7 +114,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     case message: StorekeeperMessage => message match {
 
       case InitMn(mn) =>
-        // log.info("new MN received")
+        log.info("new MN received")
         manager = Some(mn)
 
       /**
@@ -140,6 +140,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
       case RemoveItem(key) =>
         if (data contains(key)) {
           sender ! UpdateCollectionSize(false)
+          warehouseman ! Save( data )
           context become running(data - key)
         }
 
@@ -173,14 +174,16 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
             }
           }
           else if (!update && data.contains(key)) {
-            // log.warning(s"SK: Duplicate key found, cannot insert $key")
+            log.error(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
           done
         }
 
-        if (insertOrUpdate(ins.update, ins.key) == true)
+        if (insertOrUpdate(ins.update, ins.key) == true) {
+          warehouseman ! Save( data )
           context become running(data + (ins.key -> ins.value))
+        }
 
       /**
         * Persist data to disk

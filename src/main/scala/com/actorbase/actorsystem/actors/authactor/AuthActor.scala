@@ -44,6 +44,12 @@ class AuthActor extends Actor with ActorLogging {
   private val rootFolder = "actorbasedata/usersdata/"
   // private val warehouseman = context.actorOf(Warehouseman.props())
 
+  // self ! AddCredentials("admin", "Actorb4se")
+
+  override def preStart = {
+    persist(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
+  }
+
   /**
     * Insert description here
     *
@@ -100,7 +106,9 @@ class AuthActor extends Actor with ActorLogging {
         val check = passwordCheck findFirstIn password
         check map { p =>
           val salt = password.bcrypt(generateSalt)
-          if (!profiles.contains(Profile(username, salt))) {
+          // var eq = None
+          if (profiles.find(p => p.equals(Profile(username, salt))) == None) {
+            log.info(s"$username - ${profiles.find(p => p.equals(Profile(username, salt)))}")
             persist(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
             context become running(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
           }
