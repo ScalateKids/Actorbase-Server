@@ -74,7 +74,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     var dataShard = Map[String, Any]().empty
     var usersmap = Map[String, String]().empty
     var contributors = Map.empty[String, Set[ActorbaseCollection]]
-    var data = Map.empty[ActorbaseCollection, Map.empty[String, Any]]
+    var data = Map.empty[ActorbaseCollection, Map[String, Any]]
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
       var (name, owner) = ("", "")
@@ -115,7 +115,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
         case (k, v) =>
           v.foreach {
             case (kk, vv) =>
-              main ! InsertTo(k.owner, k, kk, vv.asInstanceOf[Array[Byte]], false)
+              main ! InsertTo(k.getOwner, k, kk, vv.asInstanceOf[Array[Byte]], false)
           }
       }
       // dataShard.foreach {
