@@ -72,6 +72,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
 
     val root = new File("actorbasedata/")
     var dataShard = Map[String, Any]().empty
+    var usersmap = Map[String, String]().empty
     var contributors = Map.empty[String, Set[ActorbaseCollection]]
 
     println("\n LOADING ......... ")
@@ -88,7 +89,8 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
                     metaData get "owner" map (o => owner = o.toString())
                     main ! CreateCollection(ActorbaseCollection(name, owner))
                 case user if (user.getName == "usersdata.shadow") =>
-                    CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user) map { x => if (x._1 != "admin") authProxy ! AddCredentials(x._1, x._2) }
+                    usersmap ++= CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user) 
+                    //CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user) map { x => if (x._1 != "admin") authProxy ! AddCredentials(x._1, x._2) }
                 case contributor if (contributor.getName == "contributors.shadow") =>
                 contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]]("Dummy implicit k", contributor)
                 case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", x)
@@ -109,7 +111,17 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
         }
       }
       // should probably delete actorbasedata here
-      root.delete
+      //private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
+
+       def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+       getRecursively( root ).foreach { f => f.delete() }
+       root.delete()
+
+       // persist the users 
+       usersmap.map( x => authProxy ! AddCredentials(x._1, x._2) )
+
+       //}
+      //root.delete
     } else log.warning("Directory not found!")
   }
 

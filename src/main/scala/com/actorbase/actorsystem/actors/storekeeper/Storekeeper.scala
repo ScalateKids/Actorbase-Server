@@ -173,7 +173,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
             }
           }
           else if (!update && data.contains(key)) {
-            log.error(s"SK: Duplicate")
+            log.error(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
           done
