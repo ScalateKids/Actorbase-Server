@@ -101,16 +101,14 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case AddCredentials(username, password) =>
-        log.info(s"$username added")
         val passwordCheck = """^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$""".r
         val check = passwordCheck findFirstIn password
         check map { p =>
           val salt = password.bcrypt(generateSalt)
-          // var eq = None
-          if (profiles.find(p => p.equals(Profile(username, salt))) == None) {
-            log.info(s"$username - ${profiles.find(p => p.equals(Profile(username, salt)))}")
-            persist(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
-            context become running(profiles + (Profile(username, salt, Set.empty[ActorbaseCollection])))
+          if (!profiles.contains(Profile(username, salt))) {
+            log.info(s"$username added")
+            persist(profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
+            context become running (profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
           }
         } getOrElse log.error(s"$password does not meet criteria")
 

@@ -31,7 +31,7 @@ package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.pattern.ask
-import com.actorbase.actorsystem.messages.AuthActorMessages.Authenticate
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ Authenticate, UpdateCredentials }
 import spray.can.Http
 import spray.httpx.SprayJsonSupport._
 
@@ -65,7 +65,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
           entity(as[Array[Byte]]) { value =>
             detach() {
               complete {
-                authProxy.ask(Authenticate(user, new String(value, "UTF-8")))(5 seconds).mapTo[String]
+                (authProxy ? Authenticate(user, new String(value, "UTF-8"))).mapTo[String]
               }
             }
           }
@@ -79,8 +79,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
         entity(as[Array[Byte]]) { value =>
           detach() {
             complete {
-              authProxy.ask(AddCredentials(user, new String(value, "UTF-8")))(5 seconds).mapTo[String]
-              "change complete"
+              (authProxy ? AddCredentials(user, new String(value, "UTF-8"))).mapTo[String]
             }
           }
         }
@@ -102,58 +101,55 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
       * operations, a GET request equals listing all users of the system
       */
     pathPrefix("users") {
-      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-        get {
-          authorize(authInfo.hasAdminPermissions) {
-            // only admin users can enter here
-            complete {
-              authProxy.ask(ListUsers)(5 seconds).mapTo[ListResponse]
+      pathEndOrSingleSlash {
+        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+          get {
+            authorize(authInfo.hasAdminPermissions) {
+              // only admin users can enter here
+              complete {
+                (authProxy ? ListUsers).mapTo[ListResponse]
+              }
             }
           }
         }
       }
     }
   } ~
-  pathSuffix("\\S+".r) { user =>
+  pathPrefix("users" / "\\S+".r) { user =>
     /**
       * user/<username> a POST request to this route equals adding a new user
       * to the system with username <username> and password as request payload
       */
-    authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-      post {
+    pathEndOrSingleSlash {
+      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
         authorize(authInfo.hasAdminPermissions) {
-          // only admin users can enter here
-          val value = "Actorb4ase"
-          authProxy ! AddCredentials(user, value)
-          complete {
-            s"added user $user"
-          }
-        }
-      } ~
-      put {
-        /**
-          * user/<username> a PUT request to this route equals updating an
-          * existing user of username <username>
-          */
-        authorize(authInfo.hasAdminPermissions) {
-          // only admin users can enter here
-          val value = "Actorb4se"
-          authProxy ! AddCredentials(user, value)
-          complete {
-            s"updated user $user"
-          }
-        }
-      } ~
-      delete {
-        /**
-          * user/<username> a DELETE request to this route equals removing an existing user
-          * from the system
-          */
-        authorize(authInfo.hasAdminPermissions) {
-          // only admin users can enter here
-          authProxy ! RemoveCredentials(user)
-          complete {
-            s"removed user $user"
+          post {
+            // only admin users can enter here
+            val value = "Actorb4ase"
+            complete {
+              (authProxy ? AddCredentials(user, value)).mapTo[String]
+            }
+          } ~
+          put {
+            /**
+              * user/<username> a PUT request to this route equals updating an
+              * existing user of username <username>
+              */
+            // only admin users can enter here
+            val value = "Actorb4se"
+            complete {
+              (authProxy ? UpdateCredentials(user, value, value)).mapTo[String]
+            }
+          } ~
+          delete {
+            /**
+              * user/<username> a DELETE request to this route equals removing an existing user
+              * from the system
+              */
+            // only admin users can enter here
+            complete {
+              (authProxy ? RemoveCredentials(user)).mapTo[String]
+            }
           }
         }
       }

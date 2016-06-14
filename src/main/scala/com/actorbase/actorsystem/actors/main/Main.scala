@@ -113,10 +113,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
     * @return an ActorRef pointing to the Storefinder just created that maps the collection
     */
   private def createCollection(collection: ActorbaseCollection): Option[ActorRef] = {
-    if (sfMap.contains(collection)) {
-      log.warning("contained")
-      sfMap.get(collection) // to be tested, probably uses equals, fuck up with different sizes
-    }
+    if (sfMap.contains(collection))
+      sfMap get collection // to be tested, probably uses equals, fuck up with different sizes
     else {
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
@@ -150,9 +148,9 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         log.info("MAIN: got work!")
         sfMap.find(x => x._1 == collection) map { c =>
           if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
-            c._2 ! Insert(key, value, update)
+            c._2 forward Insert(key, value, update)
         } getOrElse (
-          createCollection(collection) map (_ ! Insert(key, value, update)) getOrElse log.error("Error retrieving storefinder ActorRef")) // perhaps-fix
+          createCollection(collection) map (_ forward Insert(key, value, update)) getOrElse sender ! "UndefinedCollection") // perhaps-fix
 
       /**
         * Create a collection in the system
@@ -175,8 +173,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
           sfMap.find(_._1 == collection) map { c =>
             if (c._1.getOwner == requester || c._1.containsReadWriteContributor(requester) || c._1.containsReadContributor(requester))
               c._2 forward Get(key)
-            else log.error(s"$requester is not the owner of the collection, nor a contributor")
-          } getOrElse log.error (s"Key $key not found")
+            else sender ! "NoPrivileges"
+          } getOrElse sender ! "UndefinedCollection"
         else {
           // WIP: still completing
           sfMap.find(_._1 == collection) map { coll =>
@@ -184,10 +182,10 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
               requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1.getUUID -> mutable.Map[String, Array[Byte]]())) getOrElse (
                 requestMap += (collection.getOwner -> mutable.Map(coll._1.getUUID -> mutable.Map[String, Array[Byte]]())))
               if (coll._1.getSize > 0)
-                sfMap get collection map (_ forward GetAllItems) getOrElse log.error (s"MAIN: key $key not found")
+                sfMap get collection map (_ forward GetAllItems) getOrElse sender ! "UndefinedCollection"
               else
                 sender ! MapResponse(collection.getName, Map[String, Array[Byte]]())
-            } else log.error(s"$requester is not the owner of the collection, nor a contributor")
+            } else sender ! "UndefinedCollection"
           }
         }
 
@@ -228,7 +226,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         if (key.nonEmpty)
           sfMap.find(_._1.getUUID == uuid) map { c =>
             if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
-              c._2 ! Remove(key)
+              c._2 forward Remove(key)
             else log.error(s"$requester is not the owner of the collection, nor a contributor")
           } getOrElse log.error(s"$uuid collection not found")
         else {

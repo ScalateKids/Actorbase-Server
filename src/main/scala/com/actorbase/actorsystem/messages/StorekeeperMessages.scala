@@ -46,10 +46,10 @@ final case class GetItem(key: String) extends ConsistentHashable with Storekeepe
   override def consistentHashKey: Any = key
 }
 
-final case class InsertItem(key: String, value: Array[Byte], update: Boolean = false) extends ConsistentHashable with StorekeeperMessage {
+final case class InsertItem(parentRef: ActorRef, key: String, value: Array[Byte], update: Boolean = false) extends ConsistentHashable with StorekeeperMessage {
   override def consistentHashKey: Any = key
 }
 
-final case class RemoveItem(key: String) extends ConsistentHashable with StorekeeperMessage {
+final case class RemoveItem(parentRef: ActorRef, key: String) extends ConsistentHashable with StorekeeperMessage {
   override def consistentHashKey: Any = key
 }

@@ -29,6 +29,7 @@
 package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
+import akka.util.Timeout
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import akka.pattern.ask
@@ -59,6 +60,8 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     */
   def collectionsDirectives(main: ActorRef, authProxy: ActorRef): Route = {
 
+    implicit val timeout = Timeout(90 seconds)
+
     /**
       * Collections route, manage all collection related operations, based
       * on the request received in the form of:
@@ -84,7 +87,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
             complete {
-              authProxy.ask(ListCollectionsOf(authInfo.user.login))(5 seconds).mapTo[ListResponse]
+              (authProxy ? ListCollectionsOf(authInfo.user.login)).mapTo[ListResponse]
             }
           }
         }
@@ -96,21 +99,20 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           val coll = ActorbaseCollection(collection, authInfo.user.login)
           get {
             complete {
-              main.ask(GetFrom(authInfo.user.login, coll))(60 seconds).mapTo[MapResponse]
+              (main ? GetFrom(authInfo.user.login, coll))
+                .mapTo[MapResponse]
+                // .map(result => result)
+                // .recover
             }
           } ~
           post {
             complete {
-              //TODO controllare se esiste già
-              main ! CreateCollection(coll)
-              "Create collection complete"
+              (main ? CreateCollection(coll)).mapTo[String]
             }
           } ~
           delete {
             complete {
-              //TODO controllare, se non esiste inutile mandare il messaggio
-              main ! RemoveFrom(authInfo.user.login, authInfo.user.login + collection)
-              "Remove collection complete"
+              (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection)).mapTo[String]
             }
           }
         }
@@ -120,15 +122,12 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           val coll = ActorbaseCollection(collection, authInfo.user.login)
           get {
             complete {
-              //TODO controllare, se collection non esiste, inutile instradare
-              main.ask(GetFrom(authInfo.user.login, coll, key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
+              (main ? GetFrom(authInfo.user.login, coll, key)).mapTo[Response]
             }
           } ~
           delete {
             complete {
-              //TODO controllare, se collection non esiste, inutile instradare
-              main ! RemoveFrom(authInfo.user.login, authInfo.user.login + collection, key)
-              "Remove complete"
+              (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection, key)).mapTo[String]
             }
           } ~
           post {
@@ -136,9 +135,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
               entity(as[Array[Byte]]) { value =>
                 detach() {
                   complete {
-                    //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                    main ! InsertTo(authInfo.user.login, coll, key, value)
-                    "Insert complete"
+                    (main ? InsertTo(authInfo.user.login, coll, key, value)).mapTo[String]
                   }
                 }
               }
@@ -149,9 +146,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
               entity(as[Array[Byte]]) { value =>
                 detach() {
                   complete {
-                    //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                    main ! InsertTo(authInfo.user.login, coll, key, value, true)
-                    "Update complete"
+                    (main ? InsertTo(authInfo.user.login, coll, key, value, true)).mapTo[String]
                   }
                 }
               }

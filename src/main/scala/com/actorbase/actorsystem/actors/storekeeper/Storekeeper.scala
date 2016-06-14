@@ -137,9 +137,10 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         * RemoveItem message, when the actor receive this message it will erase the item associated with the
         * key in input. This method doesn't throw an exception if the item is not present.
         */
-      case RemoveItem(key) =>
+      case RemoveItem(parent, key) =>
         if (data contains(key)) {
-          sender ! UpdateCollectionSize(false)
+          parent ! UpdateCollectionSize(false)
+          sender ! "OK"
           warehouseman ! Save( data )
           context become running(data - key)
         }
@@ -167,7 +168,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           var done = true
           if (!update && !data.contains(key)) {
             log.info("SK: got work!")
-            sender ! UpdateCollectionSize(true)
+            ins.parentRef ! UpdateCollectionSize(true)
             if (data.size > 256 && !checked) {
               checked = true
               manager map (_ ! OneMore) getOrElse (checked = false)
@@ -181,9 +182,10 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         }
 
         if (insertOrUpdate(ins.update, ins.key) == true) {
+          sender ! "OK"
           warehouseman ! Save( data )
           context become running(data + (ins.key -> ins.value))
-        }
+        } else sender ! "DuplicatedKey"
 
       /**
         * Persist data to disk
