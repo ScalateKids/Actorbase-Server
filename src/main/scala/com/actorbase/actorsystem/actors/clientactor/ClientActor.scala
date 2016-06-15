@@ -77,7 +77,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
             detach() {
               complete {
                 println(oldpw)
-                (authProxy ? UpdateCredentials(user, new String(value, "UTF-8"), oldpw)).mapTo[String]
+                  (authProxy ? UpdateCredentials(user, oldpw, new String(value, "UTF-8"))).mapTo[String]
               }
             }
           }
@@ -121,9 +121,9 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
         authorize(authInfo.hasAdminPermissions) {
           post {
             // only admin users can enter here
-            val value = "Actorb4ase"
             complete {
-              (authProxy ? AddCredentials(user, value)).mapTo[String]
+              val value = "Actorb4se"
+                (authProxy ? AddCredentials(user, value)).mapTo[String]
             }
           } ~
           put {
@@ -132,9 +132,9 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
               * existing user of username <username>
               */
             // only admin users can enter here
-            val value = "Actorb4se"
             complete {
-              (authProxy ? UpdateCredentials(user, value, value)).mapTo[String]
+              val value = "Actorb4se"
+                (authProxy ? UpdateCredentials(user, value, value)).mapTo[String]
             }
           } ~
           delete {
