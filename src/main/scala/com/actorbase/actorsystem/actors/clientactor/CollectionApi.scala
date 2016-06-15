@@ -30,6 +30,7 @@ package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
 import akka.util.Timeout
+import com.actorbase.actorsystem.messages.MainMessages.{ AddContributor, RemoveContributor }
 import spray.http.{ HttpEntity, HttpResponse, StatusCodes }
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.marshalling.ToResponseMarshallable
@@ -83,9 +84,9 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       * DELETE collections/<collection>/<key>
       * remove an item of key <key> from the collection <collection>
       *
-      * All routes return a standard marshallable of type Array[Byte]
+      * All routes return a ToResponseMarshallable
       */
-    pathPrefix("listcollections") {
+    pathPrefix("collections") {
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
@@ -162,6 +163,52 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                   complete {
                     (main ? InsertTo(authInfo.user.login, coll, key, value, true)).mapTo[String]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } ~
+  pathPrefix("contributors" / "\\S+".r) { collection =>
+    pathEndOrSingleSlash {
+      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+        get {
+          complete("contr")
+        } ~
+        delete {
+          decompressRequest() {
+            entity(as[Array[Byte]]) { value =>
+              detach() {
+                complete {
+                  val user = new String(value, "UTF-8")
+                  val uuid = user + collection
+                    (main ? RemoveContributor(authInfo.user.login, user, uuid)).mapTo[String]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } ~
+  pathSuffix("readwrite|read".r) { permission =>
+    pathEndOrSingleSlash {
+      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+        get {
+          complete("readcontr")
+        } ~
+        post {
+          decompressRequest() {
+            entity(as[Array[Byte]]) { value =>
+              detach() {
+                complete {
+                  val user = new String(value, "UTF-8")
+                  val uuid = user + collection
+                  if (permission == "read")
+                    (main ? AddContributor(authInfo.user.login, user, ActorbaseCollection.Read, uuid)).mapTo[String]
+                  else (main ? AddContributor(authInfo.user.login, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
                 }
               }
             }
