@@ -28,11 +28,12 @@
 
 package com.actorbase.actorsystem.actors.storekeeper
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, OneForOneStrategy, Props }
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.MemberUp
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.cluster.pubsub.DistributedPubSub
+import akka.actor.SupervisorStrategy._
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
@@ -48,8 +49,7 @@ import scala.concurrent.duration._
 
 object Storekeeper {
 
-  def props: Props = Props[Storekeeper].withDispatcher("control-aware-dispatcher")
-  def props(n: String, o: String): Props = Props(classOf[Storekeeper], n, o).withDispatcher("control-aware-dispatcher")
+  def props(n: String, o: String, s: Int): Props = Props(classOf[Storekeeper], n, o, s)
 
 }
 
@@ -60,7 +60,7 @@ object Storekeeper {
   * @param range
   * @param maxSize
   */
-class Storekeeper(private val collectionName: String, private val collectionOwner: String) extends Actor with ActorLogging {
+class Storekeeper(private val collectionName: String, private val collectionOwner: String, indicativeSize: Int) extends Actor with ActorLogging {
 
   val mediator = DistributedPubSub(context.system).mediator
   // subscribe to the topic named "persist-data"
@@ -107,6 +107,14 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     // cluster.unsubscribe(self)
   }
 
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: Exception      => Resume
+      // case _: NullPointerException     => Restart
+      // case _: IllegalArgumentException => Stop
+      // case _: Exception                => Escalate
+    }
+
   def receive = running(Map[String, Array[Byte]]().empty)
 
   def running(data: Map[String, Array[Byte]]): Receive = {
@@ -124,7 +132,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         */
       case GetItem(key)  =>
-        data get key map (_ => sender ! Right(Response(_))) getOrElse sender ! Left("UndefinedKey")
+        data get key map (v => sender ! Right(Response(v))) getOrElse sender ! Left("UndefinedKey")
 
       /**
         * GetAllItem message, this actor will send back the collection name and all the collection.
@@ -143,7 +151,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           sender ! "OK"
           warehouseman ! Save( data )
           context become running(data - key)
-        }
+        } sender ! "UndefinedKey"
 
       /**
         * Insert message, insert a key/value into a designed collection
@@ -169,7 +177,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           if (!update && !data.contains(key)) {
             log.info("SK: got work!")
             ins.parentRef ! UpdateCollectionSize(true)
-            if (data.size > 256 && !checked) {
+            if (data.size > indicativeSize && !checked) {
               checked = true
               manager map (_ ! OneMore) getOrElse (checked = false)
             }

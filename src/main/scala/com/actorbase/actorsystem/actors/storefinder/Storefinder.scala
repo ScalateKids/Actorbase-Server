@@ -31,7 +31,7 @@
 
 package com.actorbase.actorsystem.actors.storefinder
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{ Actor, ActorLogging, OneForOneStrategy, Props }
 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.MemberUp
@@ -40,6 +40,7 @@ import akka.cluster.routing.ClusterRouterPoolSettings
 import akka.routing.{ ActorRefRoutee, ConsistentHashingPool, FromConfig, Router }
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
+import akka.actor.SupervisorStrategy._
 
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.StorekeeperMessages.{GetItem, GetAll, InsertItem, RemoveItem, InitMn}
@@ -49,8 +50,10 @@ import com.actorbase.actorsystem.actors.manager.Manager
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.typesafe.config.ConfigFactory
 
+import scala.concurrent.duration._
+
 object Storefinder {
-  def props(collection: ActorbaseCollection): Props = Props(new Storefinder(collection)).withDispatcher("control-aware-dispatcher")
+  def props(collection: ActorbaseCollection): Props = Props(new Storefinder(collection))
 }
 
 /**
@@ -64,18 +67,28 @@ object Storefinder {
 class Storefinder(private var collection: ActorbaseCollection) extends Actor with ActorLogging {
 
   val cluster = Cluster(context.system)
-  val config = ConfigFactory.load()
+  val config = ConfigFactory.load().getConfig("storekeepers")
   val role =
     if (config.getString("role") == "") None
     else Some(config getString "role")
+
   val storekeepers = context.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
-    ClusterRouterPoolSettings(config getInt "max-instances", config getInt "storekeepers-per-node", true, useRole = role)).props(Storekeeper.props(collection.getName, collection.getOwner)), name = "storekeepers")
+    ClusterRouterPoolSettings(config getInt "max-instances", config getInt "instances-per-node", true, useRole = role)).props(Storekeeper.props(collection.getName, collection.getOwner, config getInt "size")), name = "storekeepers")
+
   val manager = context.actorOf(Manager.props(collection.getName, collection.getOwner, storekeepers), collection.getUUID + "-manager")
 
   storekeepers ! Broadcast(InitMn(manager))
 
   override def preStart(): Unit = cluster.subscribe(self, classOf[MemberUp])
   override def postStop(): Unit = cluster.unsubscribe(self)
+
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: Exception      => Resume
+        // case _: NullPointerException     => Restart
+        // case _: IllegalArgumentException => Stop
+        // case _: Exception                => Escalate
+    }
 
   /**
     * Insert description here

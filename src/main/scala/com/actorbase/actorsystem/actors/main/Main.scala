@@ -29,18 +29,20 @@
 
 package com.actorbase.actorsystem.actors.main
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, PoisonPill, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props }
 import akka.cluster.sharding.ShardRegion
 import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
+import akka.actor.SupervisorStrategy._
+
 import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, RemoveCollectionFrom }
-
-import scala.collection.mutable
-
 import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.MapResponse
+
+import scala.collection.mutable
+import scala.concurrent.duration._
 
 /**
   * Insert description here
@@ -56,7 +58,7 @@ object Main {
     *
     * @return an object of type Props, usable directly with an actorsystem running
     */
-  def props(authProxy: ActorRef) = Props(classOf[Main], authProxy).withDispatcher("control-aware-dispatcher")
+  def props(authProxy: ActorRef) = Props(classOf[Main], authProxy)
 
   /** name of the sharded entity */
   def shardName = "mainActor"
@@ -104,6 +106,14 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
 
   private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
   private var requestMap = Map[String, mutable.Map[String, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
+
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: Exception      => Resume
+        // case _: NullPointerException     => Restart
+        // case _: IllegalArgumentException => Stop
+        // case _: Exception                => Escalate
+    }
 
   /**
     * Method that create a collection in Actorbase.

@@ -28,27 +28,33 @@
 
 package com.actorbase.actorsystem.actors.authactor
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{ Actor, ActorLogging, OneForOneStrategy }
+import akka.actor.SupervisorStrategy._
 
-import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.messages.AuthActorMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
 import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
 import com.github.t3hnar.bcrypt._
 import org.mindrot.jbcrypt.BCrypt
 
+import scala.concurrent.duration._
 import java.io.File
 
 class AuthActor extends Actor with ActorLogging {
 
   private val rootFolder = "actorbasedata/usersdata/"
-  // private val warehouseman = context.actorOf(Warehouseman.props())
-
-  // self ! AddCredentials("admin", "Actorb4se")
 
   override def preStart = {
     persist(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
   }
+
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: Exception      => Resume
+        // case _: NullPointerException     => Restart
+        // case _: IllegalArgumentException => Stop
+        // case _: Exception                => Escalate
+    }
 
   /**
     * Insert description here

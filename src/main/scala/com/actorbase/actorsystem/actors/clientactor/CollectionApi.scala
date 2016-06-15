@@ -126,42 +126,44 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         }
       } ~
       pathSuffix("\\S+".r) { key =>
-        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-          val coll = ActorbaseCollection(collection, authInfo.user.login)
-          get {
-            complete {
-              (main ? GetFrom(authInfo.user.login, coll, key))
-                .mapTo[Either[String, Response]]
-                .map { result =>
-                result match {
-                  case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
-                  case Right(response) => response: ToResponseMarshallable
-                }
-              }
-            }
-          } ~
-          delete {
-            complete {
-              (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection, key)).mapTo[String]
-            }
-          } ~
-          post {
-            decompressRequest() {
-              entity(as[Array[Byte]]) { value =>
-                detach() {
-                  complete {
-                    (main ? InsertTo(authInfo.user.login, coll, key, value)).mapTo[String]
+        pathEndOrSingleSlash {
+          authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+            val coll = ActorbaseCollection(collection, authInfo.user.login)
+            get {
+              complete {
+                (main ? GetFrom(authInfo.user.login, coll, key))
+                  .mapTo[Either[String, Response]]
+                  .map { result =>
+                  result match {
+                    case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                    case Right(response) => response: ToResponseMarshallable
                   }
                 }
               }
-            }
-          } ~
-          put {
-            decompressRequest() {
-              entity(as[Array[Byte]]) { value =>
-                detach() {
-                  complete {
-                    (main ? InsertTo(authInfo.user.login, coll, key, value, true)).mapTo[String]
+            } ~
+            delete {
+              complete {
+                (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection, key)).mapTo[String]
+              }
+            } ~
+            post {
+              decompressRequest() {
+                entity(as[Array[Byte]]) { value =>
+                  detach() {
+                    complete {
+                      (main ? InsertTo(authInfo.user.login, coll, key, value)).mapTo[String]
+                    }
+                  }
+                }
+              }
+            } ~
+            put {
+              decompressRequest() {
+                entity(as[Array[Byte]]) { value =>
+                  detach() {
+                    complete {
+                      (main ? InsertTo(authInfo.user.login, coll, key, value, true)).mapTo[String]
+                    }
                   }
                 }
               }
@@ -191,24 +193,24 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           }
         }
       }
-    }
-  } ~
-  pathSuffix("readwrite|read".r) { permission =>
-    pathEndOrSingleSlash {
-      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-        get {
-          complete("readcontr")
-        } ~
-        post {
-          decompressRequest() {
-            entity(as[Array[Byte]]) { value =>
-              detach() {
-                complete {
-                  val user = new String(value, "UTF-8")
-                  val uuid = user + collection
-                  if (permission == "read")
-                    (main ? AddContributor(authInfo.user.login, user, ActorbaseCollection.Read, uuid)).mapTo[String]
-                  else (main ? AddContributor(authInfo.user.login, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
+    } ~
+    pathSuffix("readwrite|read".r) { permission =>
+      pathEndOrSingleSlash {
+        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+          get {
+            complete(s"readcontr $permission")
+          } ~
+          post {
+            decompressRequest() {
+              entity(as[Array[Byte]]) { value =>
+                detach() {
+                  complete {
+                    val user = new String(value, "UTF-8")
+                    val uuid = user + collection
+                    if (permission == "read")
+                      (main ? AddContributor(authInfo.user.login, user, ActorbaseCollection.Read, uuid)).mapTo[String]
+                    else (main ? AddContributor(authInfo.user.login, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
+                  }
                 }
               }
             }
