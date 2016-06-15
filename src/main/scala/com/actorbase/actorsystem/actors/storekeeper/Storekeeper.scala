@@ -151,7 +151,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           sender ! "OK"
           warehouseman ! Save( data )
           context become running(data - key)
-        } sender ! "UndefinedKey"
+        } else sender ! "UndefinedKey"
 
       /**
         * Insert message, insert a key/value into a designed collection

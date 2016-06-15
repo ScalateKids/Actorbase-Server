@@ -33,6 +33,7 @@ import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.pattern.ask
 import com.actorbase.actorsystem.messages.AuthActorMessages.{ Authenticate, UpdateCredentials }
 import spray.can.Http
+import spray.http.HttpHeader
 import spray.httpx.SprayJsonSupport._
 
 import scala.concurrent.duration._
@@ -52,11 +53,8 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, Re
 class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorLogging with RestApi with CollectionApi {
 
   /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
+    * Directives for authentication routes, these lets the management of authentication
+    * and personal credentials
     */
   val authDirectives = {
     pathPrefix("auth" / "\\S+".r) { user =>
@@ -76,10 +74,13 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
   pathPrefix("private" / "\\S+".r) { user =>
     post {
       decompressRequest() {
-        entity(as[Array[Byte]]) { value =>
-          detach() {
-            complete {
-              (authProxy ? AddCredentials(user, new String(value, "UTF-8"))).mapTo[String]
+        headerValueByName("Old-Password") { oldpw =>
+          entity(as[Array[Byte]]) { value =>
+            detach() {
+              complete {
+                println(oldpw)
+                (authProxy ? UpdateCredentials(user, new String(value, "UTF-8"), oldpw)).mapTo[String]
+              }
             }
           }
         }
