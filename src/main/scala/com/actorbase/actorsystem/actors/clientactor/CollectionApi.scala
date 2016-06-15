@@ -124,8 +124,11 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             }
           } ~
           delete {
-            complete {
-              (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection)).mapTo[String]
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              complete {
+                (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection)).mapTo[String]
+              }
             }
           }
         }

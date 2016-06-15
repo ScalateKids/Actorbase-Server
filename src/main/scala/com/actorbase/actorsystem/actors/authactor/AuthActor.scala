@@ -35,6 +35,7 @@ import com.actorbase.actorsystem.messages.AuthActorMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
 import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
 import com.github.t3hnar.bcrypt._
+import com.typesafe.config.ConfigFactory
 import org.mindrot.jbcrypt.BCrypt
 
 import scala.concurrent.duration._
@@ -42,6 +43,7 @@ import java.io.File
 
 class AuthActor extends Actor with ActorLogging {
 
+  private val config = ConfigFactory.load().getConfig("persistence")
   private val rootFolder = "actorbasedata/usersdata/"
 
   override def preStart = {
@@ -79,7 +81,7 @@ class AuthActor extends Actor with ActorLogging {
       profileMap += (x.username -> x.password)
       contributorMap += (x.username -> x.getCollections)
     }
-    val key = "Dummy implicit k"
+    val key = config getString("encryption-key")
     val encryptedProfilesFile = new File(rootFolder + "/usersdata.shadow")
     encryptedProfilesFile.getParentFile.mkdirs
     val encryptedContributorsFile = new File(rootFolder + "/contributors.shadow")
