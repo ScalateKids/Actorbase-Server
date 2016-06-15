@@ -101,20 +101,15 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
-            decompressRequest() {
-              headerValueByName("owner") { owner =>
-                val coll = ActorbaseCollection(collection, owner)
-                detach() {
-                  complete {
-                    println(owner)
-                      (main ? GetFrom(authInfo.user.login, coll))
-                      .mapTo[Either[String, MapResponse]]
-                      .map { result =>
-                        result match {
-                          case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
-                          case Right(map) => map: ToResponseMarshallable
-                        }
-                      }
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              complete {
+                (main ? GetFrom(authInfo.user.login, coll))
+                  .mapTo[Either[String, MapResponse]]
+                  .map { result =>
+                  result match {
+                    case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                    case Right(map) => map: ToResponseMarshallable
                   }
                 }
               }
@@ -129,8 +124,11 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             }
           } ~
           delete {
-            complete {
-              (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection)).mapTo[String]
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              complete {
+                (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection)).mapTo[String]
+              }
             }
           }
         }
