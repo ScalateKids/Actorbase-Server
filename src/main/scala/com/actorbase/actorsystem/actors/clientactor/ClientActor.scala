@@ -44,7 +44,7 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, Re
 
 
 /**
-  * Class that represents a ClientActor. This actor has to maintain a connection with the client 
+  * Class that represents a ClientActor. This actor has to maintain a connection with the client
   * and it receives all the requests from it, he dispatch this requests to an actor responsable
   * to fullfil it
   */
@@ -76,7 +76,6 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
           entity(as[Array[Byte]]) { value =>
             detach() {
               complete {
-                println(oldpw)
                   (authProxy ? UpdateCredentials(user, oldpw, new String(value, "UTF-8"))).mapTo[String]
               }
             }
