@@ -49,11 +49,13 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
 
 /**
-  * Insert description here
+  * Class that represent a HTTPServer actor. This actor is responsible to accept the connection 
+  * incoming from clients and to instantiate a ClientActor assigned to the client asking. 
   *
-  * @param
-  * @return
-  * @throws
+  * @param main: an ActorRef to a main actor
+  * @param authProxy: an ActorRef to the AuthActor
+  * @param addess: a String representing the address on which actorbase has to listen on
+  * @param listenPort: a Int representing the port on which actorbase has to listen on
   */
 class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPort: Int) extends Actor
     with ActorLogging with SslConfiguration {
@@ -64,7 +66,12 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
   val initLoad: Unit = loadData
 
   /**
+    * Loads all the data saved on the rootfolder onto the system. This is used to repopulate
+    * the database after a restart.
+    * The actor reads all the data from files and it proceed to send messages to the right actors
+    * to repopulate the server.
     *
+    * @return no return value
     */
   def loadData: Unit = {
     import com.actorbase.actorsystem.utils.CryptoUtils
@@ -162,11 +169,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
 }
 
 /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
+  * HTTPServer object, it contains the main of the application
   */
 object HTTPServer {
   def main(args: Array[String]) = {
@@ -174,7 +177,7 @@ object HTTPServer {
       if (args.nonEmpty)
         (args(0), args(1))
       else {
-        println("errore")
+       // println("errore")
         ("127.0.0.1", 2500)
       }
     val config = ConfigFactory.parseString(s"""

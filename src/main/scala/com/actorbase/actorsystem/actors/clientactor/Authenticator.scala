@@ -47,9 +47,6 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.Authenticate
   * Authenticator, mix it with a HttpServiceBase class to give basic
   * authentication capabilities
   *
-  * @param
-  * @return
-  * @throws
   */
 trait Authenticator {
 
@@ -63,7 +60,6 @@ trait Authenticator {
     * @param ec ExecutionContext
     * @param main ActorRef representing a reference to the Main actor
     * @return a BasicAuth uncrypted for a private area
-    * @throws
     */
   def basicUserAuthenticator(implicit ec: ExecutionContext, authProxy: ActorRef): AuthMagnet[AuthInfo] = {
 
@@ -74,7 +70,6 @@ trait Authenticator {
       * @param userPass Option[UserPass] extract by the method authenticate
       * @return a reference of Option[AuthInfo] containig the credentials
       * of the authenticated user
-      * @throws
       */
     def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
       if (authInfo != None)
@@ -97,7 +92,6 @@ trait Authenticator {
       * @param userPass Option[UserPass] extract by the method authenticate
       * @return a reference to a Future of type AuthInfo containing the
       * credentials of the authenticated user
-      * @throws
       */
     def authenticator(userPass: Option[UserPass]): Future[Option[AuthInfo]] = Future { validateUser(userPass) }
 

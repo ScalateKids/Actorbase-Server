@@ -40,14 +40,26 @@ import org.mindrot.jbcrypt.BCrypt
 import scala.concurrent.duration._
 import java.io.File
 
+/**
+  * Class that represents an AuthAtcor. This actor is a singleton cluster actor used to 
+  * store the users profiles data. It's also used to check the credential on the login attempts.
+  * This actor is responsible to persist the users profile datas on the filesystem
+  */
 class AuthActor extends Actor with ActorLogging {
 
+  // the rootfolder in which to store the users data
   private val rootFolder = "actorbasedata/usersdata/"
 
+  /**
+    *  Override of the preStart Actor method
+    */
   override def preStart = {
     persist(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
   }
 
+  /**
+    * Override of the supervisionStrategy Actor method
+    */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Exception      => Resume
@@ -57,20 +69,16 @@ class AuthActor extends Actor with ActorLogging {
     }
 
   /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
+    * Override of the receive Actor method. Set the actor in the running state with a default Set of Profiles, 
+    * letting him to receive a variety of messages explained in the running method scaladoc
     */
   override def receive = running(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
 
   /**
-    * Insert description here
+    * Method used to persist the users data to filesystem
     *
-    * @param
-    * @return
-    * @throws
+    * @param profiles: a Set of Profile containing all the profiles of the users to persist on filesystem
+    * @return no return value
     */
   def persist(profiles: Set[Profile]): Unit = {
     var profileMap = Map.empty[String, String]
@@ -89,7 +97,20 @@ class AuthActor extends Actor with ActorLogging {
   }
 
   /**
-    * Insert description here
+    * Running state of the actor, while in this state the actor can receive this messages:
+    * _AddCredentials: when the actor receives this message it tries to register a user to the system adding 
+    *                  the Profile passed as message parameter to his data structure.
+    * _UpdateCredentials: when the actor receives this message it tries to update a Profile 
+    * _RemoveCredentials: when the actor receives this message it tries to remove the Profile 
+    *                     passed as parameter of the message
+    * _Authenticate: when the actor receives this message it checks it the credentials passed as parameter of 
+    *                the message are valid credentials already registered on the system
+    * _AddCollectionTo: when the actor receives this message it tries to add the collection passed as message 
+    *                   parameter to the user passed
+    * _RemoveCollectionFrom: when the actor receives this message it tries to remove the collection passed as message 
+    *                        parameter from the user passed
+    * _ListCollectionOf: when the actor receives this message it returns all the collections name
+    * _ListUsers: when the actor receives this message it returns the list of all the users registrated on the system.
     *
     * @param
     * @return

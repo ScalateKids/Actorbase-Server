@@ -30,8 +30,14 @@ package com.actorbase.actorsystem.messages.AuthActorMessages
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 
+/*
+ * Trait that contains all the messages processable from the AuthActor
+ */
 sealed trait AuthActorMessages
 
+/*
+ * Message used to ask to the AuthActor to return a list containing all the users of the system
+ */
 case object ListUsers extends AuthActorMessages
 
 final case class AddCredentials(username: String, password: String) extends AuthActorMessages

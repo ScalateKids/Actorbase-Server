@@ -35,7 +35,7 @@ import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import spray.io._
 
 /**
-  * SSL configuration, should be enabled in application.conf  *
+  * SSL configuration, should be enabled in application.conf 
   */
 trait SslConfiguration {
 

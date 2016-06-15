@@ -34,32 +34,32 @@ case object Profile {
   def apply(u: String, p: String): Profile = Profile(u, p, Set.empty[ActorbaseCollection])
 }
 
+/**
+  * Class that models a user of actorbase. It contains the credentials of the user and 
+  * a Set with all the ActorbaseCollection created by him
+  */
 case class Profile(username: String, password: String, private var collections: Set[ActorbaseCollection]) {
 
   /**
-    * Insert description here
+    * Method that returns all the collections created by this user 
     *
-    * @param
-    * @return
-    * @throws
+    * @return a Set containing all the ActorbaseCollection created by this users 
     */
   def getCollections: Set[ActorbaseCollection] = collections
 
   /**
-    * Insert description here
+    * Method that adds an ActorbaseCollection from this Profile
     *
-    * @param
-    * @return
-    * @throws
+    * @param collection: an ActorbaseCollection to add
+    * @return no return value
     */
   def addCollection(collection: ActorbaseCollection): Unit = collections += collection
 
   /**
-    * Insert description here
+    * Method that removes an ActorbaseCollection from this Profile
     *
-    * @param
-    * @return
-    * @throws
+    * @param collection: the ActorbaseCollection to remove
+    * @return no return value
     */
   def removeCollection(collection: ActorbaseCollection): Unit = {
     if (collections.contains(collection))
@@ -67,20 +67,19 @@ case class Profile(username: String, password: String, private var collections: 
   }
 
   /**
-    * Insert description here
+    * Method that checks if the ActorbaseCollection passed as param is contained in the Set of ActorbaseCollections
+    * of this Profile
     *
-    * @param
-    * @return
-    * @throws
+    * @param collection: an ActorbaseCollection that will be searched in the Set of ActorbaseCollections of this Profile
+    * @return true if the Profile got that collection, false otherwise
     */
   def contains(collection: ActorbaseCollection): Boolean = collections.contains(collection)
 
   /**
-    * Insert description here
+    * Method that checks if the Object passed as param is the same Profile as this object
     *
-    * @param
-    * @return
-    * @throws
+    * @param o: Any object to check if represent the same Profile as this object
+    * @return true if the param is the same Profile as this object, false otherwise
     */
   override def equals(o: Any) = o match {
     case that: Profile => that.username.equals(this.username)
@@ -88,11 +87,9 @@ case class Profile(username: String, password: String, private var collections: 
   }
 
   /**
-    * Insert description here
+    * Method that overrides the Any class method hashCode
     *
-    * @param
-    * @return
-    * @throws
+    * @return a String representing the hashCode
     */
   override def hashCode = username.hashCode
 

@@ -69,20 +69,17 @@ case class ActorbaseCollection (private var name: String,
   def getUUID: String = uuid
 
   /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
+    * @return the size of the collection
     */
   def getSize: Int = size
 
   /**
-    * Insert description here
+    * Check if the user passed as param has read permission 
+    * on this actorbasecollection 
     *
-    * @param
-    * @return
-    * @throws
+    * @param contributor: the username of the user that has to be checked 
+    * @return true if the user has read permission on the actorbasecollection
+    *         false otherwise
     */
   def containsReadContributor(contributor: String): Boolean = {
     var contains = false
@@ -96,11 +93,12 @@ case class ActorbaseCollection (private var name: String,
   }
 
   /**
-    * Insert description here
+    * Check if the user passed as param has read and write permission 
+    * on this actorbasecollection 
     *
-    * @param
-    * @return
-    * @throws
+    * @param contributor: the username of the user that has to be checked 
+    * @return true if the user has read and write permission on the actorbasecollection
+    *         false otherwise
     */
   def containsReadWriteContributor(contributor: String): Boolean = {
     var contains = false
@@ -114,58 +112,49 @@ case class ActorbaseCollection (private var name: String,
   }
 
   /**
-    * Insert description here
+    * Add a contributor to this actorbase collection 
     *
-    * @param
-    * @return
-    * @throws
+    * @param username: the username of a user that has to be added as a contributor 
+    * @param permission: read or read and write permission
     */
   def addContributor(username: String, permission: ActorbaseCollection.Permissions): Unit = contributors += (username -> permission)
 
   /**
-    * Insert description here
+    * Remove a contributor from this actorbase collection 
     *
-    * @param
-    * @return
-    * @throws
+    * @param username: the username of a user that has to removed from the contributors
     */
   def removeContributor(username: String): Unit = contributors -= username
 
   /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
+    * Increment the size of this actorbasecollection by 1
     */
   def incrementSize = size += 1
 
   /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
+    * Decrement the size of this actorbasecollection by 1 
     */
   def decrementSize = size -= 1
 
   /**
-    * Insert description here
+    * override the compare method of comparable trait. This methods
+    * compares two actorbasecollections object 
     *
-    * @param
-    * @return
-    * @throws
+    * @param that: the actorbasecollection that has to be compared with this
+    * @return an integer > 0 if this collection is > than that one
+                         < 0 if that collection is > than this one
+                         = 0 if the collections are the same
     */
   override def compare(that: ActorbaseCollection): Int = {
     (this.name + this.owner) compare (that.name + that.owner)
   }
 
-  /**
-    * Insert description here
+  /** 
+    * override the euqals method of the Any trait. This methods
+    * compares two actorbasecollections objects. 
     *
-    * @param
-    * @return
-    * @throws
+    * @param o: Any object, if the object passed is not an Actorbasecollection the method return false
+    * @return true if the param passed is the same object as this Actorbasecollection, false otherwise
     */
   override def equals(o: Any) = o match {
     case that: ActorbaseCollection => that.uuid.equals(this.uuid)
@@ -173,11 +162,9 @@ case class ActorbaseCollection (private var name: String,
   }
 
   /**
-    * Insert description here
+    * Method that overrides the Any class method hashCode
     *
-    * @param
-    * @return
-    * @throws
+    * @return a String representing the hashCode
     */
   override def hashCode = uuid.hashCode
 

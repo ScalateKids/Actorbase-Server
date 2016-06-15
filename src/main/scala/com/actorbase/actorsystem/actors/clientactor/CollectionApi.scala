@@ -61,6 +61,10 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     * PUT /collections/customers/aracing     - Update
     * DELETE /collections/customers/aracing  - Delete key aracing from customers
     *
+    * @param main: an ActorRef pointing to a main actor
+    * @param authProxy an ActorRef pointing to a AuthActor actor
+    ° @return a spray Route type object
+    *
     */
   def collectionsDirectives(main: ActorRef, authProxy: ActorRef): Route = {
 
