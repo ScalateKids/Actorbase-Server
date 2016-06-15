@@ -30,6 +30,7 @@
 package com.actorbase.actorsystem.actors.warehouseman
 
 import akka.actor.{Actor, ActorLogging, Props}
+import com.typesafe.config.ConfigFactory
 import java.io.File
 
 import com.actorbase.actorsystem.messages.WarehousemanMessages._
@@ -43,6 +44,7 @@ object Warehouseman {
 
 class Warehouseman(collectionUUID: String = "namecollection-owner") extends Actor with ActorLogging {
 
+  private val config = ConfigFactory.load().getConfig("persistence")
   private val wareUUID = java.util.UUID.randomUUID.toString
   private val rootFolder = "actorbasedata/"
 
@@ -53,7 +55,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
     case message: WarehousemanMessage => message match {
 
       case Init(collection, owner) =>
-        val key = "Dummy implicit k"
+        val key = config getString("encryption-key")
         val encryptedMetaFile = new File(rootFolder + collectionUUID + "/collection-meta.actbmeta")
         if (!encryptedMetaFile.exists) {
           encryptedMetaFile.getParentFile.mkdirs
@@ -68,7 +70,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         */
       case Save(map) =>
         log.info("warehouseman: save " + rootFolder + collectionUUID + "/" + wareUUID + ".actb")
-        val key = "Dummy implicit k"
+        val key = config getString("encryption-key")
         val encryptedShardFile = new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb")
         encryptedShardFile.getParentFile.mkdirs
         CryptoUtils.encrypt(key, map, encryptedShardFile)
@@ -101,7 +103,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         */
       case Read(f) =>
         log.info("warehouseman: read")
-        val key = "Dummy implicit k"
+        val key = config getString("encryption-key")
         val m = CryptoUtils.decrypt[Map[String, Any]](key, f)
         sender ! m // ok reply
     }
