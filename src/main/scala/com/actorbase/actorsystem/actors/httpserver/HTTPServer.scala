@@ -31,7 +31,7 @@ package com.actorbase.actorsystem.actors.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
-import com.actorbase.actorsystem.messages.AuthActorMessages.AddCollectionTo
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, UpdateCredentials }
 import spray.can.Http
 import akka.event.LoggingReceive
 
@@ -90,7 +90,6 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
                   main ! CreateCollection(ActorbaseCollection(name, owner))
                 case user if (user.getName == "usersdata.shadow") =>
                   usersmap ++= CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user)
-                //CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user) map { x => if (x._1 != "admin") authProxy ! AddCredentials(x._1, x._2) }
                 case contributor if (contributor.getName == "contributors.shadow") =>
                   contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]]("Dummy implicit k", contributor)
                 case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", x)
@@ -99,10 +98,6 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
           }
           val collection = new ActorbaseCollection(name, owner)
           data += (collection -> dataShard)
-          // dataShard.foreach {
-          //   case (k, v) =>
-          //     main ! InsertTo(owner, collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
-          // }
           contributors.foreach {
             case (k, v) =>
               v.foreach (entry => authProxy ! AddCollectionTo(k, entry)) // check and remove cast
@@ -118,29 +113,20 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
               main ! InsertTo(k.getOwner, k, kk, vv.asInstanceOf[Array[Byte]], false)
           }
       }
-      // dataShard.foreach {
-      //   case (k, v) =>
-      //     main ! InsertTo(owner, collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
-      // }
       dataShard = dataShard.empty
-      // should probably delete actorbasedata here
-      //private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
 
       def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
       getRecursively( root ).foreach { f =>
         if (!f.getName.endsWith("shadow") && f.getName != "usersdata")
           f.delete()
       }
-      // root.delete()
 
-      // persist the users
-      usersmap.map { x =>
+      usersmap map { x =>
         if (x._1 != "admin")
           authProxy ! AddCredentials(x._1, x._2)
+        else authProxy ! UpdateCredentials(x._1, "Actorb4se", x._2)
       }
 
-      //}
-      //root.delete
     } else log.warning("Directory not found!")
   }
 

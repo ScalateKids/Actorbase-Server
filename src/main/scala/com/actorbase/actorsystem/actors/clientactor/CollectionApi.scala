@@ -100,22 +100,27 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     pathPrefix("collections" / "\\S+".r) { collection =>
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-          val coll = ActorbaseCollection(collection, authInfo.user.login)
           get {
-            complete {
-              (main ? GetFrom(authInfo.user.login, coll))
-                .mapTo[Either[String, MapResponse]]
-                .map { result =>
-                result match {
-                  case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
-                  case Right(map) => map: ToResponseMarshallable
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              complete {
+                (main ? GetFrom(authInfo.user.login, coll))
+                  .mapTo[Either[String, MapResponse]]
+                  .map { result =>
+                  result match {
+                    case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                    case Right(map) => map: ToResponseMarshallable
+                  }
                 }
               }
             }
           } ~
           post {
-            complete {
-              (main ? CreateCollection(coll)).mapTo[String]
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              complete {
+                (main ? CreateCollection(coll)).mapTo[String]
+              }
             }
           } ~
           delete {

@@ -113,6 +113,7 @@ class AuthActor extends Actor with ActorLogging {
           val salt = password.bcrypt(generateSalt)
           if (!profiles.contains(Profile(username, salt))) {
             log.info(s"$username added")
+            sender ! "OK"
             persist(profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
             context become running (profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
           }
@@ -129,9 +130,18 @@ class AuthActor extends Actor with ActorLogging {
         * the requested username
         */
       case UpdateCredentials(username, password, newPassword) =>
-        val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
-        val salt = newPassword.bcrypt(generateSalt)
-        optElem map (elem => context become running (profiles - elem + elem.copy(password = salt))) getOrElse (sender ! "None")
+        val passwordCheck = """^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$""".r
+        val check = passwordCheck findFirstIn newPassword
+        check map { p =>
+          val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
+          val salt = newPassword.bcrypt(generateSalt)
+          optElem map { elem =>
+            sender ! "OK"
+            sender ! Stop
+            persist(profiles + Profile(username, salt, elem.getCollections))
+            context become running (profiles - elem + elem.copy(password = salt))
+          } getOrElse sender ! "UndefinedUsername"
+        } getOrElse sender ! "WrongNewPassword"
 
       /**
         * Insert description here
@@ -144,7 +154,9 @@ class AuthActor extends Actor with ActorLogging {
         val optElem = profiles find (_.username == username)
         optElem map { x =>
           persist(profiles - x)
-          context become running(profiles - x) } getOrElse log.error(s"AuthActor: $username elem not found")
+          sender ! "OK"
+          context become running(profiles - x)
+        } getOrElse sender ! "UndefinedUser"
 
       /**
         * Insert description here
