@@ -68,9 +68,17 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
 
   val p = TestProbe()
 
+  "nothing should" should {
+    "its true" in {
+      assert( 1==1 )
+    }
+  }
+
   "Main actor" should{
 
-    val mainActorRef = TestActorRef[Main]
+    val authProxy = TestActorRef[AuthActor]
+
+    val mainActorRef = TestActorRef( new Main(authProxy) )
 
     /*"list all collections" in {
       p.send( mainActorRef, ListCollections("test") )
@@ -103,16 +111,14 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
       assert( value != testMessage.asInstanceOf[Response].response)
     }
   
-  /*it should{
-    "add a contributor" in {
+  /*"add a contributor" in {
     p.send( mainActorRef, addContributor(new ActorbaseCollection("testCollection", "anonymous"), "testContributor"))
     p.send( mainActorRef, InsertTo("admin", new ActorbaseCollection("testCollection", "anonymous"), "test"))
     //get e controlla e fine test
-  }
   } TODO quando sarà fatta*/
   }
 
-
+/*
   "Storefinder Actor" should {
     
     val actbColl = new ActorbaseCollection("testOwner","testName")
@@ -159,7 +165,7 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     }
   
   }
-
+*/
  /* "Manager Actor" should{
 /*
     val collName = "testColl"
