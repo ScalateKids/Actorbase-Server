@@ -115,12 +115,28 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
       // case _: Exception                => Escalate
     }
 
+  /**
+    * Receive method of the Storekeper actor, it does different things based on the message it receives:<br>
+    * _InitMn: when the actor receives this message it initialize its corresponding manager actor.<br>
+    * _GetItem: when the actor receives this message it returns a value associated with the input key<br>
+    * _GetAll: when the actor receives this message it returns all its contents<br>
+    * _RemoveItem: when the actor receives this message it remove a value associated with the input key</br>
+    * _ins: when the actor receives this message it insert an item to the collection; it can or not allow the update of the item depending on what is specified by the boolean param update</br>
+    * _Persist: when the actor receives this message it persists its data to disk.<br>
+    *
+    */
+
   def receive = running(Map[String, Array[Byte]]().empty)
 
   def running(data: Map[String, Array[Byte]]): Receive = {
 
     case message: StorekeeperMessage => message match {
 
+      /**
+        * InitMn message, this actor will initialize its corresponding manager actor
+        *
+        * @param mn a manager actor rapresenting the corresponding manager
+         */
       case InitMn(mn) =>
         log.info("new MN received")
         manager = Some(mn)
