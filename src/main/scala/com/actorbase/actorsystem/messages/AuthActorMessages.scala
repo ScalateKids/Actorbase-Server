@@ -39,6 +39,11 @@ sealed trait AuthActorMessages
  * Message used to ask to the AuthActor to return a list containing all the users of the system
  */
 case object ListUsers extends AuthActorMessages
+
+case object Save extends AuthActorMessages
+
+case object Clean extends AuthActorMessages
+
 /**
  * Message used to ask at AuthActor to add new Credentials
  * @param username a string with username of the new credential to add
@@ -53,7 +58,9 @@ final case class AddCredentials(username: String, password: String) extends Auth
  */
 final case class UpdateCredentials(username: String, password: String, newPassword: String) extends AuthActorMessages
 /**
+
  * Message used to remove an existing credential
+
  * @param username a string with the username to remove
  */
 final case class RemoveCredentials(username: String) extends AuthActorMessages
@@ -79,3 +86,5 @@ final case class RemoveCollectionFrom(username: String, collection: ActorbaseCol
  * @param username a string with the username of the associated collection that will be displayed
  */
 final case class ListCollectionsOf(username: String) extends AuthActorMessages
+
+final case class Init(username: String, password: String) extends AuthActorMessages

@@ -100,6 +100,11 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             complete {
               (authProxy ? ListCollectionsOf(authInfo.user.login)).mapTo[ListResponse]
             }
+          } ~
+          delete {
+            complete {
+              (main ? RemoveFrom(authInfo.user.login, "", "")).mapTo[String]
+            }
           }
         }
       }
@@ -143,30 +148,38 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       pathSuffix("\\S+".r) { key =>
         pathEndOrSingleSlash {
           authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-            val coll = ActorbaseCollection(collection, authInfo.user.login)
-            get {
-              complete {
-                (main ? GetFrom(authInfo.user.login, coll, key))
-                  .mapTo[Either[String, Response]]
-                  .map { result =>
-                  result match {
-                    case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
-                    case Right(response) => response: ToResponseMarshallable
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              get {
+                complete {
+                  (main ? GetFrom(authInfo.user.login, coll, key))
+                    .mapTo[Either[String, Response]]
+                    .map { result =>
+                    result match {
+                      case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                      case Right(response) => response: ToResponseMarshallable
+                    }
                   }
                 }
               }
             } ~
             delete {
-              complete {
-                (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection, key)).mapTo[String]
+              headerValueByName("owner") { owner =>
+                complete {
+                  (main ? RemoveFrom(authInfo.user.login, owner + collection, key)).mapTo[String]
+                }
               }
             } ~
             post {
               decompressRequest() {
-                entity(as[Array[Byte]]) { value =>
-                  detach() {
-                    complete {
-                      (main ? InsertTo(authInfo.user.login, coll, key, value)).mapTo[String]
+                headerValueByName("owner") { owner =>
+
+                  entity(as[Array[Byte]]) { value =>
+                    detach() {
+                      complete {
+                        val coll = ActorbaseCollection(collection, owner)
+                          (main ? InsertTo(authInfo.user.login, coll, key, value)).mapTo[String]
+                      }
                     }
                   }
                 }
@@ -174,10 +187,13 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             } ~
             put {
               decompressRequest() {
-                entity(as[Array[Byte]]) { value =>
-                  detach() {
-                    complete {
-                      (main ? InsertTo(authInfo.user.login, coll, key, value, true)).mapTo[String]
+                headerValueByName("owner") { owner =>
+                  entity(as[Array[Byte]]) { value =>
+                    detach() {
+                      complete {
+                        val coll = ActorbaseCollection(collection, owner)
+                          (main ? InsertTo(authInfo.user.login, coll, key, value, true)).mapTo[String]
+                      }
                     }
                   }
                 }

@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
@@ -108,4 +108,4 @@ class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
   override def afterAll {
     TestKit.shutdownActorSystem(system)
   }
-}
+}*/

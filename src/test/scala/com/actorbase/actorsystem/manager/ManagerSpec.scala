@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.manager
 
 import akka.util.Timeout
@@ -59,9 +59,9 @@ class ManagerSpec extends TestKit(ActorSystem("testSystem"))
 
   val collName = "testColl"
   val collOwner = "testOwner"
-  val storekeepers = system.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
+  /*val storekeepers = system.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
     ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props( collName, collOwner)) )
-
+*/
   val mnRef = TestActorRef(new Manager( collName, collOwner, storekeepers ))
   val p = TestProbe()
 
@@ -82,4 +82,4 @@ class ManagerSpec extends TestKit(ActorSystem("testSystem"))
   override def afterAll {
     TestKit.shutdownActorSystem(system)
   }
-}
+}*/
