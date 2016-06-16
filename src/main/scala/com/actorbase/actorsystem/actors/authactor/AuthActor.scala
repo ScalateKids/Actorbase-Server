@@ -50,14 +50,14 @@ class AuthActor extends Actor with ActorLogging {
 
   private val config = ConfigFactory.load().getConfig("persistence")
   // the rootfolder in which to store the users data
-  private val rootFolder = "actorbasedata/usersdata/"
+  private val rootFolder = config.getString("save-folder") + "usersdata/"
 
   /**
     *  Override of the preStart Actor method
     */
-  override def preStart = {
-    persist(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
-  }
+  // override def preStart = {
+  //   persist(Set[Profile](Profile("admin", "Actorb4se", Set.empty[ActorbaseCollection])))
+  // }
 
   /**
     * Override of the supervisionStrategy Actor method
@@ -117,6 +117,15 @@ class AuthActor extends Actor with ActorLogging {
 
     case message: AuthActorMessages => message match {
 
+      case Clean =>
+        context become running(profiles.empty)
+
+      case Save =>
+        persist(profiles)
+
+      case Init(username, password) =>
+        context become running (profiles + Profile(username, password, Set.empty[ActorbaseCollection]))
+
       /**
         * Insert description here
         *
@@ -147,6 +156,7 @@ class AuthActor extends Actor with ActorLogging {
         * the requested username
         */
       case UpdateCredentials(username, password, newPassword) =>
+        println(username + " " + password + " " + newPassword)
         val passwordCheck = """^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$""".r
         val check = passwordCheck findFirstIn newPassword
         check map { p =>
@@ -155,7 +165,7 @@ class AuthActor extends Actor with ActorLogging {
           optElem map { elem =>
             sender ! "OK"
             sender ! Stop
-            persist(profiles + Profile(username, salt, elem.getCollections))
+            persist(profiles - elem + elem.copy(password = salt))
             context become running (profiles - elem + elem.copy(password = salt))
           } getOrElse sender ! "UndefinedUsername"
         } getOrElse sender ! "WrongNewPassword"
@@ -183,6 +193,8 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case Authenticate(username, password) =>
+        println(username + " " + password)
+        println(profiles)
         val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
         optElem map (_ => if (username == "admin") sender ! "Admin" else sender ! "Common") getOrElse sender ! "None"
 

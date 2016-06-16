@@ -40,8 +40,8 @@ sealed abstract trait MainMessage
  * @param requester the username of who made the requester
  * @param collection the collection where data will be Insert
  * @param key the key of insertion data
- * @param value the data that will be inserted 
- * @param update boolean flag to allow overwrite 
+ * @param value the data that will be inserted
+ * @param update boolean flag to allow overwrite
  */
 final case class InsertTo(requester: String, collection: ActorbaseCollection, key: String, value: Array[Byte], update: Boolean = false) extends MainMessage
 /**

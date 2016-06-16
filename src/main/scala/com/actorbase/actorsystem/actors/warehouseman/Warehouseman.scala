@@ -72,10 +72,6 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
           CryptoUtils.encrypt(key, Map("collection" -> collection, "owner" -> owner), encryptedMetaFile)
         }
 
-      /**
-       * Save a shard of a collection represented by the TreeMap stored by a Storekeeper
-       * @param save a TreeMap representing Storekeeper data
-       */
       case Save(map) =>
         log.info("warehouseman: save " + rootFolder + collectionUUID + "/" + wareUUID + ".actb")
         val key = config getString("encryption-key")
