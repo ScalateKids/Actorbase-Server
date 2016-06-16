@@ -45,7 +45,7 @@ final case class Init(collection: String, owner: String) extends WarehousemanMes
  * Message for recall a save operation on drive
  * @param map map with data to save on permanent memory
  */
-class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
+final case class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
 /**
  * Message for ask at warehouseman to read data drom permanent memory
  * @param file file that warehouseman will read
