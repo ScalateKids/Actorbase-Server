@@ -42,7 +42,7 @@ import scala.concurrent.duration._
 import java.io.File
 
 /**
-  * Class that represents an AuthAtcor. This actor is a singleton cluster actor used to
+  * Class that represents an AuthActor. This actor is a singleton cluster actor used to
   * store the users profiles data. It's also used to check the credential on the login attempts.
   * This actor is responsible to persist the users profile datas on the filesystem
   */
@@ -69,7 +69,7 @@ class AuthActor extends Actor with ActorLogging {
 
   /**
     * Override of the receive Actor method. Set the actor in the running state with a default Set of Profiles,
-    * letting him to receive a variety of messages explained in the running method scaladoc
+    * letting him receive a variety of messages explained in the running method scaladoc
     */
   override def receive = running(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
 
@@ -96,24 +96,22 @@ class AuthActor extends Actor with ActorLogging {
   }
 
   /**
-    * Running state of the actor, while in this state the actor can receive this messages:
+    * Running state of the actor, while in this state the actor can receive this messages:<br>
     * _AddCredentials: when the actor receives this message it tries to register a user to the system adding
-    *                  the Profile passed as message parameter to his data structure.
-    * _UpdateCredentials: when the actor receives this message it tries to update a Profile
+    *                  the Profile passed as message parameter to his data structure.<br>
+    * _UpdateCredentials: when the actor receives this message it tries to update a Profile <br>
     * _RemoveCredentials: when the actor receives this message it tries to remove the Profile
-    *                     passed as parameter of the message
+    *                     passed as parameter of the message<br>
     * _Authenticate: when the actor receives this message it checks it the credentials passed as parameter of
-    *                the message are valid credentials already registered on the system
+    *                the message are valid credentials already registered on the system<br>
     * _AddCollectionTo: when the actor receives this message it tries to add the collection passed as message
-    *                   parameter to the user passed
+    *                   parameter to the user passed<br>
     * _RemoveCollectionFrom: when the actor receives this message it tries to remove the collection passed as message
-    *                        parameter from the user passed
-    * _ListCollectionOf: when the actor receives this message it returns all the collections name
+    *                        parameter from the user passed<br>
+    * _ListCollectionOf: when the actor receives this message it returns all the collections name<br>
     * _ListUsers: when the actor receives this message it returns the list of all the users registrated on the system.
     *
-    * @param
-    * @return
-    * @throws
+    * @param profiles: Set of Profiles representing the users stored in this actor
     */
   def running(profiles: Set[Profile]): Receive = {
 

@@ -31,11 +31,23 @@ package com.actorbase.actorsystem.messages.WarehousemanMessages
 import java.io.File
 
 sealed abstract trait WarehousemanMessage
-
+/**
+ * Message used for ask to warehouseman to clean data on disk
+ */
 final case object Clean extends WarehousemanMessage
-
+/**
+ * Message for initialize collection on drive
+ * @param collection name of collection to store
+ * @param owner string with name of the collection owner
+ */
 final case class Init(collection: String, owner: String) extends WarehousemanMessage
-
+/** 
+ * Message for recall a save operation on drive
+ * @param map map with data to save on permanent memory
+ */
 final case class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
-
+/**
+ * Message for ask at warehouseman to read data drom permanent memory
+ * @param file file that warehouseman will read
+ */
 final case class Read(file: File) extends WarehousemanMessage

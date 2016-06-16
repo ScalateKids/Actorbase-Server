@@ -47,6 +47,9 @@ import com.actorbase.actorsystem.messages.MainMessages.{InsertTo, GetFrom, Remov
 import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.messages.AuthActorMessages.ListCollectionsOf
 
+/**
+  * Trait used to handle routes that are related to ActorbaseCollection
+  */
 trait CollectionApi extends HttpServiceBase with Authenticator {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
