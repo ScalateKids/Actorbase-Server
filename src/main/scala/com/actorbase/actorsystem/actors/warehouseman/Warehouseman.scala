@@ -48,14 +48,22 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
   private val wareUUID = java.util.UUID.randomUUID.toString
   private val rootFolder = config getString "save-folder"
  /**
-  * Function that allow to the actor to recive message and switch it to the right operation 
-  * making a decision based on message type
-  */
+    * Receive method of the Warehouseman actor, it does different things based on the message it receives:<br>
+    * _Init: when the actor receives this message it inserts the item in the collection requested by the user.<br>
+    * _Save: when the actor receives this message it Save a shard of a collection represented by the TreeMap stored by a storekeeper <br>
+    * _Clean: when the actor receives this message it Delete a file with the Range with the keys passed in<br>
+    * _Read: when the actor receives this message it Read a file from filesystem and decrypt the content extracting the map shard contained</br>
+    *
+    */
 
   def receive = {
 
     case message: WarehousemanMessage => message match {
-
+      /**
+       * Initialize collection by name of the collection and his howner
+       * @param collection name of the collection to initialize
+       * @param owner owner's collection name
+       */
       case Init(collection, owner) =>
         val key = config getString("encryption-key")
         val encryptedMetaFile = new File(rootFolder + collectionUUID + "/collection-meta.actbmeta")
