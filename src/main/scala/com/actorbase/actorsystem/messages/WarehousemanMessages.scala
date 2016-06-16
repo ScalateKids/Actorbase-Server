@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids 
   * @version 1.0
   * @since 1.0
   */
@@ -32,22 +32,22 @@ import java.io.File
 
 sealed abstract trait WarehousemanMessage
 /**
- * Message used for ask to warehouseman to clean data on disk
+ * Message used to ask to warehouseman to clean data on disk
  */
 final case object Clean extends WarehousemanMessage
 /**
- * Message for initialize collection on drive
+ * Message used to initialize collection on drive
  * @param collection name of collection to store
  * @param owner string with name of the collection owner
  */
 final case class Init(collection: String, owner: String) extends WarehousemanMessage
 /** 
- * Message for recall a save operation on drive
+ * Message used to recall a save operation on drive
  * @param map map with data to save on permanent memory
  */
 final case class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
 /**
- * Message for ask at warehouseman to read data drom permanent memory
+ * Message used to ask at warehouseman to read data from permanent memory
  * @param file file that warehouseman will read
  */
 final case class Read(file: File) extends WarehousemanMessage

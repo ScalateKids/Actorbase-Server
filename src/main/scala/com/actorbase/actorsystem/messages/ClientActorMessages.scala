@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids 
   * @version 1.0
   * @since 1.0
   */
@@ -40,7 +40,7 @@ case object ListResponse {
   implicit val goJson = jsonFormat1(ListResponse.apply)
 }
 /**
- * Message that rappresent a server response
+ * Message that represent a server response
  * @param response the response of the server in byteArray
  */
 final case class Response(response: Array[Byte])
