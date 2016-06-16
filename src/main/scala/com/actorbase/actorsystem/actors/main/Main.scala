@@ -45,17 +45,14 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 
 /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
+  * Class that represents a Main actor. This actor is responsible of managing
+  * incoming requests.
   */
 object Main {
 
   /**
     * Props method, used to build an instance of Main actor
-    *
+    * @param authProxy ActorRef representing the Authenticator actor that will be used by the Main actor
     * @return an object of type Props, usable directly with an actorsystem running
     */
   def props(authProxy: ActorRef) = Props(classOf[Main], authProxy)
@@ -96,36 +93,36 @@ object Main {
 }
 
 /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
+  * Class that represents a Main actor. This actor is responsible of managing
+  * incoming requests.
   */
 class Main(authProxy: ActorRef) extends Actor with ActorLogging {
 
   private var sfMap = Map[ActorbaseCollection, ActorRef]().empty
   private var requestMap = Map[String, mutable.Map[String, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
 
+
+
+  /**
+    * Method that overrides the supervisorStrategy method.
+   */
+
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: Exception      => Resume
-        // case _: NullPointerException     => Restart
-        // case _: IllegalArgumentException => Stop
-        // case _: Exception                => Escalate
+      case _: Exception => Resume
     }
 
   /**
-    * Method that create a collection in Actorbase.
+    * Method that creates a collection in Actorbase.
     *
-    * @param name the name of the collection
-    * @param owner the owner of the collection
+    * @param collection an ActorbaseCollection representing the collection that needs to be created
     * @return an ActorRef pointing to the Storefinder just created that maps the collection
     */
   private def createCollection(collection: ActorbaseCollection): Option[ActorRef] = {
     if (sfMap.contains(collection))
       sfMap get collection // to be tested, probably uses equals, fuck up with different sizes
     else {
+      collection.addContributor("admin", ActorbaseCollection.ReadWrite)
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
       sfMap += (collection -> sf)
@@ -135,7 +132,26 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
     }
   }
 
+  /**
+    * Method that creates a collection in Actorbase.
+    *
+    * @return an Int value representing the number of Storefinders contained in this Main actor
+    */
+
   def getSize(): Int = sfMap.size
+
+  /**
+    * Receive method of the Main actor, it does different things based on the message it receives:<br>
+    * _InsertTo: when the actor receives this message it inserts the item in the collection requested by the user.<br>
+    * _CreateCollection: when the actor receives this message it creates the collection inserted by the user <br>
+    * _GetFrom: when the actor receives this message it sends back the item requested by the user<br>
+    * _CompleteTransaction: when the actor receives this message it awaits for Storefinder response of all storekeepers, expecting
+    * a given number of response, equals to the number of key-value pairs of the collection requested<br>
+    * _RemoveFrom: when the actor receives this message it removes the item requested by the user<br>
+    * _AddContributor: when the actor receives this message it adds the specified user to the contributor list of the defined by the user<br>
+    * _RemoveContributor: when the actor receives this message it removes the specified user to the contributor list of the defined by the user<br>
+    *
+    */
 
   def receive: Receive = {
 
@@ -196,7 +212,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
               if (coll._1.getSize > 0)
                 sfMap get collection map (_ forward GetAllItems) getOrElse sender ! Left("UndefinedCollection")
               else
-                sender ! Right(MapResponse(collection.getName, Map[String, Array[Byte]]()))
+                sender ! Right(MapResponse(collection.getOwner, collection.getName, Map[String, Array[Byte]]()))
             } else sender ! Left("UndefinedCollection")
           } getOrElse sender ! Left("UndefinedCollection")
         }
@@ -219,7 +235,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
             colMap._2 ++= items
             log.info(s"${colMap._2.size} - ${collection.getSize}")
             if (colMap._2.size == collection.getSize) {
-              clientRef ! Right(MapResponse(collection.getName, colMap._2.toMap))
+              clientRef ! Right(MapResponse(collection.getOwner, collection.getName, colMap._2.toMap))
               colMap._2.clear
               ref._2.-(collection.getUUID)
             }
@@ -235,19 +251,38 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         *
         */
       case RemoveFrom(requester, uuid, key) =>
-        if (key.nonEmpty)
-          sfMap.find(_._1.getUUID == uuid) map { c =>
-            if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
-              c._2 forward Remove(key)
-            else sender ! "NoPrivileges"
-          } getOrElse sender ! "UndefinedCollection"
-        else {
-          sfMap find (_._1.getUUID == uuid) map { coll =>
-            if (requester == coll._1.getOwner || coll._1.containsReadWriteContributor(requester)) {
-              coll._2 ! PoisonPill
-              sfMap = sfMap - coll._1
-            } else sender ! "NoPrivileges"
-          } getOrElse sender ! "UndefinedCollection"
+        if (uuid.nonEmpty) {
+          if (key.nonEmpty)
+            sfMap.find(_._1.getUUID == uuid) map { c =>
+              if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
+                c._2 forward Remove(key)
+              else sender ! "NoPrivileges"
+            } getOrElse sender ! "UndefinedCollection"
+          else {
+            sfMap find (_._1.getUUID == uuid) map { coll =>
+              if (requester == coll._1.getOwner || coll._1.containsReadWriteContributor(requester)) {
+                coll._2 ! PoisonPill
+                sfMap = sfMap - coll._1
+                sender ! "OK"
+                authProxy ! RemoveCollectionFrom(requester, coll._1)
+              } else sender ! "NoPrivileges"
+            } getOrElse sender ! "UndefinedCollection"
+          }
+        } else {
+          if (requester == "admin") {
+            sfMap foreach {
+              case (k, v) =>
+                v ! PoisonPill
+                authProxy ! RemoveCollectionFrom("admin", k)
+                sender ! "OK"
+            }
+          }
+          else {
+            sfMap filter (k => k._1.getOwner == requester) map {x =>
+              x._2 ! PoisonPill
+              authProxy ! RemoveCollectionFrom(requester, x._1)
+            }
+          }
         }
 
       /**

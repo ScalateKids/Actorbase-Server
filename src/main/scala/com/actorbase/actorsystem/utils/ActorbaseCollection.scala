@@ -74,10 +74,10 @@ case class ActorbaseCollection (private var name: String,
   def getSize: Int = size
 
   /**
-    * Check if the user passed as param has read permission 
-    * on this actorbasecollection 
+    * Check if the user passed as param has read permission
+    * on this actorbasecollection
     *
-    * @param contributor: the username of the user that has to be checked 
+    * @param contributor: the username of the user that has to be checked
     * @return true if the user has read permission on the actorbasecollection
     *         false otherwise
     */
@@ -93,10 +93,10 @@ case class ActorbaseCollection (private var name: String,
   }
 
   /**
-    * Check if the user passed as param has read and write permission 
-    * on this actorbasecollection 
+    * Check if the user passed as param has read and write permission
+    * on this actorbasecollection
     *
-    * @param contributor: the username of the user that has to be checked 
+    * @param contributor: the username of the user that has to be checked
     * @return true if the user has read and write permission on the actorbasecollection
     *         false otherwise
     */
@@ -112,15 +112,15 @@ case class ActorbaseCollection (private var name: String,
   }
 
   /**
-    * Add a contributor to this actorbase collection 
+    * Add a contributor to this actorbase collection
     *
-    * @param username: the username of a user that has to be added as a contributor 
+    * @param username: the username of a user that has to be added as a contributor
     * @param permission: read or read and write permission
     */
   def addContributor(username: String, permission: ActorbaseCollection.Permissions): Unit = contributors += (username -> permission)
 
   /**
-    * Remove a contributor from this actorbase collection 
+    * Remove a contributor from this actorbase collection
     *
     * @param username: the username of a user that has to removed from the contributors
     */
@@ -132,26 +132,26 @@ case class ActorbaseCollection (private var name: String,
   def incrementSize = size += 1
 
   /**
-    * Decrement the size of this actorbasecollection by 1 
+    * Decrement the size of this actorbasecollection by 1
     */
   def decrementSize = size -= 1
 
   /**
     * override the compare method of comparable trait. This methods
-    * compares two actorbasecollections object 
+    * compares two actorbasecollections object
     *
     * @param that: the actorbasecollection that has to be compared with this
     * @return an integer > 0 if this collection is > than that one
-                         < 0 if that collection is > than this one
-                         = 0 if the collections are the same
+    < 0 if that collection is > than this one
+    = 0 if the collections are the same
     */
   override def compare(that: ActorbaseCollection): Int = {
     (this.name + this.owner) compare (that.name + that.owner)
   }
 
-  /** 
+  /**
     * override the euqals method of the Any trait. This methods
-    * compares two actorbasecollections objects. 
+    * compares two actorbasecollections objects.
     *
     * @param o: Any object, if the object passed is not an Actorbasecollection the method return false
     * @return true if the param passed is the same object as this Actorbasecollection, false otherwise

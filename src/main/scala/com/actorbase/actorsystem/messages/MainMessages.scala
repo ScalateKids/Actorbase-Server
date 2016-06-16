@@ -35,17 +35,53 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
 
 sealed abstract trait MainMessage
-
+/**
+ * Message for request to do an insertion operation in a collection
+ * @param requester the username of who made the requester
+ * @param collection the collection where data will be Insert
+ * @param key the key of insertion data
+ * @param value the data that will be inserted
+ * @param update boolean flag to allow overwrite
+ */
 final case class InsertTo(requester: String, collection: ActorbaseCollection, key: String, value: Array[Byte], update: Boolean = false) extends MainMessage
-
+/**
+ * Message for get data from a collection
+ * @param requester the username of who made the request
+ * @param collection the collection where the data will be got
+ * @param key the key of the value requested
+ */
 final case class GetFrom(requester: String, collection: ActorbaseCollection, key: String = "") extends MainMessage
-
+/**
+ * Message for send pieces of collection from storekeeper to main for collect it and resend to client
+ * @param clientRef referment of who will recive the response from storekeeper
+ * @param collection the collection that contain the pieces to send
+ * @param key key of pieces to collect
+ */
 final case class CompleteTransaction(clientRef: ActorRef, collection: ActorbaseCollection, items: Map[String, Array[Byte]]) extends MainMessage with ControlMessage
-
+/**
+ * Message for remove item from collection
+ * @param requester a string with username of who made the remove request
+ * @param uud the id of the collection where data will be removed
+ * @param key the key of the data that will be removed
+ */
 final case class RemoveFrom(requester: String, uuid: String, key: String = "") extends MainMessage
-
+/**
+ * Message for add contributor in a collection
+ * @param requester string with username of who made the request
+ * @param username username to add at the collection contributor
+ * @param permission the permission of the new user in the collection
+ * @param uuid the id of the collection where the collaborator will added
+ */
 final case class AddContributor(requester: String, username: String, permission: Permissions, uuid: String) extends MainMessage
-
+/**
+ * Message for remove contributor from a collection
+ * @param requester string with username of who made the request
+ * @param username string with username that will be removed from contributor list of the colllection
+ * @param uuid string with collection id where the contributor will be removed
+ */
 final case class RemoveContributor(requester: String, username: String, uuid: String) extends MainMessage
-
+/**
+ * Message for create a new collection in actorbase
+ * @param collection the new collection that will be added to actorbase system
+ */
 final case class CreateCollection(collection: ActorbaseCollection) extends MainMessage

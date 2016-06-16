@@ -58,7 +58,7 @@ trait Authenticator {
     * Basic authentication method
     *
     * @param ec ExecutionContext
-    * @param main ActorRef representing a reference to the Main actor
+    * @param authProxy ActorRef representing a reference to the Authenticator actor
     * @return a BasicAuth uncrypted for a private area
     */
   def basicUserAuthenticator(implicit ec: ExecutionContext, authProxy: ActorRef): AuthMagnet[AuthInfo] = {
@@ -68,7 +68,7 @@ trait Authenticator {
       * a matching password against the one saved into the system
       *
       * @param userPass Option[UserPass] extract by the method authenticate
-      * @return a reference of Option[AuthInfo] containig the credentials
+      * @return a reference of Option[AuthInfo] containing the credentials
       * of the authenticated user
       */
     def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {

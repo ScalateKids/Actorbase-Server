@@ -47,7 +47,7 @@ object Manager {
 }
 
 /**
-  * Try to maintain the equilibrium inside the SKs by tracing the number of
+  * This class represent the Manager actor, it tries to maintain the equilibrium inside the SKs by tracing the number of
   * entries stored in each map. If some SK actor is under heavy load, (number of
   * entries is beyond a given threshold) they will create new actor of type SK
   * to properly redistribute that load and add it to the SF router.
@@ -59,6 +59,10 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
   var reports = 0
   val config = ConfigFactory.load().getConfig("storekeepers")
 
+  /**
+    * Method that overrides the supervisorStrategy method.
+    * */
+
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Exception      => Resume
@@ -66,7 +70,11 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
         // case _: IllegalArgumentException => Stop
         // case _: Exception                => Escalate
     }
-
+  /**
+    * Receive method of the Manager actor it inserts the item in the collection requested by the user.<br>
+    * _OneMore: when the actor receives this message it creates a new storekeeper <br>
+    *
+    */
   def receive = {
     case OneMore =>
       reports += 1

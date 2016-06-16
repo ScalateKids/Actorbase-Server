@@ -31,29 +31,17 @@ package com.actorbase.actorsystem.actors.clientactor
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
+  * Class that offers a UserApi
   */
 object UserApi {
 
   /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
+    * Class representing the logged user
     */
   case class User(login: String)
 
   /**
-    * Insert description here
-    *
-    * @param
-    * @return
-    * @throws
+    * Class representing additional informations about the logged user
     */
   case class AuthInfo(val user: User) {
 
@@ -62,7 +50,6 @@ object UserApi {
       * operations
       *
       * @return true if the user has admin privileges, false otherwise
-      * @throws
       */
     def hasAdminPermissions = {
       if (user.login == "admin") true

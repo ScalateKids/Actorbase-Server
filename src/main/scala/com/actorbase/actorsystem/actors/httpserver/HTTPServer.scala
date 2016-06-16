@@ -31,7 +31,7 @@ package com.actorbase.actorsystem.actors.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
-import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, UpdateCredentials }
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, UpdateCredentials, Init, Save, Clean }
 import spray.can.Http
 import akka.event.LoggingReceive
 
@@ -54,8 +54,8 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
   *
   * @param main: an ActorRef to a main actor
   * @param authProxy: an ActorRef to the AuthActor
-  * @param addess: a String representing the address on which actorbase has to listen on
-  * @param listenPort: a Int representing the port on which actorbase has to listen on
+  * @param address: a String representing the address on which Actorbase has to listen on
+  * @param listenPort: a Int representing the port on which Actorbase has to listen on
   */
 class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPort: Int) extends Actor
     with ActorLogging with SslConfiguration {
@@ -106,10 +106,10 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
           }
           val collection = new ActorbaseCollection(name, owner)
           data += (collection -> dataShard)
-          contributors.foreach {
-            case (k, v) =>
-              v.foreach (entry => authProxy ! AddCollectionTo(k, entry)) // check and remove cast
-          }
+          // contributors.foreach {
+          //   case (k, v) =>
+          //     v.foreach (entry => authProxy ! AddCollectionTo(k, entry)) // check and remove cast
+          // }
           dataShard = dataShard.empty
           contributors = contributors.empty
         }
@@ -129,22 +129,24 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
           f.delete()
       }
 
-      usersmap map { x =>
-        if (x._1 != "admin")
-          authProxy ! AddCredentials(x._1, x._2)
-        else authProxy ! UpdateCredentials(x._1, "Actorb4se", x._2)
-      }
+      authProxy ! Clean
 
+      usersmap map { x =>
+        // if (x._1 != "admin")
+        println(x._1 + " " + x._2)
+        authProxy ! Init(x._1, x._2)
+        // else authProxy ! UpdateCredentials(x._1, "Actorb4se", x._2)
+      }
     } else log.warning("Directory not found!")
+
+    authProxy ! Save
+
   }
 
   /**
     * Receive method, handle connection from outside, registering it to a
     * dedicated actor
     *
-    * @param
-    * @return
-    * @throws
     */
   def receive: Receive = LoggingReceive {
     case _: Http.Connected =>
@@ -164,7 +166,6 @@ object HTTPServer {
       if (args.nonEmpty)
         (args(0), args(1))
       else {
-       // println("errore")
         ("127.0.0.1", 2500)
       }
     val config = ConfigFactory.parseString(s"""

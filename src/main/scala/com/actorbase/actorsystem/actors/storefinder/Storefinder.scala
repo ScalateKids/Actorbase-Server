@@ -91,11 +91,14 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
     }
 
   /**
-    * Insert description here
+    * Receive method of the Storefinder actor, it does different things based on the message it receives:<br>
+    * _Ins: when the actor receives this message it insert a key/value into a designed collection<br>
+    * _Get: when the actor receives this message it forward to Storekeeper in order to retrieve a given key<br>
+    * _GetAllItem: when the actor receives this message it returns the entire collection mapped by this Storefinder<br>
+    * _rem: when the actor receives this message it removes an item with the given key</br>
+    * _UpdateCollectionSize: when the actor receives this message it Update the size of the collection that this storefinder represents increasing it if a insert performed, decreasing it in case of a remove</br>
+    * _PartialMapTransaction: when the actor receives this message it Await for storekeeper entire partial map returning, and forward it to main actor</br>
     *
-    * @param
-    * @return
-    * @throws
     */
   def receive: Receive = {
 
