@@ -48,6 +48,7 @@ trait SslConfiguration {
     * default SSLContext, since we want non-default settings in this example we
     * make a custom SSLContext available here
     *
+    * @return a SSLContext value
     */
   implicit def sslContext: SSLContext = {
     val keyStoreResource = sslConfig getString "certificate-file"
@@ -71,7 +72,7 @@ trait SslConfiguration {
     * If there is no ServerSSLEngineProvider in scope implicitly the HttpServer
     * uses the default one, since we want to explicitly enable cipher suites and
     * protocols we make a custom ServerSSLEngineProvider available here
-    *
+    * @return a ServerSSLEngineProvider
     */
   implicit def sslEngineProvider: ServerSSLEngineProvider = {
     ServerSSLEngineProvider { engine =>

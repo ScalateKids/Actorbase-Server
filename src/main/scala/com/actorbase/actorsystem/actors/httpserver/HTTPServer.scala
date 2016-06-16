@@ -54,8 +54,8 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
   *
   * @param main: an ActorRef to a main actor
   * @param authProxy: an ActorRef to the AuthActor
-  * @param addess: a String representing the address on which actorbase has to listen on
-  * @param listenPort: a Int representing the port on which actorbase has to listen on
+  * @param address: a String representing the address on which Actorbase has to listen on
+  * @param listenPort: a Int representing the port on which Actorbase has to listen on
   */
 class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPort: Int) extends Actor
     with ActorLogging with SslConfiguration {
@@ -142,9 +142,6 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     * Receive method, handle connection from outside, registering it to a
     * dedicated actor
     *
-    * @param
-    * @return
-    * @throws
     */
   def receive: Receive = LoggingReceive {
     case _: Http.Connected =>
