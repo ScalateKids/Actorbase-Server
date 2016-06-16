@@ -52,6 +52,7 @@ object Main {
 
   /**
     * Props method, used to build an instance of Main actor
+    * @param authProxy ActorRef representing the Authenticator actor that will be used by the Main actor
     * @return an object of type Props, usable directly with an actorsystem running
     */
   def props(authProxy: ActorRef) = Props(classOf[Main], authProxy)
@@ -94,10 +95,6 @@ object Main {
 /**
   * Class that represents a Main actor. This actor is responsible of managing
   * incoming requests.
-  */
-/**
-  * @constructor Creates a new Main actor with the Authenticator actor passed as parameter
-  * @param authProxy ActorRef representing the Authenticator actor that will be used by the Main actor
   */
 class Main(authProxy: ActorRef) extends Actor with ActorLogging {
 
