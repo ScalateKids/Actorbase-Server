@@ -36,18 +36,18 @@ sealed abstract trait WarehousemanMessage
  */
 final case object Clean extends WarehousemanMessage
 /**
- * Message to initialize collection on drive
+ * Message used to initialize collection on drive
  * @param collection name of collection to store
  * @param owner string with name of the collection owner
  */
 final case class Init(collection: String, owner: String) extends WarehousemanMessage
 /** 
- * Message to recall a save operation on drive
+ * Message used to recall a save operation on drive
  * @param map map with data to save on permanent memory
  */
 final case class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
 /**
- * Message to ask at warehouseman to read data from permanent memory
+ * Message used to ask at warehouseman to read data from permanent memory
  * @param file file that warehouseman will read
  */
 final case class Read(file: File) extends WarehousemanMessage
