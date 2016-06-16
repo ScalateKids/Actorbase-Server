@@ -106,7 +106,9 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
 
 
 
-  
+  /**
+    * Method that overrides the supervisorStrategy method.
+   */
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
