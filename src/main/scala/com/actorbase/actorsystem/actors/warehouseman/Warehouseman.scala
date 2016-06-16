@@ -31,7 +31,7 @@ package com.actorbase.actorsystem.actors.warehouseman
 
 import akka.actor.{Actor, ActorLogging, Props}
 import com.typesafe.config.ConfigFactory
-import java.io.File/home/francesco/actorbase/Actorbase-Server/src/main/scala/com/actorbase/actorsystem/actors/storekeeper/Storekeeper.scala:201:
+import java.io.File
 
 import com.actorbase.actorsystem.messages.WarehousemanMessages._
 import com.actorbase.actorsystem.utils.CryptoUtils
