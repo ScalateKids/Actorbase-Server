@@ -22,8 +22,7 @@
   * SOFTWARE.
   * <p/>
   *
-  * @author Scalatekids TODO DA CAMBIARE
-  * @version 1.0
+  * @author Scalatekids   * @version 1.0
   * @since 1.0
   */
 
