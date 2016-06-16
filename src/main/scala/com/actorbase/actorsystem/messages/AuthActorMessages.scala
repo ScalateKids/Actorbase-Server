@@ -40,42 +40,42 @@ sealed trait AuthActorMessages
  */
 case object ListUsers extends AuthActorMessages
 /**
- * Message used for ask at AuthActor to add new Credentials
+ * Message used to ask at AuthActor to add new Credentials
  * @param username a string with username of the new credential to add
  * @param password a string with the password of the user that will add
  */
 final case class AddCredentials(username: String, password: String) extends AuthActorMessages
 /**
- * Message used for ask at AuthActor to update an existing Credentials
+ * Message used to ask at AuthActor to update an existing Credentials
  * @param username a string with username of the credential to update
  * @param password a string with the old password of the credential that will be update, needed to authenticate it
  * @param newPassword a string with the new password that will replace old password
  */
 final case class UpdateCredentials(username: String, password: String, newPassword: String) extends AuthActorMessages
 /**
- * Message used for remove an existing credential 
+ * Message used to remove an existing credential
  * @param username a string with the username to remove
  */
 final case class RemoveCredentials(username: String) extends AuthActorMessages
 /**
- * Message used for do an authentication request
+ * Message used to do an authentication request
  * @param username a string with the username for the authentication request
  */
 final case class Authenticate(username: String, password: String) extends AuthActorMessages
 /**
- * Message used for the associate collection to an user
+ * Message used to the associate collection to an user
  * @param username a string with the username to associate at the collection
  * @param collection the collection to associate at the username
  */
 final case class AddCollectionTo(username: String, collection: ActorbaseCollection) extends AuthActorMessages
 /**
- * Message used for the dissociate collection to an user
+ * Message used to the dissociate collection to an user
  * @param username a string with the username to dissociate from collection
  * @param collection the collection to dissociate from the username
  */
 final case class RemoveCollectionFrom(username: String, collection: ActorbaseCollection) extends AuthActorMessages
 /**
- * Message used for list the collection associated with the username passed as parameter
+ * Message used to list the collection associated with the username passed as parameter
  * @param username a string with the username of the associated collection that will be displayed
  */
 final case class ListCollectionsOf(username: String) extends AuthActorMessages
