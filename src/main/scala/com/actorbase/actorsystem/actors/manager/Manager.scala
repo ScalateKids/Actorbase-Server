@@ -59,6 +59,10 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
   var reports = 0
   val config = ConfigFactory.load().getConfig("storekeepers")
 
+  /**
+    * Method that overrides the supervisorStrategy method.
+    * */
+
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Exception      => Resume
@@ -66,7 +70,11 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
         // case _: IllegalArgumentException => Stop
         // case _: Exception                => Escalate
     }
-
+  /**
+    * Receive method of the Manager actor it inserts the item in the collection requested by the user.<br>
+    * _OneMore: when the actor receives this message it creates a new storekeeper <br>
+    *
+    */
   def receive = {
     case OneMore =>
       reports += 1
