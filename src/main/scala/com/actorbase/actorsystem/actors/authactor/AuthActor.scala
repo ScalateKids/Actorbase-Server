@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -156,7 +156,6 @@ class AuthActor extends Actor with ActorLogging {
         * the requested username
         */
       case UpdateCredentials(username, password, newPassword) =>
-        println(username + " " + password + " " + newPassword)
         val passwordCheck = """^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$""".r
         val check = passwordCheck findFirstIn newPassword
         check map { p =>
@@ -193,8 +192,6 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case Authenticate(username, password) =>
-        println(username + " " + password)
-        println(profiles)
         val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
         optElem map (_ => if (username == "admin") sender ! "Admin" else sender ! "Common") getOrElse sender ! "None"
 
