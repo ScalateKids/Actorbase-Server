@@ -61,6 +61,10 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     * PUT /collections/customers/aracing     - Update
     * DELETE /collections/customers/aracing  - Delete key aracing from customers
     *
+    * @param main: an ActorRef pointing to a main actor
+    * @param authProxy an ActorRef pointing to a AuthActor actor
+    ° @return a spray Route type object
+    *
     */
   def collectionsDirectives(main: ActorRef, authProxy: ActorRef): Route = {
 
@@ -187,29 +191,9 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         get {
           complete("contr")
         } ~
-        delete {
+        post {
           decompressRequest() {
-            entity(as[Array[Byte]]) { value =>
-              detach() {
-                complete {
-                  val user = new String(value, "UTF-8")
-                  val uuid = user + collection
-                    (main ? RemoveContributor(authInfo.user.login, user, uuid)).mapTo[String]
-                }
-              }
-            }
-          }
-        }
-      }
-    } ~
-    pathSuffix("readwrite|read".r) { permission =>
-      pathEndOrSingleSlash {
-        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-          get {
-            complete(s"readcontr $permission")
-          } ~
-          post {
-            decompressRequest() {
+            headerValueByName("permission") { permission =>
               entity(as[Array[Byte]]) { value =>
                 detach() {
                   complete {
@@ -219,6 +203,19 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                       (main ? AddContributor(authInfo.user.login, user, ActorbaseCollection.Read, uuid)).mapTo[String]
                     else (main ? AddContributor(authInfo.user.login, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
                   }
+                }
+              }
+            }
+          }
+        } ~
+        delete {
+          decompressRequest() {
+            entity(as[Array[Byte]]) { value =>
+              detach() {
+                complete {
+                  val user = new String(value, "UTF-8")
+                  val uuid = user + collection
+                    (main ? RemoveContributor(authInfo.user.login, user, uuid)).mapTo[String]
                 }
               }
             }

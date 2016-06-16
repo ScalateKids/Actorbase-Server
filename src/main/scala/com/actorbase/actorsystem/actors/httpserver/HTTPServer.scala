@@ -49,28 +49,36 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
 
 /**
-  * Insert description here
+  * Class that represent a HTTPServer actor. This actor is responsible to accept the connection
+  * incoming from clients and to instantiate a ClientActor assigned to the client asking.
   *
-  * @param
-  * @return
-  * @throws
+  * @param main: an ActorRef to a main actor
+  * @param authProxy: an ActorRef to the AuthActor
+  * @param addess: a String representing the address on which actorbase has to listen on
+  * @param listenPort: a Int representing the port on which actorbase has to listen on
   */
 class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPort: Int) extends Actor
     with ActorLogging with SslConfiguration {
 
+  val config = ConfigFactory.load().getConfig("persistence")
   implicit val system = context.system
   IO(Http)(system) ! Http.Bind(self, interface = address, port = listenPort)
 
   val initLoad: Unit = loadData
 
   /**
+    * Loads all the data saved on the rootfolder onto the system. This is used to repopulate
+    * the database after a restart.
+    * The actor reads all the data from files and it proceed to send messages to the right actors
+    * to repopulate the server.
     *
+    * @return no return value
     */
   def loadData: Unit = {
     import com.actorbase.actorsystem.utils.CryptoUtils
     import java.io.File
 
-    val root = new File("actorbasedata/")
+    val root = new File(config getString "save-folder")
     var dataShard = Map[String, Any]().empty
     var usersmap = Map[String, String]().empty
     var contributors = Map.empty[String, Set[ActorbaseCollection]]
@@ -84,15 +92,15 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
             x => {
               x match {
                 case meta if meta.getName.endsWith("actbmeta") =>
-                  val metaData = CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", meta)
+                  val metaData = CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", meta)
                   metaData get "collection" map (c => name = c.asInstanceOf[String])
                   metaData get "owner" map (o => owner = o.toString())
                   main ! CreateCollection(ActorbaseCollection(name, owner))
                 case user if (user.getName == "usersdata.shadow") =>
-                  usersmap ++= CryptoUtils.decrypt[Map[String, String]]("Dummy implicit k", user)
+                  usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
                 case contributor if (contributor.getName == "contributors.shadow") =>
-                  contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]]("Dummy implicit k", contributor)
-                case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]]("Dummy implicit k", x)
+                  contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]](config getString "encryption-key", contributor)
+                case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", x)
               }
             }
           }
@@ -148,11 +156,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
 }
 
 /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
+  * HTTPServer object, it contains the main of the application
   */
 object HTTPServer {
   def main(args: Array[String]) = {
@@ -160,7 +164,7 @@ object HTTPServer {
       if (args.nonEmpty)
         (args(0), args(1))
       else {
-        println("errore")
+       // println("errore")
         ("127.0.0.1", 2500)
       }
     val config = ConfigFactory.parseString(s"""

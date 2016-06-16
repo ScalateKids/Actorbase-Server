@@ -34,7 +34,8 @@ import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoS
 import javax.crypto.spec.SecretKeySpec
 
 /**
-  * Cryptography service object
+  * Cryptography service object, this object is used to crypt data before saving it into a file
+  * and to decrypt data after is read from files.  
   */
 object CryptoUtils {
 
@@ -47,7 +48,6 @@ object CryptoUtils {
     *
     * @param o TreeMap object of type String and Any
     * @return an array of bytes representing the object binarized
-    * @throws
     */
   def anyToBytes(o: Any): Array[Byte] = {
     val bos = new ByteArrayOutputStream()
@@ -60,11 +60,13 @@ object CryptoUtils {
   }
 
   /**
-    * Insert description here
+    * Translate arrays of bytes to Any Objects
     *
-    * @param
-    * @return
-    * @throws
+    * @param key represents a 16 bit key to generate the secret-key
+    * @param inputFile a File from which this class reads the data 
+    * @return Object created by reading the array bytes from the file
+    * @throws NoSuchAlgoritmException, NoSuchPaddingException, BadPaddingException,
+    *         InvalidKeyException, IllegalBlockSizeException, IOException
     */
   @throws(classOf[NoSuchAlgorithmException])
   @throws(classOf[NoSuchPaddingException])
@@ -96,7 +98,7 @@ object CryptoUtils {
     * @param key represents a 16 bit key to generate the secret-key
     * @param inputData a TreeMap[String, Any] representing a collection shard
     * @param outputFile the file that will be encrypted and persisted to disk
-    * @return
+    * @return no return value
     * @throws NoSuchAlgorithmException, NoSuchPaddingException,
     * InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
     * IOException

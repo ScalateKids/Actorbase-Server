@@ -46,7 +46,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
 
   private val config = ConfigFactory.load().getConfig("persistence")
   private val wareUUID = java.util.UUID.randomUUID.toString
-  private val rootFolder = "actorbasedata/"
+  private val rootFolder = config getString "save-folder"
 
 
 
