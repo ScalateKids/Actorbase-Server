@@ -30,13 +30,19 @@ package com.actorbase.actorsystem.messages.ClientActorMessages
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
-
+/**
+ * A message for list the responses
+ * @param list the list that contain responses
+ */
 final case class ListResponse(list: List[String])
 
 case object ListResponse {
   implicit val goJson = jsonFormat1(ListResponse.apply)
 }
-
+/**
+ * Message that rappresent a server response
+ * @param response the response of the server in byteArray
+ */
 final case class Response(response: Array[Byte])
 
 case object Response {
@@ -65,7 +71,11 @@ case object Response {
   }
   implicit val goJson = jsonFormat1(Response.apply)
 }
-
+/**
+ * Message with a map of structured responses
+ * @param collection the collection of the map responses
+ * @param map the map with the responses
+ */
 final case class MapResponse(collection: String, map: Map[String, Any])
 
 case object MapResponse {
