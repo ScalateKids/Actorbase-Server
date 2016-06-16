@@ -225,7 +225,7 @@ class AuthActor extends Actor with ActorLogging {
             persist(profiles + x)
             context become running (profiles + x)
           }
-        } getOrElse log.error(s"AuthActor: Failed to add ${collection.getUUID} to $username")
+        } getOrElse log.error(s"AuthActor: Failed to remove ${collection.getUUID} from $username")
 
       /**
         * Build a list of collection names and reply it to the sender

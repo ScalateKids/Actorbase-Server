@@ -22,7 +22,7 @@
   * SOFTWARE.
   * <p/>
   *
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -105,7 +105,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
 
   /**
     * Method that overrides the supervisorStrategy method.
-   */
+    */
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
@@ -120,14 +120,16 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
     */
   private def createCollection(collection: ActorbaseCollection): Option[ActorRef] = {
     if (sfMap.contains(collection))
-      sfMap get collection // to be tested, probably uses equals, fuck up with different sizes
+      sfMap get collection
     else {
-      collection.addContributor("admin", ActorbaseCollection.ReadWrite)
+      if (collection.getOwner != "admin") {
+        authProxy ! AddCollectionTo("admin", collection)
+        collection.addContributor("admin", ActorbaseCollection.ReadWrite)
+      }
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
       sfMap += (collection -> sf)
       authProxy ! AddCollectionTo(collection.getOwner, collection)
-      authProxy ! AddCollectionTo("admin", collection)
       Some(sf)
     }
   }
@@ -264,7 +266,10 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
                 coll._2 ! PoisonPill
                 sfMap = sfMap - coll._1
                 sender ! "OK"
+                authProxy ! RemoveCollectionFrom("admin", coll._1)
                 authProxy ! RemoveCollectionFrom(requester, coll._1)
+                if (coll._1.getOwner != requester)
+                  authProxy ! RemoveCollectionFrom(coll._1.getOwner, coll._1)
               } else sender ! "NoPrivileges"
             } getOrElse sender ! "UndefinedCollection"
           }
@@ -274,15 +279,18 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
               case (k, v) =>
                 v ! PoisonPill
                 authProxy ! RemoveCollectionFrom("admin", k)
-                sender ! "OK"
+                authProxy ! RemoveCollectionFrom(k.getOwner, k)
             }
           }
           else {
-            sfMap filter (k => k._1.getOwner == requester) map {x =>
+            sfMap filter (k => k._1.getOwner == requester) map { x =>
               x._2 ! PoisonPill
               authProxy ! RemoveCollectionFrom(requester, x._1)
+              authProxy ! RemoveCollectionFrom("admin", x._1)
+              authProxy ! RemoveCollectionFrom(x._1.getOwner, x._1)
             }
           }
+          sender ! "OK"
         }
 
       /**

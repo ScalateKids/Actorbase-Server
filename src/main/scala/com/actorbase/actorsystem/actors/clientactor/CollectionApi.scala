@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -137,9 +137,8 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           } ~
           delete {
             headerValueByName("owner") { owner =>
-              val coll = ActorbaseCollection(collection, owner)
               complete {
-                (main ? RemoveFrom(authInfo.user.login, authInfo.user.login + collection)).mapTo[String]
+                (main ? RemoveFrom(authInfo.user.login, owner + collection)).mapTo[String]
               }
             }
           }
@@ -173,7 +172,6 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             post {
               decompressRequest() {
                 headerValueByName("owner") { owner =>
-
                   entity(as[Array[Byte]]) { value =>
                     detach() {
                       complete {
