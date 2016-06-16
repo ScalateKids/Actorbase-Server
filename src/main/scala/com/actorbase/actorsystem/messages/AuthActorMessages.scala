@@ -40,6 +40,10 @@ sealed trait AuthActorMessages
  */
 case object ListUsers extends AuthActorMessages
 
+case object Save extends AuthActorMessages
+
+case object Clean extends AuthActorMessages
+
 final case class AddCredentials(username: String, password: String) extends AuthActorMessages
 
 final case class UpdateCredentials(username: String, password: String, newPassword: String) extends AuthActorMessages
@@ -53,3 +57,5 @@ final case class AddCollectionTo(username: String, collection: ActorbaseCollecti
 final case class RemoveCollectionFrom(username: String, collection: ActorbaseCollection) extends AuthActorMessages
 
 final case class ListCollectionsOf(username: String) extends AuthActorMessages
+
+final case class Init(username: String, password: String) extends AuthActorMessages

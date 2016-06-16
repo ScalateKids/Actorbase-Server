@@ -42,7 +42,7 @@ final case class GetFrom(requester: String, collection: ActorbaseCollection, key
 
 final case class CompleteTransaction(clientRef: ActorRef, collection: ActorbaseCollection, items: Map[String, Array[Byte]]) extends MainMessage with ControlMessage
 
-final case class RemoveFrom(requester: String, uuid: String, key: String = "") extends MainMessage
+final case class RemoveFrom(requester: String, uuid: String = "", key: String = "") extends MainMessage
 
 final case class AddContributor(requester: String, username: String, permission: Permissions, uuid: String) extends MainMessage
 

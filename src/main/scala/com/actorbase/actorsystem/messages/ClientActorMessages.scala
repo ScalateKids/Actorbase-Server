@@ -66,7 +66,7 @@ case object Response {
   implicit val goJson = jsonFormat1(Response.apply)
 }
 
-final case class MapResponse(collection: String, map: Map[String, Any])
+final case class MapResponse(owner: String, collection: String, map: Map[String, Any])
 
 case object MapResponse {
   implicit object AnyJsonFormat extends JsonFormat[Any] {
@@ -94,6 +94,6 @@ case object MapResponse {
 
   }
 
-  implicit val goJson = jsonFormat2(MapResponse.apply)
+  implicit val goJson = jsonFormat3(MapResponse.apply)
 
 }
