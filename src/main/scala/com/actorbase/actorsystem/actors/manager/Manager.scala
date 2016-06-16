@@ -47,7 +47,7 @@ object Manager {
 }
 
 /**
-  * Try to maintain the equilibrium inside the SKs by tracing the number of
+  * This class represent the Manager actor, it tries to maintain the equilibrium inside the SKs by tracing the number of
   * entries stored in each map. If some SK actor is under heavy load, (number of
   * entries is beyond a given threshold) they will create new actor of type SK
   * to properly redistribute that load and add it to the SF router.
