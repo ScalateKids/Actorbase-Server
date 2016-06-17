@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -40,7 +40,7 @@ import ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransaction, UpdateCollectionSize}
-import com.actorbase.actorsystem.messages.WarehousemanMessages.{Init, Save}
+import com.actorbase.actorsystem.messages.WarehousemanMessages.{ Init, Save, SaveRow }
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.actors.manager.Manager.OneMore
@@ -110,9 +110,6 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Exception      => Resume
-      // case _: NullPointerException     => Restart
-      // case _: IllegalArgumentException => Stop
-      // case _: Exception                => Escalate
     }
 
   /**
@@ -136,7 +133,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         * InitMn message, this actor will initialize its corresponding manager actor
         *
         * @param mn a manager actor rapresenting the corresponding manager
-         */
+        */
       case InitMn(mn) =>
         log.info("new MN received")
         manager = Some(mn)
@@ -193,12 +190,15 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           if (!update && !data.contains(key)) {
             log.info("SK: got work!")
             ins.parentRef ! UpdateCollectionSize(true)
+            // warehouseman ! SaveRow( (key -> ins.value) )
+            warehouseman ! Save(data)
             if (data.size > indicativeSize && !checked) {
               checked = true
               manager map (_ ! OneMore) getOrElse (checked = false)
             }
           }
           else if (!update && data.contains(key)) {
+            warehouseman ! Save( data )
             log.error(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
@@ -207,7 +207,6 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
 
         if (insertOrUpdate(ins.update, ins.key) == true) {
           sender ! "OK"
-          warehouseman ! Save( data )
           context become running(data + (ins.key -> ins.value))
         } else sender ! "DuplicatedKey"
 

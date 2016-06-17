@@ -142,7 +142,7 @@ class AuthActor extends Actor with ActorLogging {
             sender ! "OK"
             persist(profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
             context become running (profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
-          }
+          } else sender ! "OK"
         } getOrElse sender ! "WrongCredentials"
 
       /**
@@ -193,7 +193,7 @@ class AuthActor extends Actor with ActorLogging {
         */
       case Authenticate(username, password) =>
         val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
-        optElem map (_ => if (username == "admin") sender ! "Admin" else sender ! "Common") getOrElse sender ! "None"
+        optElem map (_ => sender ! Some(username)) getOrElse sender ! Some("None")
 
       /**
         * Insert description here
@@ -237,6 +237,19 @@ class AuthActor extends Actor with ActorLogging {
         optElem map { set =>
           val names = set.getCollections map (collection => collection.getName)
           sender ! ListResponse(names.toList)
+        }
+
+      /**
+        * Build a list of UUIDs of collections owned by the username
+        * that request them
+        */
+      case ListUUIDsOwnedBy(username) =>
+        val optElem = profiles find (_.username == username)
+        optElem map { set =>
+          val uuids =
+            if (username == "admin") set.getCollections map (collection => collection.getUUID)
+            else set.getCollections map (collection => if (collection.getOwner == username) collection.getUUID else "")
+          sender ! ListResponse(uuids.toList)
         }
 
       /**

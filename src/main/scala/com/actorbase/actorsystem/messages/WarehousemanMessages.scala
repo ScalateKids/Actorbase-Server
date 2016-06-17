@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -41,11 +41,13 @@ final case object Clean extends WarehousemanMessage
  * @param owner string with name of the collection owner
  */
 final case class Init(collection: String, owner: String) extends WarehousemanMessage
-/** 
+/**
  * Message used to recall a save operation on drive
  * @param map map with data to save on permanent memory
  */
 final case class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
+
+final case class SaveRow(row: (String, Any)) extends WarehousemanMessage
 /**
  * Message used to ask at warehouseman to read data from permanent memory
  * @param file file that warehouseman will read

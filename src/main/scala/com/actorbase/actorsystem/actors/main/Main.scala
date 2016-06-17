@@ -67,7 +67,7 @@ object Main {
     * @return a String representing an UUID of a shard-region where the actor belongs to
     */
   val extractShardId: ExtractShardId = {
-    case CreateCollection(collection) => (collection.getUUID.hashCode % 30).toString
+    case CreateCollection(_, collection) => (collection.getUUID.hashCode % 30).toString
     case RemoveFrom(_, uuid, _) => (uuid.hashCode % 30).toString
     case InsertTo(_,collection, _, _, _) => (collection.getUUID.hashCode % 30).toString
     case GetFrom(_,collection, _) => (collection.getUUID.hashCode % 30).toString
@@ -186,9 +186,11 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param name a String representing the name of the collection
         * @param owner a String representing the owner of the collection
         */
-      case CreateCollection(collection) =>
-        createCollection(collection)
-        sender ! "OK"
+      case CreateCollection(requester, collection) =>
+        if (requester == "admin" || requester == collection.getOwner) {
+          createCollection(collection)
+          sender ! "OK"
+        } else sender ! "NoPrivileges"
 
       /**
         * Get item from collection message, given a key of type String, retrieve
@@ -253,44 +255,24 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         *
         */
       case RemoveFrom(requester, uuid, key) =>
-        if (uuid.nonEmpty) {
-          if (key.nonEmpty)
-            sfMap.find(_._1.getUUID == uuid) map { c =>
-              if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
-                c._2 forward Remove(key)
-              else sender ! "NoPrivileges"
-            } getOrElse sender ! "UndefinedCollection"
-          else {
-            sfMap find (_._1.getUUID == uuid) map { coll =>
-              if (requester == coll._1.getOwner || coll._1.containsReadWriteContributor(requester)) {
-                coll._2 ! PoisonPill
-                sfMap = sfMap - coll._1
-                sender ! "OK"
-                authProxy ! RemoveCollectionFrom("admin", coll._1)
-                authProxy ! RemoveCollectionFrom(requester, coll._1)
-                if (coll._1.getOwner != requester)
-                  authProxy ! RemoveCollectionFrom(coll._1.getOwner, coll._1)
-              } else sender ! "NoPrivileges"
-            } getOrElse sender ! "UndefinedCollection"
-          }
-        } else {
-          if (requester == "admin") {
-            sfMap foreach {
-              case (k, v) =>
-                v ! PoisonPill
-                authProxy ! RemoveCollectionFrom("admin", k)
-                authProxy ! RemoveCollectionFrom(k.getOwner, k)
-            }
-          }
-          else {
-            sfMap filter (k => k._1.getOwner == requester) map { x =>
-              x._2 ! PoisonPill
-              authProxy ! RemoveCollectionFrom(requester, x._1)
-              authProxy ! RemoveCollectionFrom("admin", x._1)
-              authProxy ! RemoveCollectionFrom(x._1.getOwner, x._1)
-            }
-          }
-          sender ! "OK"
+        if (key.nonEmpty)
+          sfMap.find(_._1.getUUID == uuid) map { c =>
+            if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
+              c._2 forward Remove(key)
+            else sender ! "NoPrivileges"
+          } getOrElse sender ! "UndefinedCollection"
+        else {
+          sfMap find (_._1.getUUID == uuid) map { coll =>
+            if (requester == coll._1.getOwner || requester == "admin") {
+              coll._2 ! PoisonPill
+              sfMap = sfMap - coll._1
+              sender ! "OK"
+              authProxy ! RemoveCollectionFrom("admin", coll._1)
+              authProxy ! RemoveCollectionFrom(requester, coll._1)
+              if (coll._1.getOwner != requester)
+                authProxy ! RemoveCollectionFrom(coll._1.getOwner, coll._1)
+            } else sender ! "NoPrivileges"
+          } getOrElse sender ! "UndefinedCollection"
         }
 
       /**

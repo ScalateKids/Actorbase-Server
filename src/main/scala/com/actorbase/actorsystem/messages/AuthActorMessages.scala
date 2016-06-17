@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -88,3 +88,5 @@ final case class RemoveCollectionFrom(username: String, collection: ActorbaseCol
 final case class ListCollectionsOf(username: String) extends AuthActorMessages
 
 final case class Init(username: String, password: String) extends AuthActorMessages
+
+final case class ListUUIDsOwnedBy(username: String) extends AuthActorMessages

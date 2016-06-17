@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -35,7 +35,7 @@ import javax.crypto.spec.SecretKeySpec
 
 /**
   * Cryptography service object, this object is used to crypt data before saving it into a file
-  * and to decrypt data after is read from files.  
+  * and to decrypt data after is read from files.
   */
 object CryptoUtils {
 
@@ -63,7 +63,7 @@ object CryptoUtils {
     * Translate arrays of bytes to Any Objects
     *
     * @param key represents a 16 bit key to generate the secret-key
-    * @param inputFile a File from which this class reads the data 
+    * @param inputFile a File from which this class reads the data
     * @return Object created by reading the array bytes from the file
     * @throws NoSuchAlgoritmException, NoSuchPaddingException, BadPaddingException,
     *         InvalidKeyException, IllegalBlockSizeException, IOException
@@ -92,6 +92,15 @@ object CryptoUtils {
     in.readObject()
   }
 
+  def writeToFile(outputFile: File, outputBytes: Array[Byte], append: Boolean = false): Unit = {
+    val outputStream = new FileOutputStream(outputFile, append)
+    try {
+      outputStream.write(outputBytes)
+    } finally {
+      outputStream.close()
+    }
+  }
+
   /**
     * Encryption method, currently uses AES algorithm
     *
@@ -103,7 +112,7 @@ object CryptoUtils {
     * InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
     * IOException
     */
-  def encrypt(key: String, inputData: Any, outputFile: File): Unit = {
+  def encrypt(key: String, inputData: Any, outputFile: File, append: Boolean = false): Unit = {
 
     val cipherMode: Int = Cipher.ENCRYPT_MODE
 
@@ -115,10 +124,7 @@ object CryptoUtils {
 
       val outputBytes = cipher.doFinal(anyToBytes(inputData))
 
-      val outputStream = new FileOutputStream(outputFile)
-      outputStream.write(outputBytes)
-
-      outputStream.close()
+      writeToFile(outputFile, outputBytes, append)
 
     } catch {
       case na: NoSuchAlgorithmException => println(s"Error encrypting/decrypting file $na")

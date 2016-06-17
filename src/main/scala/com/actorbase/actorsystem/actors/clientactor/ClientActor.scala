@@ -50,6 +50,14 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, Re
 class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorLogging with CollectionApi {
 
   /**
+    * Check permission of the username
+    *
+    * @param username a String representing the user to be checked as admin
+    * @return true only if the user has admin rights, false otherwise
+    */
+  def hasAdminPermissions(username: String): Boolean = if (username == "admin") true else false
+
+  /**
     * Directives for authentication routes, these lets the management of authentication
     * and personal credentials
     */
@@ -60,7 +68,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
           entity(as[Array[Byte]]) { value =>
             detach() {
               complete {
-                (authProxy ? Authenticate(user, new String(value, "UTF-8"))).mapTo[String]
+                (authProxy ? Authenticate(user, new String(value, "UTF-8"))).mapTo[Option[String]]
               }
             }
           }
@@ -98,7 +106,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
-            authorize(authInfo.hasAdminPermissions) {
+            authorize(hasAdminPermissions(authInfo)) {
               // only admin users can enter here
               complete {
                 (authProxy ? ListUsers).mapTo[ListResponse]
@@ -116,7 +124,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
       */
     pathEndOrSingleSlash {
       authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-        authorize(authInfo.hasAdminPermissions) {
+        authorize(hasAdminPermissions(authInfo)) {
           post {
             // only admin users can enter here
             complete {

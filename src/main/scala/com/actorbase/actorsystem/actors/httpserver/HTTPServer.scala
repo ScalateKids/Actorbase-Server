@@ -94,7 +94,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
                   val metaData = CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", meta)
                   metaData get "collection" map (c => name = c.asInstanceOf[String])
                   metaData get "owner" map (o => owner = o.toString())
-                  main ! CreateCollection(ActorbaseCollection(name, owner))
+                  main ! CreateCollection(owner, ActorbaseCollection(name, owner))
                 case user if (user.getName == "usersdata.shadow") =>
                   usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
                 case contributor if (contributor.getName == "contributors.shadow") =>

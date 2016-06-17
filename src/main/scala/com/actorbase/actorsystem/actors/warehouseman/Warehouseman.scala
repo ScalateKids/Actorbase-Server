@@ -22,7 +22,7 @@
   * SOFTWARE.
   * <p/>
   *
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -47,7 +47,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
   private val config = ConfigFactory.load().getConfig("persistence")
   private val wareUUID = java.util.UUID.randomUUID.toString
   private val rootFolder = config getString "save-folder"
- /**
+  /**
     * Receive method of the Warehouseman actor, it does different things based on the message it receives:<br>
     * _Init: when the actor receives this message it inserts the item in the collection requested by the user.<br>
     * _Save: when the actor receives this message it Save a shard of a collection represented by the TreeMap stored by a storekeeper <br>
@@ -60,10 +60,10 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
 
     case message: WarehousemanMessage => message match {
       /**
-       * Initialize collection by name of the collection and his howner
-       * @param collection name of the collection to initialize
-       * @param owner owner's collection name
-       */
+        * Initialize collection by name of the collection and his howner
+        * @param collection name of the collection to initialize
+        * @param owner owner's collection name
+        */
       case Init(collection, owner) =>
         val key = config getString("encryption-key")
         val encryptedMetaFile = new File(rootFolder + collectionUUID + "/collection-meta.actbmeta")
@@ -77,7 +77,15 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         val key = config getString("encryption-key")
         val encryptedShardFile = new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb")
         encryptedShardFile.getParentFile.mkdirs
-        CryptoUtils.encrypt(key, map, encryptedShardFile)
+        CryptoUtils.encrypt(key, map, encryptedShardFile, false)
+        sender ! 0 // ok reply
+
+      case SaveRow(row) =>
+        log.info("warehouseman: save " + rootFolder + collectionUUID + "/" + wareUUID + ".actb")
+        val key = config getString("encryption-key")
+        val encryptedShardFile = new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb")
+        encryptedShardFile.getParentFile.mkdirs
+        CryptoUtils.encrypt(key, row, encryptedShardFile, true)
         sender ! 0 // ok reply
 
       /**
@@ -88,16 +96,6 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
       case Clean =>
         new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
         new File(rootFolder + collectionUUID + "/collection-meta.actbmeta").delete()
-
-        /**
-          * Delete a folder of a Storefinder, usefull when a Storefinder duplicates
-          *
-          * @param sfRange a KeyRange representing the range of the storefinder that has to be deleted
-          */
-        /*case RemoveSfFolder(sfRange) =>
-         val f = rootFolder+collectionShard+"-"+sfRange.getMinRange+"-"+sfRange.getMaxRange+"/"
-         removeAll(f)
-         self ! PoisonPill*/
 
       /**
         * Read a file from filesystem and decrypt the content
