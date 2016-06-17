@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -53,6 +53,7 @@ trait Authenticator {
   implicit val timeout = Timeout(5 seconds)
 
   var authInfo: Option[AuthInfo] = None
+  var lastUser: Option[UserPass] = None
 
   /**
     * Basic authentication method
@@ -72,7 +73,7 @@ trait Authenticator {
       * of the authenticated user
       */
     def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
-      if (authInfo != None)
+      if (authInfo.isDefined && lastUser.isDefined && lastUser == userPass)
         authInfo
       else {
         val x = for {

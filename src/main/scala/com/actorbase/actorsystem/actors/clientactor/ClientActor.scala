@@ -47,7 +47,7 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, Re
   * and it receives all the requests from it, he dispatch this requests to an actor responsable
   * to fullfil it
   */
-class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorLogging with RestApi with CollectionApi {
+class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorLogging with CollectionApi {
 
   /**
     * Directives for authentication routes, these lets the management of authentication
@@ -60,7 +60,6 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
           entity(as[Array[Byte]]) { value =>
             detach() {
               complete {
-                println(new String(value, "UTF-8"))
                 (authProxy ? Authenticate(user, new String(value, "UTF-8"))).mapTo[String]
               }
             }
@@ -162,7 +161,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
   /**
     * Handle all directives to manage and query the system
     */
-  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy) ~ route(main) ~ authDirectives ~ adminDirectives)
+  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy) ~ authDirectives ~ adminDirectives)
 
   /**
     * Overrides of the receive method of the Akka Actor class

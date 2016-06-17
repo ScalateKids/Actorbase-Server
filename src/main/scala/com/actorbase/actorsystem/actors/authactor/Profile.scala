@@ -35,15 +35,15 @@ case object Profile {
 }
 
 /**
-  * Class that models a user of actorbase. It contains the credentials of the user and 
+  * Class that models a user of actorbase. It contains the credentials of the user and
   * a Set with all the ActorbaseCollection created by him
   */
 case class Profile(username: String, password: String, private var collections: Set[ActorbaseCollection]) {
 
   /**
-    * Method that returns all the collections created by this user 
+    * Method that returns all the collections created by this user
     *
-    * @return a Set containing all the ActorbaseCollection created by this users 
+    * @return a Set containing all the ActorbaseCollection created by this users
     */
   def getCollections: Set[ActorbaseCollection] = collections
 
@@ -62,8 +62,10 @@ case class Profile(username: String, password: String, private var collections: 
     * @return no return value
     */
   def removeCollection(collection: ActorbaseCollection): Unit = {
-    if (collections.contains(collection))
+    if (collections.contains(collection)) {
+      println("removed collection" + collection.getUUID + " from " + username)
       collections -= collection
+    }
   }
 
   /**

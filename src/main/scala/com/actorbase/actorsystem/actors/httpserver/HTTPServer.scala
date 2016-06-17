@@ -22,7 +22,7 @@
   * SOFTWARE.
   * <p/>
   *
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -47,7 +47,9 @@ import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
+import com.actorbase.actorsystem.utils.CryptoUtils
 
+import java.io.File
 /**
   * Class that represent a HTTPServer actor. This actor is responsible to accept the connection
   * incoming from clients and to instantiate a ClientActor assigned to the client asking.
@@ -75,9 +77,6 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     * @return no return value
     */
   def loadData: Unit = {
-    import com.actorbase.actorsystem.utils.CryptoUtils
-    import java.io.File
-
     val root = new File(config getString "save-folder")
     var dataShard = Map[String, Any]().empty
     var usersmap = Map[String, String]().empty
@@ -104,14 +103,10 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
               }
             }
           }
-          val collection = new ActorbaseCollection(name, owner)
+          val collection = ActorbaseCollection(name, owner)
           data += (collection -> dataShard)
-          // contributors.foreach {
-          //   case (k, v) =>
-          //     v.foreach (entry => authProxy ! AddCollectionTo(k, entry)) // check and remove cast
-          // }
+
           dataShard = dataShard.empty
-          contributors = contributors.empty
         }
       }
       data.foreach {
@@ -132,11 +127,15 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
       authProxy ! Clean
 
       usersmap map { x =>
-        // if (x._1 != "admin")
-        println(x._1 + " " + x._2)
         authProxy ! Init(x._1, x._2)
-        // else authProxy ! UpdateCredentials(x._1, "Actorb4se", x._2)
       }
+
+      contributors.foreach {
+        case (k, v) =>
+          v.foreach (entry => authProxy ! AddCollectionTo(k, entry)) // check and remove cast
+      }
+      contributors = contributors.empty
+
     } else log.warning("Directory not found!")
 
     authProxy ! Save
