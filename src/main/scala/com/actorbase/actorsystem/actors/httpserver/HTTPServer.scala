@@ -50,6 +50,7 @@ import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
 import com.actorbase.actorsystem.utils.CryptoUtils
 
 import java.io.File
+
 /**
   * Class that represent a HTTPServer actor. This actor is responsible to accept the connection
   * incoming from clients and to instantiate a ClientActor assigned to the client asking.
@@ -85,29 +86,24 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
       var (name, owner) = ("", "")
-      root.listFiles.filter(_.isDirectory).foreach {
-        x => {
-          x.listFiles.filter(_.isFile).foreach {
-            x => {
-              x match {
-                case meta if meta.getName.endsWith("actbmeta") =>
-                  val metaData = CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", meta)
-                  metaData get "collection" map (c => name = c.asInstanceOf[String])
-                  metaData get "owner" map (o => owner = o.toString())
-                  main ! CreateCollection(owner, ActorbaseCollection(name, owner))
-                case user if (user.getName == "usersdata.shadow") =>
-                  usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
-                case contributor if (contributor.getName == "contributors.shadow") =>
-                  contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]](config getString "encryption-key", contributor)
-                case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", x)
-              }
-            }
+      root.listFiles.filter(_.isDirectory).foreach { x =>
+        x.listFiles.filter(_.isFile).foreach { x =>
+          x match {
+            case meta if meta.getName.endsWith("actbmeta") =>
+              val metaData = CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", meta)
+              metaData get "collection" map (c => name = c.asInstanceOf[String])
+              metaData get "owner" map (o => owner = o.toString())
+              main ! CreateCollection(owner, ActorbaseCollection(name, owner))
+            case user if (user.getName == "usersdata.shadow") =>
+              usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
+            case contributor if (contributor.getName == "contributors.shadow") =>
+              contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]](config getString "encryption-key", contributor)
+            case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", x)
           }
-          val collection = ActorbaseCollection(name, owner)
-          data += (collection -> dataShard)
-
-          dataShard = dataShard.empty
         }
+        val collection = ActorbaseCollection(name, owner)
+        data += (collection -> dataShard)
+        dataShard = dataShard.empty
       }
       data.foreach {
         case (k, v) =>
@@ -116,7 +112,6 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
               main ! InsertTo(k.getOwner, k, kk, vv.asInstanceOf[Array[Byte]], false)
           }
       }
-      dataShard = dataShard.empty
 
       def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
       getRecursively( root ).foreach { f =>
@@ -126,9 +121,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
 
       authProxy ! Clean
 
-      usersmap map { x =>
-        authProxy ! Init(x._1, x._2)
-      }
+      usersmap map ( x => authProxy ! Init(x._1, x._2) )
 
       contributors.foreach {
         case (k, v) =>

@@ -28,9 +28,12 @@
 
 package com.actorbase.actorsystem.actors.authactor
 
-import akka.actor.{ Actor, ActorLogging, OneForOneStrategy }
+import akka.actor.{ Actor, ActorLogging, Cancellable, OneForOneStrategy }
 import akka.actor.SupervisorStrategy._
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 
+import com.actorbase.actorsystem.messages.StorekeeperMessages.Persist
 import com.actorbase.actorsystem.messages.AuthActorMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
 import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
@@ -39,6 +42,8 @@ import com.typesafe.config.ConfigFactory
 import org.mindrot.jbcrypt.BCrypt
 
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
 import java.io.File
 
 /**
@@ -52,12 +57,24 @@ class AuthActor extends Actor with ActorLogging {
   // the rootfolder in which to store the users data
   private val rootFolder = config.getString("save-folder") + "usersdata/"
 
+  private val initDelay = 20 seconds       // delay for the first persistence message to be sent
+  private val intervalDelay = 50 seconds   // interval in-between each persistence message has to be sent
+  private var scheduler: Cancellable = _   // akka scheduler used to track time
+  // activate the extension
+  val mediator = DistributedPubSub(context.system).mediator
+
   /**
     *  Override of the preStart Actor method
     */
-  // override def preStart = {
-  //   persist(Set[Profile](Profile("admin", "Actorb4se", Set.empty[ActorbaseCollection])))
-  // }
+  override def preStart = {
+    scheduler = context.system.scheduler.schedule(
+      initialDelay = initDelay,
+      interval = intervalDelay,
+      receiver = self,
+      message = PersistDB
+    )
+    //   persist(Set[Profile](Profile("admin", "Actorb4se", Set.empty[ActorbaseCollection])))
+  }
 
   /**
     * Override of the supervisionStrategy Actor method
@@ -260,6 +277,8 @@ class AuthActor extends Actor with ActorLogging {
         profiles map (profile => users ::= profile.username)
         sender ! ListResponse(users)
 
+      case PersistDB =>
+        mediator ! Publish("persist-data", Persist)
     }
   }
 }

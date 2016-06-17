@@ -44,6 +44,8 @@ case object Save extends AuthActorMessages
 
 case object Clean extends AuthActorMessages
 
+case object PersistDB extends AuthActorMessages
+
 /**
  * Message used to ask at AuthActor to add new Credentials
  * @param username a string with username of the new credential to add

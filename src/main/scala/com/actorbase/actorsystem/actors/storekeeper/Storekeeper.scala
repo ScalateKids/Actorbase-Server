@@ -1,30 +1,30 @@
 /**
-  * The MIT License (MIT)
-  * <p/>
-  * Copyright (c) 2016 ScalateKids
-  * <p/>
-  * Permission is hereby granted, free of charge, to any person obtaining a copy
-  * of this software and associated documentation files (the "Software"), to deal
-  * in the Software without restriction, including without limitation the rights
-  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  * copies of the Software, and to permit persons to whom the Software is
-  * furnished to do so, subject to the following conditions:
-  * <p/>
-  * The above copyright notice and this permission notice shall be included in all
-  * copies or substantial portions of the Software.
-  * <p/>
-  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  * SOFTWARE.
-  * <p/>
-  * @author Scalatekids
-  * @version 1.0
-  * @since 1.0
-  */
+    * The MIT License (MIT)
+    * <p/>
+    * Copyright (c) 2016 ScalateKids
+    * <p/>
+    * Permission is hereby granted, free of charge, to any person obtaining a copy
+    * of this software and associated documentation files (the "Software"), to deal
+    * in the Software without restriction, including without limitation the rights
+    * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    * copies of the Software, and to permit persons to whom the Software is
+    * furnished to do so, subject to the following conditions:
+    * <p/>
+    * The above copyright notice and this permission notice shall be included in all
+    * copies or substantial portions of the Software.
+    * <p/>
+    * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    * SOFTWARE.
+    * <p/>
+    * @author Scalatekids
+    * @version 1.0
+    * @since 1.0
+    */
 
 package com.actorbase.actorsystem.actors.storekeeper
 
@@ -162,7 +162,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         if (data contains(key)) {
           parent ! UpdateCollectionSize(false)
           sender ! "OK"
-          warehouseman ! Save( data )
+          // warehouseman ! Save( data )
           context become running(data - key)
         } else sender ! "UndefinedKey"
 
@@ -191,14 +191,14 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
             log.info("SK: got work!")
             ins.parentRef ! UpdateCollectionSize(true)
             // warehouseman ! SaveRow( (key -> ins.value) )
-            warehouseman ! Save(data)
+            // warehouseman ! Save(data)
             if (data.size > indicativeSize && !checked) {
               checked = true
               manager map (_ ! OneMore) getOrElse (checked = false)
             }
           }
           else if (!update && data.contains(key)) {
-            warehouseman ! Save( data )
+            // warehouseman ! Save( data )
             log.error(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
@@ -206,6 +206,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         }
 
         if (insertOrUpdate(ins.update, ins.key) == true) {
+          // warehouseman ! Save( data + (ins.key -> ins.value) )
           sender ! "OK"
           context become running(data + (ins.key -> ins.value))
         } else sender ! "DuplicatedKey"
