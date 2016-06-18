@@ -31,21 +31,22 @@ package com.actorbase.actorsystem.messages.ClientActorMessages
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 /**
- * A message for list the responses
- * @param list the list that contain responses
- */
+  * A message for list the responses
+  * @param list the list that contain responses
+  */
 final case class ListResponse(list: List[String])
 
 case object ListResponse {
   implicit val goJson = jsonFormat1(ListResponse.apply)
 }
 /**
- * Message that represent a server response
- * @param response the response of the server in byteArray
- */
+  * Message that represent a server response
+  * @param response the response of the server in byteArray
+  */
 final case class Response(response: Array[Byte])
 
 case object Response {
+
   implicit object AnyJsonFormat extends JsonFormat[Any] {
 
     def write(x: Any) = x match {
@@ -71,18 +72,32 @@ case object Response {
   }
   implicit val goJson = jsonFormat1(Response.apply)
 }
-/**
- * Message with a map of structured responses
- * @param collection the collection of the map responses
- * @param map the map with the responses
- */
-final case class MapResponse(owner: String, collection: String, map: Map[String, Any])
 
-case object MapResponse {
+/**
+  * Message with a map of structured responses
+  * @param collection the collection of the map responses
+  * @param map the map with the responses
+  */
+final case class MapResponse(owner: String, collectionName: String, data: Map[String, Any])
+
+object MapResponse {
+
+  // def apply(owner: String, collectionName: String, data: Map[String, Array[Byte]]) = {
+  //     def bytesToAny(bytes: Array[Byte]): Any = {
+  //       import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+  //       val in = new ObjectInputStream(new ByteArrayInputStream(bytes))
+  //       in.readUnshared().asInstanceOf[Any]
+  //     }
+  //     data mapValues (v => bytesToAny(v))
+  // }
+
   implicit object AnyJsonFormat extends JsonFormat[Any] {
 
     def write(x: Any) = x match {
       case n: Int => JsNumber(n)
+      case d: Double => JsNumber(d)
+      case i: BigInt => JsNumber(i)
+      case l: Long => JsNumber(l)
       case s: String => JsString(s)
       case x: Seq[_] => seqFormat[Any].write(x)
       case m: Map[String, _] => mapFormat[String, Any].write(m)

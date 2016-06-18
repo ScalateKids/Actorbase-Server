@@ -239,7 +239,14 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
             colMap._2 ++= items
             log.info(s"${colMap._2.size} - ${collection.getSize}")
             if (colMap._2.size == collection.getSize) {
-              clientRef ! Right(MapResponse(collection.getOwner, collection.getName, colMap._2.toMap))
+              def bytesToAny(bytes: Array[Byte]): Any = {
+                import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+                val in = new ObjectInputStream(new ByteArrayInputStream(bytes))
+                in.readUnshared().asInstanceOf[Any]
+              }
+              val k = colMap._2.toMap mapValues (v => bytesToAny(v))
+              clientRef ! Right(MapResponse(collection.getOwner, collection.getName, k))
+              // clientRef ! Right(MapResponse(collection.getOwner, collection.getName, colMap._2.toMap))
               colMap._2.clear
               ref._2.-(collection.getUUID)
             }
