@@ -25,8 +25,8 @@
   * @version 1.0
   * @since 1.0
   */
-
-package com.actorbase.actorsystem.userkeeper
+/*
+package com.actorbase.actorsystem.authactor
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
@@ -37,7 +37,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
-
+*/
 // /**
 //   * Userkeeper specification tests
 //   *

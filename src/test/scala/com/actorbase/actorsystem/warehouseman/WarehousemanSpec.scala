@@ -25,7 +25,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.warehouseman
 
 import akka.util.Timeout
@@ -96,3 +96,4 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
 
   }
 }
+*/

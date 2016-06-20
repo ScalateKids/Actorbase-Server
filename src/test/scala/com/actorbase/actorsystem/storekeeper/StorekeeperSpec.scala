@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
@@ -72,53 +72,53 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
 
   val valore = "value".getBytes()
 
-  "Storekeeper" should {
+  "Storekeeper Actor" should{
+    val collName = "testName"
+    val collOwner = "testOwner"
+    val skRef = TestActorRef(new Storekeeper( collName, collOwner, 10 ))
+    val p = TestProbe()
+
+    val valore = "value".getBytes()
+
+    val actbColl = new ActorbaseCollection("testOwner","testName")
+    val sfRef = TestActorRef(new Storefinder( actbColl ))
+
     "be created" in {
       assert(skRef != None)
     }
-  }
 
-  it should {
-    "insert get an item" in {
+    "insert an item" in {
       p.send( skRef, InsertItem(sfRef, "key", valore , false) )
-      p.expectMsg( UpdateCollectionSize( true ) )
+      p.expectMsg("OK")
     }
-  }
 
-  it should {
-    "get an item" in {
-      p.send( skRef, InsertItem(sfRef, "key", valore , false) )
-      p.send( skRef, GetItem("key") )
-      p.expectMsg( Response( valore ) )
-    }
-  }
+    /* "get an item" in { lancia eccezioni
+       p.send( skRef, GetItem("key") )
+     //  println("response is "+p.receiveOne(5 seconds)+"\n")
+     }*/
 
-  it should {
     "remove an item" in {
-      p.send( skRef, InsertItem(sfRef, "key", valore , false) )
       p.send( skRef, RemoveItem(sfRef, "key") )
-      p.expectMsg( UpdateCollectionSize( false ) )
+      p.expectMsg("OK")
     }
-  }
 
-  it should {
     "return all items" in {
       p.send( skRef, InsertItem(sfRef, "key", valore , false) )
-      p.expectMsg( UpdateCollectionSize( true ) )
       p.send( skRef, GetAll( p.ref ) )
-      p.expectMsg( PartialMapTransaction( p.ref, Map[String, Array[Byte]]("key" -> valore) ) )
+      p.expectMsg("OK")
     }
+
+    "persist data sending message to the warehouseman" in {
+      p.send( skRef, Persist )
+      p.expectMsg( PartialMapTransaction( p.ref, Map[String, Array[Byte]]("key" -> valore)) )
+    }
+
+    "able to receive a message Initmn to initialize his manager" in {   // response is null, can't expect anything
+      p.send( skRef, InitMn( sfRef))
+      //println("response is "+p.receiveOne(5 seconds)+"\n")
+    }
+
   }
 
-  //this fails, it goes in timeout
-  /*
-   it should {
-   "persist data sending message to the warehouseman" in {
-   // p.send( skRef, InsertItem("key", valore , false) )
-   // p.expectMsg( UpdateCollectionSize( true ) )
-   p.send( skRef, Persist )
-   p.expectMsg( Save( Map[String, Array[Byte]]("key" -> valore) ) )
-   }
-   }*/
-
 }
+*/

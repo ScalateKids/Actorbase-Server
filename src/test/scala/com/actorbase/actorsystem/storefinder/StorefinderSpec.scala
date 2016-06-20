@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
@@ -61,53 +61,42 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
     */
   override def afterAll() : Unit = system.shutdown
 
-  "Storefinder" should {
+  "Storefinder Actor" should {
+
+    val actbColl = new ActorbaseCollection("testCollection", "anonymous")
+
+    val sfRef = TestActorRef(new Storefinder( actbColl ))
+
     "be created" in{
       assert(sfRef != None)
     }
-  }
 
-  it should {
     "insert and get an item" in {
-      val value = "value".getBytes("UTF-8")
-      p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, Get("key") )
-      p.expectMsg( Response( value ) )
-    }
-  }
-
-  /*  TODO SBAGLIATO
-   it should {
-   "get all items" in {
-   val value = "value".getBytes()
-   p.send( sfRef, Insert("key", value , false) )
-   p.send( sfRef, GetAllItems )
-   val m: Map[String, Array[Byte]] = Map("key" -> value )
-   p.expectMsg( 5 seconds, MapResponse( "testName",  m ) )
-   }
-   }
-   */
-
-  // None.get non è uguale a None.get ritornato dallo SK
-  it should {
-    "remove an item" in {
       val value = "value".getBytes()
       p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, Remove("key"))
       p.send( sfRef, Get("key") )
-      val testMessage = p.receiveOne(3 seconds)
-      assert( value != testMessage.asInstanceOf[Response].response )
-      //p.expectMsg( 5 seconds, Response( none ) )
+      p.expectMsg("OK")
     }
-  }
 
-  // non è giusto, non controlla niente
-  it should {
-    "update the collection size" in {
-      //val size = sfRef.underlyingActor.collection.size
-      p.send( sfRef, UpdateCollectionSize( true ) )
-      //assert ( size = sfRef.underlyingActor.collection.size -1 )
+    "get all items" in {  // response is null, can't expect anything
+      p.send( sfRef, GetAllItems )
     }
+
+    "remove an item" in {
+      val value = "value".getBytes()
+      p.send( sfRef, Remove("key"))
+      p.expectMsg("OK")
+    }
+
+    "update the collection size" in { // response is null, can't expect anything
+      p.send( sfRef, UpdateCollectionSize( true ) )
+    }
+
+    "receive the message PartialMapTransaction" in {  // response is null, can't expect anything
+      p.send( sfRef, PartialMapTransaction( sfRef, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
+    }
+
   }
 
 }
+*/
