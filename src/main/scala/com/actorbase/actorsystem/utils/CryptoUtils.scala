@@ -34,8 +34,8 @@ import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoS
 import javax.crypto.spec.SecretKeySpec
 
 /**
-  * Cryptography service object, this object is used to crypt data before saving it into a file
-  * and to decrypt data after is read from files.
+  * Cryptography service object, this object is used to crypt data before saving
+  * it into a file and to decrypt data after is read from files.
   */
 object CryptoUtils {
 
