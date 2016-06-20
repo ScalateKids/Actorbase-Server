@@ -40,7 +40,7 @@ import org.scalatest.concurrent._
   * @return
   * @throws
   */
-object ActorSystemSpecs {
+//object ActorSystemSpecs {
 
   /**
     * Basic unit-testing class with Future capabilities
@@ -51,4 +51,4 @@ object ActorSystemSpecs {
     */
   trait ActorSystemUnitSpec extends WordSpecLike with MustMatchers with ScalaFutures with BeforeAndAfterAll
 
-}
+//}

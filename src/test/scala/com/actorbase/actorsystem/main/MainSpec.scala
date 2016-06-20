@@ -42,7 +42,7 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
-import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
+import com.actorbase.actorsystem.ActorSystemUnitSpec
 import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.actorbase.actorsystem.utils.ActorbaseCollection._
@@ -51,11 +51,11 @@ import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.messages.AuthActorMessages._
 
-class MainSpec extends TestKit(ActorSystem("MainSpec",
+class MainSpec extends TestKit(ActorSystem("MainSpec"/*,
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
 akka.actors.provider = "akka.cluster.ClusterRefProvider"
-"""))) with ActorSystemUnitSpec with ImplicitSender {
+""")*/)) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(5 seconds)
 
