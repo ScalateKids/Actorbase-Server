@@ -135,7 +135,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         * @param mn a manager actor rapresenting the corresponding manager
         */
       case InitMn(mn) =>
-        log.info("new MN received")
+        // log.info("new MN received")
         manager = Some(mn)
 
       /**
@@ -219,7 +219,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
       /**
         * Persist data to disk
         */
-      case Persist => warehouseman ! Save( data )
+      case Persist => if (data.size > 0) warehouseman ! Save( data )
 
     }
   }

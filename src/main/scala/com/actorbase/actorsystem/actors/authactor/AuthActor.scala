@@ -60,7 +60,7 @@ class AuthActor extends Actor with ActorLogging {
   private val initDelay = 20 seconds       // delay for the first persistence message to be sent
   private val intervalDelay = 50 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
-  // activate the extension
+                                           // activate the extension
   val mediator = DistributedPubSub(context.system).mediator
 
   /**
@@ -88,7 +88,8 @@ class AuthActor extends Actor with ActorLogging {
     * Override of the receive Actor method. Set the actor in the running state with a default Set of Profiles,
     * letting him receive a variety of messages explained in the running method scaladoc
     */
-  override def receive = running(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
+  override def receive = running(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection]),
+    Profile("anonymous", "Anonym0us".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
 
   /**
     * Method used to persist the users data to filesystem

@@ -49,6 +49,7 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
 import com.actorbase.actorsystem.utils.CryptoUtils
 
+import scala.collection.mutable.Queue
 import java.io.File
 
 /**
@@ -79,10 +80,10 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     */
   def loadData: Unit = {
     val root = new File(config getString "save-folder")
-    var dataShard = Map[String, Any]().empty
-    var usersmap = Map[String, String]().empty
+    var dataShard = Map.empty[String, Array[Byte]]
+    var usersmap = Map.empty[String, String]
     var contributors = Map.empty[String, Set[ActorbaseCollection]]
-    var data = Map.empty[ActorbaseCollection, Map[String, Any]]
+    var data = Queue.empty[(ActorbaseCollection, Map[String, Array[Byte]])]
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
       var (name, owner) = ("", "")
@@ -90,26 +91,28 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
         x.listFiles.filter(_.isFile).foreach { x =>
           x match {
             case meta if meta.getName.endsWith("actbmeta") =>
-              val metaData = CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", meta)
-              metaData get "collection" map (c => name = c.asInstanceOf[String])
-              metaData get "owner" map (o => owner = o.toString())
+              val metaData = CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", meta)
+              metaData get "collection" map (c => name = c)
+              metaData get "owner" map (o => owner = o)
               main ! CreateCollection(owner, ActorbaseCollection(name, owner))
             case user if (user.getName == "usersdata.shadow") =>
               usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
             case contributor if (contributor.getName == "contributors.shadow") =>
               contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]](config getString "encryption-key", contributor)
-            case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", x)
+            case _ =>
+              dataShard ++= CryptoUtils.decrypt[Map[String, Array[Byte]]](config getString "encryption-key", x)
           }
         }
         val collection = ActorbaseCollection(name, owner)
         data += (collection -> dataShard)
         dataShard = dataShard.empty
       }
+
       data.foreach {
         case (k, v) =>
           v.foreach {
             case (kk, vv) =>
-              main ! InsertTo(k.getOwner, k, kk, vv.asInstanceOf[Array[Byte]], false)
+              main ! InsertTo(k.getOwner, k, kk, vv, false)
           }
       }
 

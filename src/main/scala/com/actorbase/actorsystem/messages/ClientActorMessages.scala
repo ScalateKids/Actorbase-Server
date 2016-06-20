@@ -114,5 +114,4 @@ object MapResponse {
   }
 
   implicit val goJson = jsonFormat3(MapResponse.apply)
-
 }
