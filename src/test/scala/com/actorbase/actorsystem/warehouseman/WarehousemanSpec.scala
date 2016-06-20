@@ -32,18 +32,13 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import java.io.File
 import akka.pattern.ask
-import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, TestProbe}
-import org.scalatest.matchers.MustMatchers
-import org.scalatest.WordSpecLike
-import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
-import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.messages.WarehousemanMessages._
 
@@ -53,6 +48,7 @@ akka.remote.netty.tcp.port = 0,
 akka.actors.provider = "akka.cluster.ClusterRefProvider"
 """))) with ActorSystemUnitSpec {
 
+  implicit val timeout = Timeout(25 seconds)
   val collUuid = "testUuid"
   val wareRef = TestActorRef(new Warehouseman( collUuid ))
   val p = TestProbe()
@@ -67,30 +63,36 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
     "be created" in {
       assert(wareRef != None)
     }
-  }
 
-  it should {
     "save encrypted data" in {
-      def delete(file: File) {
+      def delete(file: File): Unit = {
         if (file.isDirectory)
           Option(file.listFiles).map(_.toList).getOrElse(Nil).foreach(delete(_))
         file.delete
       }
       delete( new File("actorbasedata/testUuid/") )
       val map = Map[String, Array[Byte]]("key0" -> "zero".getBytes(), "key1" -> "one".getBytes(), "key2" -> "two".getBytes())
-      Await.result(wareRef.ask(Save(map))(5 seconds).mapTo[Int], Duration.Inf)
-      val nfiles = new File("actorbasedata/testUuid/").list.size
-      assert( nfiles == 1) //should be(true)
+      // Await.result(wareRef.ask(Save(map))(5 seconds).mapTo[Int], Duration.Inf)
+      val future = wareRef ? Save(map)
+      future onSuccess {
+        case 0  =>
+          val nfiles = new File("actorbasedata/testUuid/").list.size
+          assert(nfiles == 1)
+      }
     }
-  }
 
-  it should {
-    "read and decrypt data" in {
-      val dir = new File("actorbasedata/testUuid/")
-      val f = Option(dir.listFiles).map(_.toList).getOrElse(Nil)
-      val map = Await.result(wareRef.ask(Read(f.head))(5 seconds).mapTo[Map[String, Any]], Duration.Inf)
-      assert(map.size == 3) // should have size 3
-    }
-  }
+    // it should {
+    //   "read and decrypt data" in {
+    //     val dir = new File("actorbasedata/testUuid/")
+    //     val f = Option(dir.listFiles).map(_.toList).getOrElse(Nil)
+    //     // val map = Await.result(wareRef.ask(Read(f.head))(5 seconds).mapTo[Map[String, Any]], Duration.Inf)
+    //     val future = wareRef ? Read(f.head)
+    //     future onSuccess {
+    //       case
+    //     }
+    //     assert(map.size == 3) // should have size 3
+    //   }
+    // }
 
+  }
 }

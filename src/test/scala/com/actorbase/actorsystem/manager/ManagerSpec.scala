@@ -29,30 +29,16 @@
 
 package com.actorbase.actorsystem.manager
 
-import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, TestProbe}
-import org.scalatest.matchers.MustMatchers
-import org.scalatest.WordSpecLike
-import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
-import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.manager.Manager
 import com.actorbase.actorsystem.actors.manager.Manager.OneMore
 import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
-import com.actorbase.actorsystem.actors.main.Main
-
-import akka.cluster.routing.ClusterRouterPool
-import akka.cluster.routing.ClusterRouterPoolSettings
-import akka.routing.{ ActorRefRoutee, ConsistentHashingPool, FromConfig, Router }
-import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
-import akka.routing.Broadcast
 
 class ManagerSpec extends TestKit(ActorSystem("ManagerSpec",
   ConfigFactory.parseString("""
@@ -68,23 +54,21 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
     * actorsystem.
     */
   override def afterAll() : Unit = system.shutdown
-  /*val storekeepers = system.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
-   ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props( collName, collOwner)) )
-   */
-  val mnRef = TestActorRef(new Manager( collName, collOwner, storekeepers ))
+
+  val skRef = TestActorRef(new Storekeeper( collName, collOwner, 10 ))
+  val mnRef = TestActorRef(new Manager( collName, collOwner, skRef ))
+
   val p = TestProbe()
 
   "Manager" should {
-    "be created" in{
+    "be created" in {
       assert(mnRef != None)
     }
-  }
 
-  // fails, it goes in timeout...
-  it should {
+    // fails, it goes in timeout...
     "create one storekeeper" in {
-      p.send( mnRef, OneMore )
-      p.expectMsg( InitMn( mnRef ) )
+      p.send(mnRef, OneMore)
+      p.expectMsg(InitMn(mnRef))
     }
   }
 }

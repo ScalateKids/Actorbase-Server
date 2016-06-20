@@ -32,10 +32,8 @@ package com.actorbase.actorsystem
 import akka.util.Timeout
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import scala.concurrent.duration._
-import org.scalatest.FlatSpec
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike

@@ -34,11 +34,7 @@ import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, TestProbe}
-import org.scalatest.matchers.MustMatchers
-import org.scalatest.WordSpecLike
-import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
@@ -73,7 +69,7 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
 
   it should {
     "insert and get an item" in {
-      val value = "value".getBytes()
+      val value = "value".getBytes("UTF-8")
       p.send( sfRef, Insert("key", value , false) )
       p.send( sfRef, Get("key") )
       p.expectMsg( Response( value ) )
