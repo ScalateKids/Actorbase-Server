@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -40,47 +40,27 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-import com.actorbase.actorsystem.actors.clientactor.UserApi.{User, AuthInfo}
 import com.actorbase.actorsystem.messages.AuthActorMessages.Authenticate
 
 /**
   * Authenticator, mix it with a HttpServiceBase class to give basic
   * authentication capabilities
   *
-  * @param
-  * @return
-  * @throws
   */
 trait Authenticator {
 
   implicit val timeout = Timeout(5 seconds)
 
+  var login: Option[String] = None
+
   /**
     * Basic authentication method
     *
     * @param ec ExecutionContext
-    * @param main ActorRef representing a reference to the Main actor
+    * @param authProxy ActorRef representing a reference to the Authenticator actor
     * @return a BasicAuth uncrypted for a private area
-    * @throws
     */
-  def basicUserAuthenticator(implicit ec: ExecutionContext, authProxy: ActorRef): AuthMagnet[AuthInfo] = {
-
-    /**
-      * Validation method, get an Option[UserPass] reference and test for
-      * a matching password against the one saved into the system
-      *
-      * @param userPass Option[UserPass] extract by the method authenticate
-      * @return a reference of Option[AuthInfo] containig the credentials
-      * of the authenticated user
-      * @throws
-      */
-    def validateUser(userPass: Option[UserPass]): Option[AuthInfo] = {
-      for {
-        p <- userPass
-        auth = Await.result(authProxy.ask(Authenticate(p.user, p.pass)).mapTo[String], Duration.Inf) // ugly as f**k
-        if (auth == "OK")
-          } yield new AuthInfo(UserApi.User(userPass.get.user, Some(userPass.get.pass)))
-    }
+  def basicUserAuthenticator(implicit ec: ExecutionContext, authProxy: ActorRef): AuthMagnet[String] = {
 
     /**
       * Authentication method, call for validateUser and test for a matching
@@ -89,9 +69,19 @@ trait Authenticator {
       * @param userPass Option[UserPass] extract by the method authenticate
       * @return a reference to a Future of type AuthInfo containing the
       * credentials of the authenticated user
-      * @throws
       */
-    def authenticator(userPass: Option[UserPass]): Future[Option[AuthInfo]] = Future { validateUser(userPass) }
+    def authenticator(userPass: Option[UserPass]): Future[Option[String]] = {
+      if (login.exists(l => l == userPass.get.user)) Future { login }
+      else {
+        val log = for {
+          l <- (authProxy ? Authenticate(userPass.get.user, userPass.get.pass)).mapTo[Option[String]]
+        } yield l
+        log.onSuccess {
+          case ok => login = ok
+        }
+        log
+      }
+    }
 
     BasicAuth(authenticator _, realm = "Private area")
   }

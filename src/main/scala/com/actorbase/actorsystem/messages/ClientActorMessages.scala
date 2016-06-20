@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -30,14 +30,20 @@ package com.actorbase.actorsystem.messages.ClientActorMessages
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
-
-case class ListResponse(list: List[String])
+/**
+ * A message for list the responses
+ * @param list the list that contain responses
+ */
+final case class ListResponse(list: List[String])
 
 case object ListResponse {
   implicit val goJson = jsonFormat1(ListResponse.apply)
 }
-
-case class Response(response: Array[Byte])
+/**
+ * Message that represent a server response
+ * @param response the response of the server in byteArray
+ */
+final case class Response(response: Array[Byte])
 
 case object Response {
   implicit object AnyJsonFormat extends JsonFormat[Any] {
@@ -65,8 +71,12 @@ case object Response {
   }
   implicit val goJson = jsonFormat1(Response.apply)
 }
-
-case class MapResponse(collection: String, map: Map[String, Any])
+/**
+ * Message with a map of structured responses
+ * @param collection the collection of the map responses
+ * @param map the map with the responses
+ */
+final case class MapResponse(owner: String, collection: String, map: Map[String, Any])
 
 case object MapResponse {
   implicit object AnyJsonFormat extends JsonFormat[Any] {
@@ -94,6 +104,6 @@ case object MapResponse {
 
   }
 
-  implicit val goJson = jsonFormat2(MapResponse.apply)
+  implicit val goJson = jsonFormat3(MapResponse.apply)
 
 }

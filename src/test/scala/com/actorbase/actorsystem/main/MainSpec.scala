@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem.main
 
 import akka.util.Timeout
@@ -39,27 +39,80 @@ import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
+import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.actors.main.Main
-import com.actorbase.actorsystem.messages.MainMessages.ListCollections
-import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
+import com.actorbase.actorsystem.messages.MainMessages._
+import com.actorbase.actorsystem.messages.StorefinderMessages._
+import com.actorbase.actorsystem.messages.ClientActorMessages._
 
 class MainSpec extends TestKit(ActorSystem("testSystem"))
-  // Using the ImplicitSender trait will automatically set `testActor` as the sender
-  with ImplicitSender
   with WordSpecLike
-  with MustMatchers {
+  with MustMatchers
+  with ImplicitSender  {
 
   implicit val timeout = Timeout(25 seconds)
 
   //implicit val system = ActorSystem()
 
+<<<<<<< HEAD
   "Main actor" should{
     "list all collections" in {
       val mainActorRef = TestActorRef[Main]
       val p = TestProbe()
       p.send( mainActorRef, ListCollections("lol") )
       p.expectMsg(ListResponse(List()))
+=======
+  val mainActorRef = TestActorRef[Main]
+
+  val p = TestProbe()
+
+  "main" should{
+    "list all collections" in {
+      p.send( mainActorRef, ListCollections("test") )
+      p.expectMsg( ListResponse(List()) )
     }
   }
+
+  it should{
+    "insert and retrieve an item" in {
+      val testColl = new ActorbaseCollection("testCollection", "anonymous")
+      val value = "testValue".getBytes
+      p.send( mainActorRef, InsertTo(testColl, "testKey",  value, false))
+      p.send( mainActorRef, GetFrom(testColl, "testKey"))
+      p.expectMsg(Response(value))
+>>>>>>> 9441d3471d3c41dfec5097ae0f0adbe7e81a6ec3
+    }
+  }
+  
+  it should{
+    "create a new collection" in {
+	  val testCreate = new ActorbaseCollection("testColl", "anonymous")
+	  val size = mainActorRef.underlyingActor.getSize
+	  p.send(mainActorRef, CreateCollection(testCreate))
+	  assert(mainActorRef.underlyingActor.getSize === size+1)
+	}
+  }
+  
+  it should{
+    "remove an item" in {
+	  val testColl = new ActorbaseCollection("testCollection", "anonymous")
+      val value = "testValue".getBytes
+      p.send( mainActorRef, InsertTo(testColl, "testKey",  value, false))
+      p.send( mainActorRef, GetFrom(testColl, "testKey"))
+	  p.send(mainActorRef, RemoveFrom(testColl.getUUID, "testKey"))
+      p.send( mainActorRef, GetFrom(testColl, "testKey"))
+      val testMessage = p.receiveOne(25 seconds)
+	  assert( value != testMessage.asInstanceOf[Response].response)
+	}
+  }
+  
+  /*it should{
+    "add a contributor" in {
+	  p.send( mainActorRef, addContributor(new ActorbaseCollection("testCollection", "anonymous"), "testContributor"))
+	  p.send( mainActorRef, InsertTo(new ActorbaseCollection("testCollection", "anonymous"), "test"))
+	  //get e controlla e fine test
+	}
+  } TODO quando sarà fatta*/
 }
+*/

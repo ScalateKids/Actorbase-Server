@@ -27,7 +27,7 @@
   * @since 1.0
   */
 /*
-package com.actorbase.actorsystem.storefinder
+package com.actorbase.actorsystem.manager
 
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -40,78 +40,46 @@ import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.actorbase.actorsystem.actors.manager.Manager
+import com.actorbase.actorsystem.actors.manager.Manager.OneMore
+import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
-import com.actorbase.actorsystem.messages.StorekeeperMessages._
-import com.actorbase.actorsystem.messages.StorefinderMessages.{UpdateCollectionSize, PartialMapTransaction}
-import com.actorbase.actorsystem.messages.WarehousemanMessages.Save
-import com.actorbase.actorsystem.messages.ClientActorMessages.Response
+import com.actorbase.actorsystem.actors.main.Main
 
-class StorekeeperSpec extends TestKit(ActorSystem("testSystem2"))
+import akka.cluster.routing.ClusterRouterPool
+import akka.cluster.routing.ClusterRouterPoolSettings
+import akka.routing.{ ActorRefRoutee, ConsistentHashingPool, FromConfig, Router }
+import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
+import akka.routing.Broadcast
+
+class ManagerSpec extends TestKit(ActorSystem("testSystem"))
   with WordSpecLike
   with MustMatchers
   with BeforeAndAfterAll{
 
-  implicit val timeout = Timeout(25 seconds)
-
-  //val actbColl = new ActorbaseCollection("testOwner","testName")
-  val collName = "testName"
+  val collName = "testColl"
   val collOwner = "testOwner"
-  val skRef = TestActorRef(new Storekeeper( collName, collOwner ))
+  /*val storekeepers = system.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
+    ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props( collName, collOwner)) )
+*/
+  val mnRef = TestActorRef(new Manager( collName, collOwner, storekeepers ))
   val p = TestProbe()
 
-  val valore = "value".getBytes()
-
-  "Storekeeper" should {
-    "be created" in {
-      assert(skRef != None)
+  "Manager" should {
+    "be created" in{
+      assert(mnRef != None)
     }
   }
 
+  // fails, it goes in timeout...
   it should {
-    "insert get an item" in {
-      p.send( skRef, InsertItem("key", valore , false) )
-      p.expectMsg( UpdateCollectionSize( true ) )
+    "create one storekeeper" in {
+      p.send( mnRef, OneMore )
+      p.expectMsg( InitMn( mnRef ) )
     }
   }
-
-  it should {
-    "get an item" in {
-      p.send( skRef, InsertItem("key", valore , false) )
-      p.send( skRef, GetItem("key") )
-      p.expectMsg( Response( valore ) )
-    }
-  }
-
-  it should {
-    "remove an item" in {
-      p.send( skRef, InsertItem("key", valore , false) )
-      p.send( skRef, RemoveItem("key") )
-      p.expectMsg( UpdateCollectionSize( false ) )
-    }
-  }
-
-  it should {
-    "return all items" in {
-      p.send( skRef, InsertItem("key", valore , false) )
-      p.expectMsg( UpdateCollectionSize( true ) )
-      p.send( skRef, GetAll( p.ref ) )
-      p.expectMsg( PartialMapTransaction( p.ref, Map[String, Array[Byte]]("key" -> valore) ) )
-    }
-  }
-
-  //this fails, it goes in timeout
-  /*
-  it should {
-    "persist data sending message to the warehouseman" in {
-     // p.send( skRef, InsertItem("key", valore , false) )
-     // p.expectMsg( UpdateCollectionSize( true ) )
-      p.send( skRef, Persist )
-      p.expectMsg( Save( Map[String, Array[Byte]]("key" -> valore) ) )
-    }
-  }*/
 
   override def afterAll {
     TestKit.shutdownActorSystem(system)
   }
-
 }*/

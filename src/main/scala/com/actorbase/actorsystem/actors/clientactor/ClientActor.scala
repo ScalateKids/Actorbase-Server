@@ -22,36 +22,79 @@
   * SOFTWARE.
   * <p/>
   *
-  * @author Scalatekids TODO DA CAMBIARE
-  * @version 1.0
+  * @author Scalatekids   * @version 1.0
   * @since 1.0
   */
 
 package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
+import akka.pattern.ask
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ Authenticate, UpdateCredentials }
 import spray.can.Http
+import spray.http.HttpHeader
+import spray.httpx.SprayJsonSupport._
 
+import scala.concurrent.duration._
 import scala.util.Try
 
-import com.actorbase.actorsystem.messages.AuthActorMessages.{AddCredentials, RemoveCredentials}
+import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCredentials, RemoveCredentials, ListUsers }
 
 
 /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
+  * Class that represents a ClientActor. This actor has to maintain a connection with the client
+  * and it receives all the requests from it, he dispatch this requests to an actor responsable
+  * to fullfil it
   */
-class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorLogging with RestApi with CollectionApi {
+class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorLogging with CollectionApi {
 
   /**
-    * Insert description here
+    * Check permission of the username
     *
-    * @param
-    * @return
-    * @throws
+    * @param username a String representing the user to be checked as admin
+    * @return true only if the user has admin rights, false otherwise
+    */
+  def hasAdminPermissions(username: String): Boolean = if (username == "admin") true else false
+
+  /**
+    * Directives for authentication routes, these lets the management of authentication
+    * and personal credentials
+    */
+  val authDirectives = {
+    pathPrefix("auth" / "\\S+".r) { user =>
+      post {
+        decompressRequest() {
+          entity(as[Array[Byte]]) { value =>
+            detach() {
+              complete {
+                (authProxy ? Authenticate(user, new String(value, "UTF-8"))).mapTo[Option[String]]
+              }
+            }
+          }
+        }
+      }
+    }
+  } ~
+  pathPrefix("private" / "\\S+".r) { user =>
+    post {
+      decompressRequest() {
+        headerValueByName("Old-Password") { oldpw =>
+          entity(as[Array[Byte]]) { value =>
+            detach() {
+              complete {
+                (authProxy ? UpdateCredentials(user, oldpw, new String(value, "UTF-8"))).mapTo[String]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+    * Directives for administrator users routes, these lets the management of the users of the system,
+    * like creation of new user and deletion of existing ones.
     */
   // private area
   val adminDirectives = {
@@ -60,68 +103,55 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
       * operations, a GET request equals listing all users of the system
       */
     pathPrefix("users") {
-      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-        get {
-          authorize(authInfo.hasAdminPermissions) {
-            // only admin users can enter here
-            complete {
-              "list users"
+      pathEndOrSingleSlash {
+        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+          get {
+            authorize(hasAdminPermissions(authInfo)) {
+              // only admin users can enter here
+              complete {
+                (authProxy ? ListUsers).mapTo[ListResponse]
+              }
             }
           }
         }
       }
     }
   } ~
-  pathSuffix("\\S+".r) { user =>
+  pathPrefix("users" / "\\S+".r) { user =>
     /**
       * user/<username> a POST request to this route equals adding a new user
       * to the system with username <username> and password as request payload
       */
-    authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-      post {
-        decompressRequest() {
-          entity(as[String]) { value =>
-            detach() {
-              authorize(authInfo.hasAdminPermissions) {
-                // only admin users can enter here
-                authProxy ! AddCredentials(user, value)
-                complete {
-                  s"added user $user"
-                }
-              }
+    pathEndOrSingleSlash {
+      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+        authorize(hasAdminPermissions(authInfo)) {
+          post {
+            // only admin users can enter here
+            complete {
+              val value = "Actorb4se"
+                (authProxy ? AddCredentials(user, value)).mapTo[String]
             }
-          }
-        }
-      } ~
-      put {
-        /**
-          * user/<username> a PUT request to this route equals updating an
-          * existing user of username <username>
-          */
-        decompressRequest() {
-          entity(as[String]) { value =>
-            detach() {
-              authorize(authInfo.hasAdminPermissions) {
-                // only admin users can enter here
-                authProxy ! AddCredentials(user, value)
-                complete {
-                  s"updated user $user"
-                }
-              }
+          } ~
+          put {
+            /**
+              * user/<username> a PUT request to this route equals updating an
+              * existing user of username <username>
+              */
+            // only admin users can enter here
+            complete {
+              val value = "Actorb4se"
+                (authProxy ? UpdateCredentials(user, value, value)).mapTo[String]
             }
-          }
-        }
-      } ~
-      delete {
-        /**
-          * user/<username> a DELETE request to this route equals removing an existing user
-          * from the system
-          */
-        authorize(authInfo.hasAdminPermissions) {
-          // only admin users can enter here
-          authProxy ! RemoveCredentials(user)
-          complete {
-            s"removed user $user"
+          } ~
+          delete {
+            /**
+              * user/<username> a DELETE request to this route equals removing an existing user
+              * from the system
+              */
+            // only admin users can enter here
+            complete {
+              (authProxy ? RemoveCredentials(user)).mapTo[String]
+            }
           }
         }
       }
@@ -139,8 +169,11 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
   /**
     * Handle all directives to manage and query the system
     */
-  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy) ~ route(main) ~ adminDirectives)
+  def httpReceive: Receive = runRoute(collectionsDirectives(main, authProxy) ~ authDirectives ~ adminDirectives)
 
+  /**
+    * Overrides of the receive method of the Akka Actor class
+    */
   override def receive = handleHttpRequests orElse httpReceive
 
 }

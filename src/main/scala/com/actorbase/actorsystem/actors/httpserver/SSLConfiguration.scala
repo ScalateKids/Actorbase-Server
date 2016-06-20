@@ -21,22 +21,25 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids 
   * @version 1.0
   * @since 1.0
   */
 
 package com.actorbase.actorsystem.actors.httpserver
 
+import com.typesafe.config.{ Config, ConfigFactory }
 import java.security.{SecureRandom, KeyStore}
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import spray.io._
 
 /**
-  * SSL configuration, should be enabled in application.conf  *
+  * SSL configuration, should be enabled in application.conf 
   */
 trait SslConfiguration {
+
+  def sslConfig: Config = ConfigFactory.load().getConfig("ssl")
 
   /**
     * Custom SSL configuration, currently using a sample CA inside resources
@@ -45,12 +48,11 @@ trait SslConfiguration {
     * default SSLContext, since we want non-default settings in this example we
     * make a custom SSLContext available here
     *
+    * @return a SSLContext value
     */
   implicit def sslContext: SSLContext = {
-    // java.lang.System.setProperty(
-    //   "sun.security.ssl.allowUnsafeRenegotiation", "true");
-    val keyStoreResource = "actorbase.com.jks"
-    val password = "vhjMYi9NRV"
+    val keyStoreResource = sslConfig getString "certificate-file"
+    val password = sslConfig getString "certificate-password"
 
     val keyStore = KeyStore.getInstance("JKS")
     val in = getClass.getClassLoader.getResourceAsStream(keyStoreResource)
@@ -70,15 +72,11 @@ trait SslConfiguration {
     * If there is no ServerSSLEngineProvider in scope implicitly the HttpServer
     * uses the default one, since we want to explicitly enable cipher suites and
     * protocols we make a custom ServerSSLEngineProvider available here
-    *
+    * @return a ServerSSLEngineProvider
     */
   implicit def sslEngineProvider: ServerSSLEngineProvider = {
     ServerSSLEngineProvider { engine =>
-      // engine.setEnabledCipherSuites(Array("TLS_RSA_WITH_AES_256_CBC_SHA"))
-      // engine.setEnabledCipherSuites(Array("TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_128_GCM_SHA256", "TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_RSA_WITH_AES_128_CBC_SHA", "SSL_RSA_WITH_3DES_EDE_CBC_SHA"))
-      engine.setEnabledProtocols(Array("TLSv1", "TLSv1.2", "TLSv1.1")) // SSLv3
-      // engine.setEnabledCipherSuites(Array("TLS_RSA_WITH_AES_256_CBC_SHA"))
-      // engine.setEnabledProtocols(Array("SSLv3", "TLSv1"))
+      engine.setEnabledProtocols(Array("TLSv1", "TLSv1.2", "TLSv1.1"))
       engine
     }
   }

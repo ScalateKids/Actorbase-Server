@@ -22,7 +22,7 @@
   * SOFTWARE.
   * <p/>
   *
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -31,8 +31,7 @@ package com.actorbase.actorsystem.actors.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
-import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
-import scala.collection.immutable.TreeMap
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, UpdateCredentials, Init, Save, Clean }
 import spray.can.Http
 import akka.event.LoggingReceive
 
@@ -47,83 +46,99 @@ import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
+import com.actorbase.actorsystem.utils.CryptoUtils
+
+import java.io.File
 
 /**
-  * Insert description here
+  * Class that represent a HTTPServer actor. This actor is responsible to accept the connection
+  * incoming from clients and to instantiate a ClientActor assigned to the client asking.
   *
-  * @param
-  * @return
-  * @throws
+  * @param main: an ActorRef to a main actor
+  * @param authProxy: an ActorRef to the AuthActor
+  * @param address: a String representing the address on which Actorbase has to listen on
+  * @param listenPort: a Int representing the port on which Actorbase has to listen on
   */
 class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPort: Int) extends Actor
     with ActorLogging with SslConfiguration {
 
+  val config = ConfigFactory.load().getConfig("persistence")
   implicit val system = context.system
   IO(Http)(system) ! Http.Bind(self, interface = address, port = listenPort)
 
-  private val initLoad: Unit = loadData
+  val initLoad: Unit = loadData
 
   /**
+    * Loads all the data saved on the rootfolder onto the system. This is used to repopulate
+    * the database after a restart.
+    * The actor reads all the data from files and it proceed to send messages to the right actors
+    * to repopulate the server.
     *
+    * @return no return value
     */
   def loadData: Unit = {
-    import com.actorbase.actorsystem.utils.CryptoUtils
-    import java.io.File
-
-    val root = new File("actorbasedata/")
-    var dataShard = TreeMap[String, Any]().empty
-
+    val root = new File(config getString "save-folder")
+    var dataShard = Map[String, Any]().empty
+    var usersmap = Map[String, String]().empty
+    var contributors = Map.empty[String, Set[ActorbaseCollection]]
+    var data = Map.empty[ActorbaseCollection, Map[String, Any]]
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
-      // log.info("dirs")
       var (name, owner) = ("", "")
-      root.listFiles.filter(_.isDirectory).foreach {
-        x => {
-          // log.info("FOLDER " + x.getName)
-          x.listFiles.filter(_.isFile).foreach {
-            x => {
-              x match {
-                case meta if meta.getName.endsWith("actbmeta") =>
-                  val metaData = CryptoUtils.decrypt("Dummy implicit k", meta)
-                  name = metaData.get("collection").get.asInstanceOf[String]
-                  owner = metaData.get("owner").get.toString
-                  main ! CreateCollection(ActorbaseCollection(name, owner))
-                case user if user.getName.endsWith("shadow") =>
-                  CryptoUtils.decrypt("Dummy implicit k", user) map { case (u, p) => authProxy ! AddCredentials(u, p.asInstanceOf[String])}
-                case _ => dataShard ++= CryptoUtils.decrypt("Dummy implicit k", x)
-              }
-              // should insert all the items in the files
-              // log.info("FILE " + x.getName)
-              // if (x.getName.endsWith("actbmeta")) {
-              //   val metaData = CryptoUtils.decrypt("Dummy implicit k", x)
-              //   name = metaData.get("collection").get.asInstanceOf[String]
-              //   owner = metaData.get("owner").get.toString
-              //   main ! CreateCollection(ActorbaseCollection(name, owner))
-              // } else {
-              //   dataShard ++= CryptoUtils.decrypt("Dummy implicit k", x)
-              // }
-            }
+      root.listFiles.filter(_.isDirectory).foreach { x =>
+        x.listFiles.filter(_.isFile).foreach { x =>
+          x match {
+            case meta if meta.getName.endsWith("actbmeta") =>
+              val metaData = CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", meta)
+              metaData get "collection" map (c => name = c.asInstanceOf[String])
+              metaData get "owner" map (o => owner = o.toString())
+              main ! CreateCollection(owner, ActorbaseCollection(name, owner))
+            case user if (user.getName == "usersdata.shadow") =>
+              usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
+            case contributor if (contributor.getName == "contributors.shadow") =>
+              contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]](config getString "encryption-key", contributor)
+            case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Any]](config getString "encryption-key", x)
           }
-          val collection = new ActorbaseCollection(name, owner)
-          dataShard.foreach {
-            case(k, v) =>
-              // log.info("key is " + k + " value is " + v)
-              main ! InsertTo(collection, k, v.asInstanceOf[Array[Byte]], false) // check and remove cast
-          }
-          dataShard = dataShard.empty
         }
+        val collection = ActorbaseCollection(name, owner)
+        data += (collection -> dataShard)
+        dataShard = dataShard.empty
       }
-      // should probably delete actorbasedata here
+      data.foreach {
+        case (k, v) =>
+          v.foreach {
+            case (kk, vv) =>
+              main ! InsertTo(k.getOwner, k, kk, vv.asInstanceOf[Array[Byte]], false)
+          }
+      }
+
+      def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+      getRecursively( root ).foreach { f =>
+        if (!f.getName.endsWith("shadow") && f.getName != "usersdata")
+          f.delete()
+      }
+
+      authProxy ! Clean
+
+      usersmap map ( x => authProxy ! Init(x._1, x._2) )
+
+      contributors.foreach {
+        case (k, v) =>
+          v.foreach (entry => authProxy ! AddCollectionTo(k, entry)) // check and remove cast
+      }
+      contributors = contributors.empty
+
     } else log.warning("Directory not found!")
+
+    authProxy ! Save
+
   }
 
   /**
     * Receive method, handle connection from outside, registering it to a
     * dedicated actor
     *
-    * @param
-    * @return
-    * @throws
     */
   def receive: Receive = LoggingReceive {
     case _: Http.Connected =>
@@ -135,35 +150,42 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
 }
 
 /**
-  * Insert description here
-  *
-  * @param
-  * @return
-  * @throws
+  * HTTPServer object, it contains the main of the application
   */
-object HTTPServer extends App {
-  val config = ConfigFactory.load()
-  val system = ActorSystem(config getString "name", config)
-  // singleton userkeeper
-  system.actorOf(ClusterSingletonManager.props(
-    singletonProps = Props(classOf[AuthActor]),
-    terminationMessage = PoisonPill,
-    settings = ClusterSingletonManagerSettings(system)),
-    name = "authactor")
-  // proxy
-  val authProxy = system.actorOf(ClusterSingletonProxy.props(
-    singletonManagerPath = "/user/authactor",
-    settings = ClusterSingletonProxySettings(system)),
-    name = "authProxy")
-  // main sharding
-  ClusterSharding(system).start(
-    typeName = Main.shardName,
-    entityProps = Main.props,
-    settings = ClusterShardingSettings(system),
-    extractShardId = Main.extractShardId,
-    extractEntityId = Main.extractEntityId)
+object HTTPServer {
+  def main(args: Array[String]) = {
+    val (hostname, port) =
+      if (args.nonEmpty)
+        (args(0), args(1))
+      else {
+        ("127.0.0.1", 2500)
+      }
+    val config = ConfigFactory.parseString(s"""
+akka.remote.netty.tcp.hostname=${hostname}
+akka.remote.netty.tcp.port=${port}
+listen-on=${hostname}
+""").withFallback(ConfigFactory.load())
+    val system = ActorSystem(config getString "name", config)
+    // singleton authactor
+    system.actorOf(ClusterSingletonManager.props(
+      singletonProps = Props(classOf[AuthActor]),
+      terminationMessage = PoisonPill,
+      settings = ClusterSingletonManagerSettings(system)),
+      name = "authactor")
+    // proxy
+    val authProxy = system.actorOf(ClusterSingletonProxy.props(
+      singletonManagerPath = "/user/authactor",
+      settings = ClusterSingletonProxySettings(system)),
+      name = "authProxy")
+    // main sharding
+    ClusterSharding(system).start(
+      typeName = Main.shardName,
+      entityProps = Main.props(authProxy),
+      settings = ClusterShardingSettings(system),
+      extractShardId = Main.extractShardId,
+      extractEntityId = Main.extractEntityId)
 
-  val main = ClusterSharding(system).shardRegion(Main.shardName)
-  val http = system.actorOf(Props(classOf[HTTPServer], main, authProxy, config getString "listen-on", config getInt "exposed-port"))
-
+    val main = ClusterSharding(system).shardRegion(Main.shardName)
+    val http = system.actorOf(Props(classOf[HTTPServer], main, authProxy, config getString "listen-on", config getInt "exposed-port"))
+  }
 }

@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -29,8 +29,12 @@
 package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
-import com.actorbase.actorsystem.messages.MainMessages.ListCollections
+import akka.util.Timeout
+import com.actorbase.actorsystem.messages.MainMessages.{ AddContributor, RemoveContributor }
+import spray.http.{ HttpEntity, HttpResponse, StatusCodes }
 import spray.httpx.SprayJsonSupport._
+import spray.httpx.marshalling.ToResponseMarshallable
+import spray.httpx.marshalling._
 import spray.routing._
 import akka.pattern.ask
 
@@ -41,7 +45,11 @@ import scala.concurrent.duration._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages.{InsertTo, GetFrom, RemoveFrom, CreateCollection}
 import com.actorbase.actorsystem.messages.ClientActorMessages._
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ ListCollectionsOf, ListUUIDsOwnedBy }
 
+/**
+  * Trait used to handle routes that are related to ActorbaseCollection
+  */
 trait CollectionApi extends HttpServiceBase with Authenticator {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
@@ -56,8 +64,14 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     * PUT /collections/customers/aracing     - Update
     * DELETE /collections/customers/aracing  - Delete key aracing from customers
     *
+    * @param main: an ActorRef pointing to a main actor
+    * @param authProxy an ActorRef pointing to a AuthActor actor
+    ° @return a spray Route type object
+    *
     */
   def collectionsDirectives(main: ActorRef, authProxy: ActorRef): Route = {
+
+    implicit val timeout = Timeout(90 seconds)
 
     /**
       * Collections route, manage all collection related operations, based
@@ -77,14 +91,14 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
       * DELETE collections/<collection>/<key>
       * remove an item of key <key> from the collection <collection>
       *
-      * All routes return a standard marshallable of type Array[Byte]
+      * All routes return a ToResponseMarshallable
       */
-    pathPrefix("listcollections") {
+    pathPrefix("collections") {
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
             complete {
-              main.ask(ListCollections(authInfo.user.login))(5 seconds).mapTo[ListResponse]
+              (authProxy ? ListCollectionsOf(authInfo)).mapTo[ListResponse]
             }
           }
         }
@@ -93,66 +107,127 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
     pathPrefix("collections" / "\\S+".r) { collection =>
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-          val coll = ActorbaseCollection(collection, authInfo.user.login)
           get {
-            complete {
-              main.ask(GetFrom(coll))(5 seconds).mapTo[MapResponse]
-            }
-          } ~
-          post {
-            complete {
-              //TODO controllare se esiste già
-              main ! CreateCollection(coll)
-              "Create collection complete"
-            }
-          } ~
-          delete {
-            complete {
-              //TODO controllare, se non esiste inutile mandare il messaggio
-              main ! RemoveFrom(authInfo.user.login + collection)
-              "Remove collection complete"
-            }
-          }
-        }
-      } ~
-      pathSuffix("\\S+".r) { key =>
-        authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-          val coll = ActorbaseCollection(collection, authInfo.user.login)
-          get {
-            complete {
-              //TODO controllare, se collection non esiste, inutile instradare
-              main.ask(GetFrom(coll, key))(5 seconds).mapTo[Response] // Array[Byte] -> Response for stress-test demo
-            }
-          } ~
-          delete {
-            complete {
-              //TODO controllare, se collection non esiste, inutile instradare
-              main ! RemoveFrom(authInfo.user.login + collection, key)
-              "Remove complete"
-            }
-          } ~
-          post {
-            decompressRequest() {
-              entity(as[Array[Byte]]) { value =>
-                detach() {
-                  complete {
-                    //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                    main ! InsertTo(coll, key, value)
-                    "Insert complete"
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              complete {
+                (main ? GetFrom(authInfo, coll))
+                  .mapTo[Either[String, MapResponse]]
+                  .map { result =>
+                  result match {
+                    case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                    case Right(map) => map: ToResponseMarshallable
                   }
                 }
               }
             }
           } ~
-          put {
-            decompressRequest() {
+          post {
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              complete {
+                (main ? CreateCollection(authInfo, coll)).mapTo[String]
+              }
+            }
+          } ~
+          delete {
+            headerValueByName("owner") { owner =>
+              complete {
+                (main ? RemoveFrom(authInfo, owner + collection)).mapTo[String]
+              }
+            }
+          }
+        }
+      } ~
+      pathSuffix("\\S+".r) { key =>
+        pathEndOrSingleSlash {
+          authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+            headerValueByName("owner") { owner =>
+              val coll = ActorbaseCollection(collection, owner)
+              get {
+                complete {
+                  (main ? GetFrom(authInfo, coll, key))
+                    .mapTo[Either[String, Response]]
+                    .map { result =>
+                    result match {
+                      case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                      case Right(response) => response: ToResponseMarshallable
+                    }
+                  }
+                }
+              }
+            } ~
+            delete {
+              headerValueByName("owner") { owner =>
+                complete {
+                  (main ? RemoveFrom(authInfo, owner + collection, key)).mapTo[String]
+                }
+              }
+            } ~
+            post {
+              decompressRequest() {
+                headerValueByName("owner") { owner =>
+                  entity(as[Array[Byte]]) { value =>
+                    detach() {
+                      complete {
+                        val coll = ActorbaseCollection(collection, owner)
+                          (main ? InsertTo(authInfo, coll, key, value)).mapTo[String]
+                      }
+                    }
+                  }
+                }
+              }
+            } ~
+            put {
+              decompressRequest() {
+                headerValueByName("owner") { owner =>
+                  entity(as[Array[Byte]]) { value =>
+                    detach() {
+                      complete {
+                        val coll = ActorbaseCollection(collection, owner)
+                          (main ? InsertTo(authInfo, coll, key, value, true)).mapTo[String]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } ~
+  pathPrefix("contributors" / "\\S+".r) { collection =>
+    pathEndOrSingleSlash {
+      authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
+        get {
+          complete("contr")
+        } ~
+        post {
+          decompressRequest() {
+            headerValueByName("permission") { permission =>
               entity(as[Array[Byte]]) { value =>
                 detach() {
                   complete {
-                    //TODO vedere se la collezione è presente, se non lo è mandare un createCollection
-                    main ! InsertTo(coll, key, value, true)
-                    "Update complete"
+                    val user = new String(value, "UTF-8")
+                    val uuid = user + collection
+                    if (permission == "read")
+                      (main ? AddContributor(authInfo, user, ActorbaseCollection.Read, uuid)).mapTo[String]
+                    else (main ? AddContributor(authInfo, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
                   }
+                }
+              }
+            }
+          }
+        } ~
+        delete {
+          decompressRequest() {
+            entity(as[Array[Byte]]) { value =>
+              detach() {
+                complete {
+                  val user = new String(value, "UTF-8")
+                  val uuid = user + collection
+                    (main ? RemoveContributor(authInfo, user, uuid)).mapTo[String]
                 }
               }
             }

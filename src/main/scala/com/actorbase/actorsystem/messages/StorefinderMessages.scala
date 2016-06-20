@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids 
   * @version 1.0
   * @since 1.0
   */
@@ -32,15 +32,36 @@ import akka.actor.ActorRef
 import akka.dispatch.ControlMessage
 
 sealed abstract trait StorefinderMessage
-
+/**
+ * Message used to request to get all item from the Storefinder
+ */
 final case object GetAllItems extends StorefinderMessage
-
+/**
+ * Message used to update the collection size after an insert or a remove operation
+ * @param increment boolean flag to do an increment or decrement operation with size (true = increment ; false = decrement)
+ */
+ 
 final case class UpdateCollectionSize(increment: Boolean = true) extends StorefinderMessage with ControlMessage
-
+/**
+ * Message used to get data from the collection associated at the storefinder
+ * @param key string with value key that will be search in the collection associated
+ */
 final case class Get(key: String) extends StorefinderMessage
-
+/**
+ * Message used to receive shards of collection from storekeepers to return to a client
+ * @param clientRef reference to client that made the request and will receive the response
+ * @param items map that contain the shards of collection to return
+ */
 final case class PartialMapTransaction(clientRef: ActorRef, items: Map[String, Array[Byte]]) extends StorefinderMessage with ControlMessage
-
+/**
+ * Message used to remove data from the collection associated at the storefinder
+ * @param key a string with the key of the value that will be trashed
+ */
 final case class Remove(key: String) extends StorefinderMessage
-
+/**
+ * Message used to insert value into the collection associated to the storefinder
+ * @param key a string with the key of value that will be inserted in the collection
+ * @param value data to insert in the collection
+ * @param update boolean flag to allow overwrite data o deny it (true = allow ; false = deny)
+ */
 final case class Insert(key: String, value: Array[Byte], update: Boolean = false) extends StorefinderMessage
