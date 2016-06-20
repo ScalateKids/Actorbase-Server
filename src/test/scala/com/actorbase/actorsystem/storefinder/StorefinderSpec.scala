@@ -26,10 +26,11 @@
   * @version 1.0
   * @since 1.0
   */
-/*
+
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
@@ -39,22 +40,30 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
+import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 
-class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
-  with WordSpecLike
-  with MustMatchers
-  with BeforeAndAfterAll{
+class StorefinderSpec extends TestKit(ActorSystem("StorefinderSpec",
+  ConfigFactory.parseString("""
+akka.remote.netty.tcp.port = 0,
+akka.actors.provider = "akka.cluster.ClusterRefProvider"
+"""))) with ActorSystemUnitSpec {
 
   implicit val timeout = Timeout(25 seconds)
 
   val actbColl = new ActorbaseCollection("testOwner","testName")
   val sfRef = TestActorRef(new Storefinder( actbColl ))
   val p = TestProbe()
+
+  /**
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
+  override def afterAll() : Unit = system.shutdown
 
   "Storefinder" should {
     "be created" in{
@@ -72,16 +81,16 @@ class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
   }
 
   /*  TODO SBAGLIATO
-  it should {
-    "get all items" in {
-      val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
-      p.send( sfRef, GetAllItems )
-      val m: Map[String, Array[Byte]] = Map("key" -> value )
-      p.expectMsg( 5 seconds, MapResponse( "testName",  m ) )
-    }
-  }
-  */
+   it should {
+   "get all items" in {
+   val value = "value".getBytes()
+   p.send( sfRef, Insert("key", value , false) )
+   p.send( sfRef, GetAllItems )
+   val m: Map[String, Array[Byte]] = Map("key" -> value )
+   p.expectMsg( 5 seconds, MapResponse( "testName",  m ) )
+   }
+   }
+   */
 
   // None.get non è uguale a None.get ritornato dallo SK
   it should {
@@ -105,7 +114,4 @@ class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
     }
   }
 
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
-}*/
+}

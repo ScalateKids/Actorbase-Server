@@ -25,10 +25,11 @@
   * @version 1.0
   * @since 1.0
   */
-/*
+
 package com.actorbase.actorsystem.warehouseman
 
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 import java.io.File
 import akka.pattern.ask
 import scala.concurrent.Await
@@ -41,18 +42,26 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
+import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.messages.WarehousemanMessages._
 
-class WarehousemanSpec extends TestKit(ActorSystem("testSystem2"))
-  with WordSpecLike
-  with MustMatchers
-  with BeforeAndAfterAll{
+class WarehousemanSpec extends TestKit(ActorSystem("WarehousemanSpec",
+  ConfigFactory.parseString("""
+akka.remote.netty.tcp.port = 0,
+akka.actors.provider = "akka.cluster.ClusterRefProvider"
+"""))) with ActorSystemUnitSpec {
 
   val collUuid = "testUuid"
   val wareRef = TestActorRef(new Warehouseman( collUuid ))
   val p = TestProbe()
+
+  /**
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
+  override def afterAll() : Unit = system.shutdown
 
   "Warehouseman" should {
     "be created" in {
@@ -84,8 +93,4 @@ class WarehousemanSpec extends TestKit(ActorSystem("testSystem2"))
     }
   }
 
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
-
-}*/
+}

@@ -63,7 +63,8 @@ import com.actorbase.actorsystem.messages.WarehousemanMessages._
 class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     with WordSpecLike
     with MustMatchers
-    with ImplicitSender{
+    with ImplicitSender
+    with BeforeAndAfterAll {
 
   implicit val timeout = Timeout(5 seconds)
 
@@ -77,9 +78,7 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
    }
    }*/
 
-  // override def afterAll =  {
-  //   TestKit.shutdownActorSystem(system)
-  // }
+  override def afterAll(): Unit = TestKit.shutdownActorSystem(system)
 
   "Main actor" should{
 

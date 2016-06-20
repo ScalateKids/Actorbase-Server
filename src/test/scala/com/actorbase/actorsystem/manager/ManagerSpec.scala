@@ -26,10 +26,11 @@
   * @version 1.0
   * @since 1.0
   */
-/*
+
 package com.actorbase.actorsystem.manager
 
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
@@ -39,6 +40,7 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
+import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.manager.Manager
 import com.actorbase.actorsystem.actors.manager.Manager.OneMore
@@ -52,16 +54,23 @@ import akka.routing.{ ActorRefRoutee, ConsistentHashingPool, FromConfig, Router 
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
 
-class ManagerSpec extends TestKit(ActorSystem("testSystem"))
-  with WordSpecLike
-  with MustMatchers
-  with BeforeAndAfterAll{
+class ManagerSpec extends TestKit(ActorSystem("ManagerSpec",
+  ConfigFactory.parseString("""
+akka.remote.netty.tcp.port = 0,
+akka.actors.provider = "akka.cluster.ClusterRefProvider"
+"""))) with ActorSystemUnitSpec {
 
   val collName = "testColl"
   val collOwner = "testOwner"
+
+  /**
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
+  override def afterAll() : Unit = system.shutdown
   /*val storekeepers = system.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
-    ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props( collName, collOwner)) )
-*/
+   ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props( collName, collOwner)) )
+   */
   val mnRef = TestActorRef(new Manager( collName, collOwner, storekeepers ))
   val p = TestProbe()
 
@@ -78,8 +87,4 @@ class ManagerSpec extends TestKit(ActorSystem("testSystem"))
       p.expectMsg( InitMn( mnRef ) )
     }
   }
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
-}*/
+}
