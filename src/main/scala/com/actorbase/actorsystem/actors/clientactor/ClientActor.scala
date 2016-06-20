@@ -65,10 +65,10 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
     pathPrefix("auth" / "\\S+".r) { user =>
       post {
         decompressRequest() {
-          entity(as[Array[Byte]]) { value =>
+          entity(as[String]) { value =>
             detach() {
               complete {
-                (authProxy ? Authenticate(user, new String(value, "UTF-8"))).mapTo[Option[String]]
+                (authProxy ? Authenticate(user, new String(base64ToBytes(value), "UTF-8"))).mapTo[Option[String]]
               }
             }
           }
@@ -80,10 +80,10 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
     post {
       decompressRequest() {
         headerValueByName("Old-Password") { oldpw =>
-          entity(as[Array[Byte]]) { value =>
+          entity(as[String]) { value =>
             detach() {
               complete {
-                (authProxy ? UpdateCredentials(user, oldpw, new String(value, "UTF-8"))).mapTo[String]
+                (authProxy ? UpdateCredentials(user, oldpw, new String(base64ToBytes(value), "UTF-8"))).mapTo[String]
               }
             }
           }

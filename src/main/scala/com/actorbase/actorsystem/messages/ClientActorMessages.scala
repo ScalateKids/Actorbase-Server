@@ -43,7 +43,7 @@ case object ListResponse {
   * Message that represent a server response
   * @param response the response of the server in byteArray
   */
-final case class Response(response: Array[Byte])
+final case class Response(response: Any)
 
 case object Response {
 
@@ -51,6 +51,9 @@ case object Response {
 
     def write(x: Any) = x match {
       case n: Int => JsNumber(n)
+      case d: Double => JsNumber(d)
+      case i: BigInt => JsNumber(i)
+      case l: Long => JsNumber(l)
       case s: String => JsString(s)
       case x: Seq[_] => seqFormat[Any].write(x)
       case m: Map[String, _] => mapFormat[String, Any].write(m)
@@ -81,15 +84,6 @@ case object Response {
 final case class MapResponse(owner: String, collectionName: String, data: Map[String, Any])
 
 object MapResponse {
-
-  // def apply(owner: String, collectionName: String, data: Map[String, Array[Byte]]) = {
-  //     def bytesToAny(bytes: Array[Byte]): Any = {
-  //       import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-  //       val in = new ObjectInputStream(new ByteArrayInputStream(bytes))
-  //       in.readUnshared().asInstanceOf[Any]
-  //     }
-  //     data mapValues (v => bytesToAny(v))
-  // }
 
   implicit object AnyJsonFormat extends JsonFormat[Any] {
 

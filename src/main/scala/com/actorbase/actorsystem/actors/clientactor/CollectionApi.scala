@@ -41,6 +41,7 @@ import akka.pattern.ask
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import java.util.Base64
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages.{InsertTo, GetFrom, RemoveFrom, CreateCollection}
@@ -54,6 +55,9 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
+  def base64ToBytes(in: String): Array[Byte] = {
+    Base64.getUrlDecoder.decode(in)
+  }
   /**
     * HTTP routes mapped to handle CRUD operations, these should be nouns
     * (not verbs!) e.g.
@@ -167,11 +171,11 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             post {
               decompressRequest() {
                 headerValueByName("owner") { owner =>
-                  entity(as[Array[Byte]]) { value =>
+                  entity(as[String]) { value =>
                     detach() {
                       complete {
                         val coll = ActorbaseCollection(collection, owner)
-                          (main ? InsertTo(authInfo, coll, key, value)).mapTo[String]
+                          (main ? InsertTo(authInfo, coll, key, base64ToBytes(value))).mapTo[String]
                       }
                     }
                   }
@@ -181,11 +185,11 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             put {
               decompressRequest() {
                 headerValueByName("owner") { owner =>
-                  entity(as[Array[Byte]]) { value =>
+                  entity(as[String]) { value =>
                     detach() {
                       complete {
                         val coll = ActorbaseCollection(collection, owner)
-                          (main ? InsertTo(authInfo, coll, key, value, true)).mapTo[String]
+                          (main ? InsertTo(authInfo, coll, key, base64ToBytes(value), true)).mapTo[String]
                       }
                     }
                   }
@@ -206,10 +210,10 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         post {
           decompressRequest() {
             headerValueByName("permission") { permission =>
-              entity(as[Array[Byte]]) { value =>
+              entity(as[String]) { value =>
                 detach() {
                   complete {
-                    val user = new String(value, "UTF-8")
+                    val user = new String(base64ToBytes(value), "UTF-8")
                     val uuid = user + collection
                     if (permission == "read")
                       (main ? AddContributor(authInfo, user, ActorbaseCollection.Read, uuid)).mapTo[String]
@@ -222,10 +226,10 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         } ~
         delete {
           decompressRequest() {
-            entity(as[Array[Byte]]) { value =>
+            entity(as[String]) { value =>
               detach() {
                 complete {
-                  val user = new String(value, "UTF-8")
+                  val user = new String(base64ToBytes(value), "UTF-8")
                   val uuid = user + collection
                     (main ? RemoveContributor(authInfo, user, uuid)).mapTo[String]
                 }
