@@ -219,7 +219,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
       /**
         * Persist data to disk
         */
-      case Persist => if (data.size > 0) warehouseman ! Save( data )
+      case Persist => if (data.size > 0 && collectionOwner != "anonymous") warehouseman ! Save( data )
 
     }
   }

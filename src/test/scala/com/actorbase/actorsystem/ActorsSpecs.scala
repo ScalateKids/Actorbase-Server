@@ -61,9 +61,9 @@ import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.messages.WarehousemanMessages._
 
 class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
-  with WordSpecLike
-  with MustMatchers
-  with ImplicitSender{
+    with WordSpecLike
+    with MustMatchers
+    with ImplicitSender{
 
   implicit val timeout = Timeout(5 seconds)
 
@@ -71,23 +71,27 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
 
   val p = TestProbe()
 
- /* "nothing should" should {
-    "its true" in {
-      assert( 1==1 )
-    }
-  }*/
+  /* "nothing should" should {
+   "its true" in {
+   assert( 1==1 )
+   }
+   }*/
+
+  // override def afterAll =  {
+  //   TestKit.shutdownActorSystem(system)
+  // }
 
   "Main actor" should{
 
     val authProxy = TestActorRef[AuthActor]
 
     val mainActorRef = TestActorRef( new Main(authProxy) )
-    
+
     val testColl = new ActorbaseCollection("testCollection", "anonymous")
-      
+
     /*"list all collections" in {
-      p.send( mainActorRef, ListCollections("test") )
-    }*/
+     p.send( mainActorRef, ListCollections("test") )
+     }*/
 
     "should be created" in {
       assert(mainActorRef != None)
@@ -99,12 +103,12 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
       p.send( mainActorRef, GetFrom("admin", testColl, "testKey"))
       p.expectMsg("OK")
     }
-  
+
     "create a new collection" in {
       val size = mainActorRef.underlyingActor.getSize
-      p.send(mainActorRef, CreateCollection(testColl))
+      p.send(mainActorRef, CreateCollection("admin", testColl))
     }
-  
+
     "remove an item" in {
       val value = "testValue".getBytes
       p.send( mainActorRef, InsertTo("admin", testColl, "testKey",  value, false))
@@ -115,7 +119,7 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     "return an item" in {
       p.send( mainActorRef, GetFrom("admin", testColl, "testKey"))
     }
-  
+
     "add a contributor to a collection" in {
       p.send( mainActorRef, AddContributor("admin", "pluto", ReadWrite, "testCollection"))
     }
@@ -131,14 +135,14 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
 
 
   "Storefinder Actor" should {
-    
+
     val actbColl = new ActorbaseCollection("testOwner","testName")
     val sfRef = TestActorRef(new Storefinder( actbColl ))
 
     "be created" in{
       assert(sfRef != None)
     }
-  
+
     "insert and get an item" in {
       val value = "value".getBytes()
       p.send( sfRef, Insert("key", value , false) )
@@ -157,15 +161,15 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
       p.send( sfRef, Insert("key", value , false) )
       p.send( sfRef, GetAllItems )
     }
-  
+
     "update the collection size" in {
       p.send( sfRef, UpdateCollectionSize( true ) )
     }
 
     "receive the message PartialMapTransaction" in {
-      p.send( sfRef, PartialMapTransaction( sfRef, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) ) 
+      p.send( sfRef, PartialMapTransaction( sfRef, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
     }
-  
+
   }
 
 
@@ -210,7 +214,7 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     }
 
   }
-  
+
 
   "Warehouseman Actor" should {
 
@@ -225,7 +229,7 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     "be created" in {
       assert(wareRef != None)
     }
-  
+
     "save encrypted data" in {
       def delete(file: File) {
         if (file.isDirectory)
@@ -266,7 +270,7 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     "receive the message AddCredential" in {
       p.send( authRef, AddCredentials("pippo", "Pluto7632"))
     }
-    
+
     "receive the message Authenticate" in {
       p.send( authRef, Authenticate("pippo", "Pluto7632"))
     }
@@ -294,20 +298,20 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     val collName = "testColl"
     val collOwner = "testOwner"
     /*val storekeepers = system.actorOf(ClusterRouterPool(ConsistentHashingPool(0),
-      ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props( collName, collOwner)) )
-  */
+     ClusterRouterPoolSettings(10000, 25, true, None)).props(Storekeeper.props( collName, collOwner)) )
+     */
     val skRef = TestActorRef(new Storekeeper( collName, collOwner, 10 ))
 
     val mnRef = TestActorRef(new Manager( collName, collOwner, skRef ))
-    
+
     "be created" in{
       assert(mnRef != None)
     }
-  
+
     "create one storekeeper" in {
       import com.actorbase.actorsystem.actors.manager.Manager.OneMore
       p.send( mnRef, OneMore )
-    }    
+    }
   }
 
 
@@ -328,12 +332,12 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     }
 
     "receive the message MapResponse" in {
-      p.send( clientActorRef, MapResponse("user", "user", Map[String, Any]("key" -> "value")) ) 
+      p.send( clientActorRef, MapResponse("user", "user", Map[String, Any]("key" -> "value")) )
     }
 
     "receive the message ListResponse" in {
       p.send( clientActorRef, ListResponse(List[String]("item1", "item2", "item3") ) )
     }
   }
-  
+
 }

@@ -36,6 +36,7 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import com.actorbase.actorsystem.messages.StorekeeperMessages.Persist
 import com.actorbase.actorsystem.messages.AuthActorMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
+import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
 import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
 import com.github.t3hnar.bcrypt._
 import com.typesafe.config.ConfigFactory
@@ -85,8 +86,9 @@ class AuthActor extends Actor with ActorLogging {
     }
 
   /**
-    * Override of the receive Actor method. Set the actor in the running state with a default Set of Profiles,
-    * letting him receive a variety of messages explained in the running method scaladoc
+    * Override of the receive Actor method. Set the actor in the running state
+    * with a default Set of Profiles, letting him receive a variety of messages
+    * explained in the running method scaladoc
     */
   override def receive = running(Set[Profile](Profile("admin", "Actorb4se".bcrypt(generateSalt), Set.empty[ActorbaseCollection]),
     Profile("anonymous", "Anonym0us".bcrypt(generateSalt), Set.empty[ActorbaseCollection])))
@@ -99,10 +101,18 @@ class AuthActor extends Actor with ActorLogging {
     */
   def persist(profiles: Set[Profile]): Unit = {
     var profileMap = Map.empty[String, String]
-    var contributorMap = Map.empty[String, Set[ActorbaseCollection]]
+    var contributorMap = Map.empty[String, Tuple2[ActorbaseCollection.Permissions, Set[ActorbaseCollection]]]
     profiles map  { x =>
       profileMap += (x.username -> x.password)
-      contributorMap += (x.username -> x.getCollections)
+      var colls = Set.empty[ActorbaseCollection]
+      x.getCollections filter (c => c.containsReadContributor(x.username)) map { rc =>
+        colls += rc
+        contributorMap += (x.username -> (ActorbaseCollection.Read -> colls))
+      }
+      colls = colls.empty
+      x.getCollections filter (c => c.containsReadWriteContributor(x.username)) map { rc =>
+        contributorMap += (x.username -> (ActorbaseCollection.ReadWrite -> colls))
+      }
     }
     val key = config getString("encryption-key")
     val encryptedProfilesFile = new File(rootFolder + "/usersdata.shadow")

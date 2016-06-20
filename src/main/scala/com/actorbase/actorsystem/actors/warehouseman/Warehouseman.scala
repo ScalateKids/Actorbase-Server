@@ -47,6 +47,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
   private val config = ConfigFactory.load().getConfig("persistence")
   private val wareUUID = java.util.UUID.randomUUID.toString
   private val rootFolder = config getString "save-folder"
+
   /**
     * Receive method of the Warehouseman actor, it does different things based on the message it receives:<br>
     * _Init: when the actor receives this message it inserts the item in the collection requested by the user.<br>
@@ -55,10 +56,10 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
     * _Read: when the actor receives this message it Read a file from filesystem and decrypt the content extracting the map shard contained</br>
     *
     */
-
   def receive = {
 
     case message: WarehousemanMessage => message match {
+
       /**
         * Initialize collection by name of the collection and his howner
         * @param collection name of the collection to initialize
