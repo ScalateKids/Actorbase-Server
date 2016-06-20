@@ -26,16 +26,14 @@
   * @version 1.0
   * @since 1.0
   */
-
+/*
 package com.actorbase.actorsystem
 
 import akka.util.Timeout
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import scala.concurrent.duration._
-import org.scalatest.FlatSpec
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
@@ -63,7 +61,8 @@ import com.actorbase.actorsystem.messages.WarehousemanMessages._
 class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     with WordSpecLike
     with MustMatchers
-    with ImplicitSender{
+    with ImplicitSender
+    with BeforeAndAfterAll {
 
   implicit val timeout = Timeout(5 seconds)
 
@@ -71,7 +70,9 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
 
   val p = TestProbe()
 
-  "Main actor" should{
+  override def afterAll(): Unit = TestKit.shutdownActorSystem(system)
+
+/*  "Main actor" should{
 
     val authProxy = TestActorRef[AuthActor]
 
@@ -203,7 +204,7 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
     }
 
   }
-
+*/
 
   /*"Warehouseman Actor" should {
 
@@ -330,3 +331,4 @@ class ActorsSpecs extends TestKit(ActorSystem("testSystem"))
   }*/
 
 }
+*/

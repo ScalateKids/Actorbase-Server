@@ -58,6 +58,11 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
   def base64ToBytes(in: String): Array[Byte] = {
     Base64.getUrlDecoder.decode(in)
   }
+
+  def base64ToString(in: String): String = {
+    new String(Base64.getUrlDecoder.decode(in), "UTF-8")
+  }
+
   /**
     * HTTP routes mapped to handle CRUD operations, these should be nouns
     * (not verbs!) e.g.
@@ -113,7 +118,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
             headerValueByName("owner") { owner =>
-              val coll = ActorbaseCollection(collection, owner)
+              val coll = ActorbaseCollection(collection, base64ToString(owner))
               complete {
                 (main ? GetFrom(authInfo, coll))
                   .mapTo[Either[String, MapResponse]]
@@ -128,7 +133,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           } ~
           post {
             headerValueByName("owner") { owner =>
-              val coll = ActorbaseCollection(collection, owner)
+              val coll = ActorbaseCollection(collection, base64ToString(owner))
               complete {
                 (main ? CreateCollection(authInfo, coll)).mapTo[String]
               }
@@ -137,7 +142,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           delete {
             headerValueByName("owner") { owner =>
               complete {
-                (main ? RemoveFrom(authInfo, owner + collection)).mapTo[String]
+                (main ? RemoveFrom(authInfo, base64ToString(owner) + collection)).mapTo[String]
               }
             }
           }
@@ -147,7 +152,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         pathEndOrSingleSlash {
           authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
             headerValueByName("owner") { owner =>
-              val coll = ActorbaseCollection(collection, owner)
+              val coll = ActorbaseCollection(collection, base64ToString(owner))
               get {
                 complete {
                   (main ? GetFrom(authInfo, coll, key))
@@ -164,7 +169,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             delete {
               headerValueByName("owner") { owner =>
                 complete {
-                  (main ? RemoveFrom(authInfo, owner + collection, key)).mapTo[String]
+                  (main ? RemoveFrom(authInfo, base64ToString(owner) + collection, key)).mapTo[String]
                 }
               }
             } ~
@@ -174,7 +179,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                   entity(as[String]) { value =>
                     detach() {
                       complete {
-                        val coll = ActorbaseCollection(collection, owner)
+                        val coll = ActorbaseCollection(collection, base64ToString(owner))
                           (main ? InsertTo(authInfo, coll, key, base64ToBytes(value))).mapTo[String]
                       }
                     }
@@ -188,7 +193,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                   entity(as[String]) { value =>
                     detach() {
                       complete {
-                        val coll = ActorbaseCollection(collection, owner)
+                        val coll = ActorbaseCollection(collection, base64ToString(owner))
                           (main ? InsertTo(authInfo, coll, key, base64ToBytes(value), true)).mapTo[String]
                       }
                     }
@@ -215,7 +220,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                   complete {
                     val user = new String(base64ToBytes(value), "UTF-8")
                     val uuid = user + collection
-                    if (permission == "read")
+                    if (base64ToString(permission) == "read")
                       (main ? AddContributor(authInfo, user, ActorbaseCollection.Read, uuid)).mapTo[String]
                     else (main ? AddContributor(authInfo, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
                   }

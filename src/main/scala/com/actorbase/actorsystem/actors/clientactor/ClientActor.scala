@@ -83,7 +83,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
           entity(as[String]) { value =>
             detach() {
               complete {
-                (authProxy ? UpdateCredentials(user, oldpw, new String(base64ToBytes(value), "UTF-8"))).mapTo[String]
+                (authProxy ? UpdateCredentials(user, base64ToString(oldpw), new String(base64ToBytes(value), "UTF-8"))).mapTo[String]
               }
             }
           }

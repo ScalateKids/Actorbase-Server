@@ -25,10 +25,11 @@
   * @version 1.0
   * @since 1.0
   */
-/*
+
 package com.actorbase.actorsystem.userkeeper
 
 import akka.actor.{ActorSystem, Props}
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import akka.pattern.ask
@@ -36,92 +37,93 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
-import com.actorbase.actorsystem.userkeeper.Userkeeper._
 
-/**
-  * Userkeeper specification tests
-  *
-  * @param
-  * @return
-  * @throws
-  */
-class UserkeeperSpec extends ActorSystemUnitSpec {
+// /**
+//   * Userkeeper specification tests
+//   *
+//   * @param
+//   * @return
+//   * @throws
+//   */
+// class UserkeeperSpec extends ActorSystemUnitSpec {
 
-  val system = ActorSystem("UserkeeperSpec")
+//   val system = ActorSystem("UserkeeperSpec", ConfigFactory.parseString("""
+// akka.remote.netty.tcp.port = 0,
+// akka.actors.provider = "akka.cluster.ClusterRefProvider"
+// """))
 
-  /**
-    * afterAll method, triggered after all test have ended, it shutdown the
-    * actorsystem.
-    */
-  override def afterAll() : Unit = system.shutdown
+//   /**
+//     * afterAll method, triggered after all test have ended, it shutdown the
+//     * actorsystem.
+//     */
+//   override def afterAll() : Unit = system.shutdown
 
-  /**
-    * User credentials tests
-    */
-  "Concerning password, an Userkeeper" should {
+//   /**
+//     * User credentials tests
+//     */
+//   "Concerning password, an Userkeeper" should {
 
-    val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
+//     val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
 
-    "set the password: pass" in {
+//     "set the password: pass" in {
 
-      val password = Await.result(actorRef.ask(GetPassword)(5 seconds).mapTo[Option[String]].map{ pass => pass }, Duration.Inf)
-      password.getOrElse("No-Password-Received") should be("pass")
-    }
+//       val password = Await.result(actorRef.ask(GetPassword)(5 seconds).mapTo[Option[String]].map{ pass => pass }, Duration.Inf)
+//       password.getOrElse("No-Password-Received") should be("pass")
+//     }
 
-    "set the password: newPass using ChangePassword" in {
+//     "set the password: newPass using ChangePassword" in {
 
-      actorRef ! ChangePassword("newPass")
-      val password = Await.result(actorRef.ask(GetPassword)(5 seconds).mapTo[Option[String]].map{ results => results }, Duration.Inf)
-      password.getOrElse("No-Password-Received") should be("newPass")
-    }
+//       actorRef ! ChangePassword("newPass")
+//       val password = Await.result(actorRef.ask(GetPassword)(5 seconds).mapTo[Option[String]].map{ results => results }, Duration.Inf)
+//       password.getOrElse("No-Password-Received") should be("newPass")
+//     }
 
-  }
+//   }
 
-  /**
-    * Read-write permission collections tests
-    */
-  "Adding a read-write collection to an Userkeeper" should {
+//   /**
+//     * Read-write permission collections tests
+//     */
+//   "Adding a read-write collection to an Userkeeper" should {
 
-    val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
+//     val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
 
-    "increment the size of the read-write buffer" in {
+//     "increment the size of the read-write buffer" in {
 
-      actorRef ! AddCollection(true, "collection_1")
-      val collections = Await.result(actorRef.ask(GetCollections(true))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
-      collections.size should be(1)
-    }
+//       actorRef ! AddCollection(true, "collection_1")
+//       val collections = Await.result(actorRef.ask(GetCollections(true))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+//       collections.size should be(1)
+//     }
 
-    "add the collection to the read-write buffer" in {
+//     "add the collection to the read-write buffer" in {
 
-      actorRef ! AddCollection(true, "collection_2")
-      val collections = Await.result(actorRef.ask(GetCollections(true))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
-      collections.contains("collection_2") should be(true)
-    }
+//       actorRef ! AddCollection(true, "collection_2")
+//       val collections = Await.result(actorRef.ask(GetCollections(true))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+//       collections.contains("collection_2") should be(true)
+//     }
 
-  }
+//   }
 
-  /**
-    * Read-only permission collections tests
-    */
-  "Adding a read-only collection to an Userkeeper" should {
+//   /**
+//     * Read-only permission collections tests
+//     */
+//   "Adding a read-only collection to an Userkeeper" should {
 
-    val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
+//     val actorRef = system.actorOf(Userkeeper.props("user", "pass"))
 
-    "increment the size of the read-only buffer" in {
+//     "increment the size of the read-only buffer" in {
 
-      actorRef ! AddCollection(false, "collection_1")
-      val collections = Await.result(actorRef.ask(GetCollections(false))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
-      collections.size should be(1)
-    }
+//       actorRef ! AddCollection(false, "collection_1")
+//       val collections = Await.result(actorRef.ask(GetCollections(false))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+//       collections.size should be(1)
+//     }
 
-    "add the collection to the read-only buffer" in {
+//     "add the collection to the read-only buffer" in {
 
-      actorRef ! AddCollection(false, "collection_2")
-      val collections = Await.result(actorRef.ask(GetCollections(false))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
-      collections.contains("collection_2") should be(true)
-    }
+//       actorRef ! AddCollection(false, "collection_2")
+//       val collections = Await.result(actorRef.ask(GetCollections(false))(5 seconds).mapTo[ListBuffer[String]].map{ results => results }, Duration.Inf)
+//       collections.contains("collection_2") should be(true)
+//     }
 
-  }
+//   }
 
-}
-*/
+// }

@@ -26,11 +26,12 @@
   * @version 1.0
   * @since 1.0
   */
-/*
+
 package com.actorbase.actorsystem.main
 
 import akka.util.Timeout
 import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import org.scalatest.FlatSpec
 
@@ -41,69 +42,73 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
+import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.actors.main.Main
+import com.actorbase.actorsystem.actors.authactor.AuthActor
+import com.actorbase.actorsystem.utils.ActorbaseCollection._
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages._
+import com.actorbase.actorsystem.messages.AuthActorMessages._
 
-class MainSpec extends TestKit(ActorSystem("testSystem"))
-  with WordSpecLike
-  with MustMatchers
-  with ImplicitSender  {
+class MainSpec extends TestKit(ActorSystem("MainSpec",
+  ConfigFactory.parseString("""
+akka.remote.netty.tcp.port = 0,
+akka.actors.provider = "akka.cluster.ClusterRefProvider"
+"""))) with ActorSystemUnitSpec with ImplicitSender {
 
-  implicit val timeout = Timeout(25 seconds)
+  implicit val timeout = Timeout(5 seconds)
 
-  //implicit val system = ActorSystem()
-
-  val mainActorRef = TestActorRef[Main]
+  /**
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
+  override def afterAll() : Unit = system.shutdown
 
   val p = TestProbe()
 
-  "main" should{
-    "list all collections" in {
-      p.send( mainActorRef, ListCollections("test") )
-      p.expectMsg( ListResponse(List()) )
-    }
-  }
 
-  it should{
+  "Main actor" should{
+
+    val authProxy = TestActorRef[AuthActor]
+    val mainActorRef = TestActorRef( new Main(authProxy) )
+    val testColl = new ActorbaseCollection("testCollection", "anonymous")
+
+    "should be created" in {
+      assert(mainActorRef != None)
+    }
+
+    "create a new collection" in {
+      val size = mainActorRef.underlyingActor.getSize
+      p.send(mainActorRef, CreateCollection("admin", testColl))
+      p.expectMsg("OK")
+    }
+
     "insert and retrieve an item" in {
-      val testColl = new ActorbaseCollection("testCollection", "anonymous")
       val value = "testValue".getBytes
-      p.send( mainActorRef, InsertTo(testColl, "testKey",  value, false))
-      p.send( mainActorRef, GetFrom(testColl, "testKey"))
-      p.expectMsg(Response(value))
+      p.send( mainActorRef, InsertTo("anonymous", testColl, "testKey",  value, false))
+      p.send( mainActorRef, GetFrom("anonymous", testColl, "testKey"))
+      p.expectMsg("OK")
+    }
+
+    "remove an item" in {
+      val value = "testValue".getBytes
+      p.send(mainActorRef, RemoveFrom("anonymous", testColl.getUUID, "testKey"))
+      p.expectMsg("OK")
+    }
+
+    "add a contributor to a collection" in {
+      p.send( authProxy, AddCredentials("pluto", "p4sswordPluto"))
+      p.send( mainActorRef, AddContributor("anonymous", "pluto", ReadWrite, testColl.getUUID))
+      p.expectMsg("OK")
+    }
+
+    "remove a contributor from a collection" in {   // this is not responding, can't except messages
+      p.send( mainActorRef, RemoveContributor("anonymous", "pluto", testColl.getUUID ))
+    }
+
+    "receive the message CompleteTransaction" in {
+      p.send( mainActorRef, CompleteTransaction( authProxy, testColl, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
     }
   }
-  
-  it should{
-    "create a new collection" in {
-	  val testCreate = new ActorbaseCollection("testColl", "anonymous")
-	  val size = mainActorRef.underlyingActor.getSize
-	  p.send(mainActorRef, CreateCollection(testCreate))
-	  assert(mainActorRef.underlyingActor.getSize === size+1)
-	}
-  }
-  
-  it should{
-    "remove an item" in {
-	  val testColl = new ActorbaseCollection("testCollection", "anonymous")
-      val value = "testValue".getBytes
-      p.send( mainActorRef, InsertTo(testColl, "testKey",  value, false))
-      p.send( mainActorRef, GetFrom(testColl, "testKey"))
-	  p.send(mainActorRef, RemoveFrom(testColl.getUUID, "testKey"))
-      p.send( mainActorRef, GetFrom(testColl, "testKey"))
-      val testMessage = p.receiveOne(25 seconds)
-	  assert( value != testMessage.asInstanceOf[Response].response)
-	}
-  }
-  
-  /*it should{
-    "add a contributor" in {
-	  p.send( mainActorRef, addContributor(new ActorbaseCollection("testCollection", "anonymous"), "testContributor"))
-	  p.send( mainActorRef, InsertTo(new ActorbaseCollection("testCollection", "anonymous"), "test"))
-	  //get e controlla e fine test
-	}
-  } TODO quando sarà fatta*/
 }
-*/

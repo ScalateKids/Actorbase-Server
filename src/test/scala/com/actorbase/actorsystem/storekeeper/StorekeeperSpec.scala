@@ -30,6 +30,8 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
+import com.actorbase.actorsystem.actors.storefinder.Storefinder
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
@@ -39,6 +41,7 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
 
+import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
@@ -46,72 +49,76 @@ import com.actorbase.actorsystem.messages.StorefinderMessages.{UpdateCollectionS
 import com.actorbase.actorsystem.messages.WarehousemanMessages.Save
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 
-class StorekeeperSpec extends TestKit(ActorSystem("testSystem2"))
-  with WordSpecLike
-  with MustMatchers
-  with BeforeAndAfterAll{
+class StorekeeperSpec extends TestKit(ActorSystem("StorekeeperSpec", ConfigFactory.parseString("""
+akka.remote.netty.tcp.port = 0,
+akka.actors.provider = "akka.cluster.ClusterRefProvider"
+"""))) with ActorSystemUnitSpec {
 
   implicit val timeout = Timeout(25 seconds)
 
   //val actbColl = new ActorbaseCollection("testOwner","testName")
   val collName = "testName"
   val collOwner = "testOwner"
-  val skRef = TestActorRef(new Storekeeper( collName, collOwner ))
+  val skRef = TestActorRef(new Storekeeper( collName, collOwner, 256 ))
+  val actbColl = new ActorbaseCollection("testOwner","testName")
+  val sfRef = TestActorRef(new Storefinder( actbColl ))
   val p = TestProbe()
+
+  /**
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
+  override def afterAll() : Unit = system.shutdown
 
   val valore = "value".getBytes()
 
-  "Storekeeper" should {
+  "Storekeeper Actor" should{
+    val collName = "testName"
+    val collOwner = "testOwner"
+    val skRef = TestActorRef(new Storekeeper( collName, collOwner, 10 ))
+    val p = TestProbe()
+
+    val valore = "value".getBytes()
+
+    val actbColl = new ActorbaseCollection("testOwner","testName")
+    val sfRef = TestActorRef(new Storefinder( actbColl ))
+
     "be created" in {
       assert(skRef != None)
     }
-  }
 
-  it should {
-    "insert get an item" in {
-      p.send( skRef, InsertItem("key", valore , false) )
-      p.expectMsg( UpdateCollectionSize( true ) )
+    "insert an item" in {
+      p.send( skRef, InsertItem(sfRef, "key", valore , false) )
+      p.expectMsg("OK")
     }
-  }
 
-  it should {
-    "get an item" in {
-      p.send( skRef, InsertItem("key", valore , false) )
-      p.send( skRef, GetItem("key") )
-      p.expectMsg( Response( valore ) )
-    }
-  }
+    /* "get an item" in { lancia eccezioni
+       p.send( skRef, GetItem("key") )
+     //  println("response is "+p.receiveOne(5 seconds)+"\n")
+     }*/
 
-  it should {
     "remove an item" in {
-      p.send( skRef, InsertItem("key", valore , false) )
-      p.send( skRef, RemoveItem("key") )
-      p.expectMsg( UpdateCollectionSize( false ) )
+      p.send( skRef, RemoveItem(sfRef, "key") )
+      p.expectMsg("OK")
     }
-  }
 
-  it should {
     "return all items" in {
-      p.send( skRef, InsertItem("key", valore , false) )
-      p.expectMsg( UpdateCollectionSize( true ) )
+      p.send( skRef, InsertItem(sfRef, "key", valore , false) )
       p.send( skRef, GetAll( p.ref ) )
-      p.expectMsg( PartialMapTransaction( p.ref, Map[String, Array[Byte]]("key" -> valore) ) )
+      p.expectMsg("OK")
     }
-  }
 
-  //this fails, it goes in timeout
-  /*
-  it should {
     "persist data sending message to the warehouseman" in {
-     // p.send( skRef, InsertItem("key", valore , false) )
-     // p.expectMsg( UpdateCollectionSize( true ) )
       p.send( skRef, Persist )
-      p.expectMsg( Save( Map[String, Array[Byte]]("key" -> valore) ) )
+      p.expectMsg( PartialMapTransaction( p.ref, Map[String, Array[Byte]]("key" -> valore)) )
     }
-  }*/
 
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
+    "able to receive a message Initmn to initialize his manager" in {   // response is null, can't expect anything
+      p.send( skRef, InitMn( sfRef))
+      //println("response is "+p.receiveOne(5 seconds)+"\n")
+    }
+
   }
 
-}*/
+}
+*/

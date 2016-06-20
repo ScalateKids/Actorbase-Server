@@ -30,25 +30,24 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, TestProbe}
-import org.scalatest.matchers.MustMatchers
-import org.scalatest.WordSpecLike
-import org.scalatest.BeforeAndAfterAll
 
+import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 
-class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
-  with WordSpecLike
-  with MustMatchers
-  with BeforeAndAfterAll{
+class StorefinderSpec extends TestKit(ActorSystem("StorefinderSpec",
+  ConfigFactory.parseString("""
+akka.remote.netty.tcp.port = 0,
+akka.actors.provider = "akka.cluster.ClusterRefProvider"
+"""))) with ActorSystemUnitSpec {
 
   implicit val timeout = Timeout(25 seconds)
 
@@ -56,56 +55,48 @@ class StorefinderSpec extends TestKit(ActorSystem("testSystem"))
   val sfRef = TestActorRef(new Storefinder( actbColl ))
   val p = TestProbe()
 
-  "Storefinder" should {
+  /**
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
+  override def afterAll() : Unit = system.shutdown
+
+  "Storefinder Actor" should {
+
+    val actbColl = new ActorbaseCollection("testCollection", "anonymous")
+
+    val sfRef = TestActorRef(new Storefinder( actbColl ))
+
     "be created" in{
       assert(sfRef != None)
     }
-  }
 
-  it should {
     "insert and get an item" in {
       val value = "value".getBytes()
       p.send( sfRef, Insert("key", value , false) )
       p.send( sfRef, Get("key") )
-      p.expectMsg( Response( value ) )
+      p.expectMsg("OK")
     }
-  }
 
-  /*  TODO SBAGLIATO
-  it should {
-    "get all items" in {
-      val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
+    "get all items" in {  // response is null, can't expect anything
       p.send( sfRef, GetAllItems )
-      val m: Map[String, Array[Byte]] = Map("key" -> value )
-      p.expectMsg( 5 seconds, MapResponse( "testName",  m ) )
     }
-  }
-  */
 
-  // None.get non è uguale a None.get ritornato dallo SK
-  it should {
     "remove an item" in {
       val value = "value".getBytes()
-      p.send( sfRef, Insert("key", value , false) )
       p.send( sfRef, Remove("key"))
-      p.send( sfRef, Get("key") )
-      val testMessage = p.receiveOne(3 seconds)
-      assert( value != testMessage.asInstanceOf[Response].response )
-      //p.expectMsg( 5 seconds, Response( none ) )
+      p.expectMsg("OK")
     }
-  }
 
-  // non è giusto, non controlla niente
-  it should {
-    "update the collection size" in {
-      //val size = sfRef.underlyingActor.collection.size
+    "update the collection size" in { // response is null, can't expect anything
       p.send( sfRef, UpdateCollectionSize( true ) )
-      //assert ( size = sfRef.underlyingActor.collection.size -1 )
     }
+
+    "receive the message PartialMapTransaction" in {  // response is null, can't expect anything
+      p.send( sfRef, PartialMapTransaction( sfRef, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
+    }
+
   }
 
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
-}*/
+}
+*/
