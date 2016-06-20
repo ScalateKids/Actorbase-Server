@@ -99,8 +99,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
               usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
             case contributor if (contributor.getName == "contributors.shadow") =>
               contributors ++= CryptoUtils.decrypt[Map[String, Set[ActorbaseCollection]]](config getString "encryption-key", contributor)
-            case _ =>
-              dataShard ++= CryptoUtils.decrypt[Map[String, Array[Byte]]](config getString "encryption-key", x)
+            case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Array[Byte]]](config getString "encryption-key", x)
           }
         }
         val collection = ActorbaseCollection(name, owner)

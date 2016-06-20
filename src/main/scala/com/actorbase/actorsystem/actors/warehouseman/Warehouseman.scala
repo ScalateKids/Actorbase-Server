@@ -73,8 +73,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         }
 
       case Save(map) =>
-        // log.info("warehouseman: save " + rootFolder + collectionUUID + "/" + wareUUID + ".actb")
-        log.info("save: " + map)
+        log.info("warehouseman: save " + rootFolder + collectionUUID + "/" + wareUUID + ".actb")
         val key = config getString("encryption-key")
         val encryptedShardFile = new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb")
         encryptedShardFile.getParentFile.mkdirs
