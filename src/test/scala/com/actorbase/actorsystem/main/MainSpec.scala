@@ -54,7 +54,7 @@ import com.actorbase.actorsystem.messages.AuthActorMessages._
 class MainSpec extends TestKit(ActorSystem("MainSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actors.provider = "akka.cluster.ClusterRefProvider"
+akka.actor.provider = "akka.cluster.ClusterRefProvider"
 """))) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(5 seconds)
