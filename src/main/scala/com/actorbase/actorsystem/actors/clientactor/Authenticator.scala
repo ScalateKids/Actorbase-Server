@@ -51,7 +51,7 @@ trait Authenticator {
 
   implicit val timeout = Timeout(5 seconds)
 
-  var login: Option[String] = None
+  var login: Option[(String, String)] = None
 
   /**
     * Basic authentication method
@@ -60,7 +60,7 @@ trait Authenticator {
     * @param authProxy ActorRef representing a reference to the Authenticator actor
     * @return a BasicAuth uncrypted for a private area
     */
-  def basicUserAuthenticator(implicit ec: ExecutionContext, authProxy: ActorRef): AuthMagnet[String] = {
+  def basicUserAuthenticator(implicit ec: ExecutionContext, authProxy: ActorRef): AuthMagnet[(String, String)] = {
 
     /**
       * Authentication method, call for validateUser and test for a matching
@@ -70,11 +70,11 @@ trait Authenticator {
       * @return a reference to a Future of type AuthInfo containing the
       * credentials of the authenticated user
       */
-    def authenticator(userPass: Option[UserPass]): Future[Option[String]] = {
-      if (login.exists(l => l == userPass.get.user)) Future { login }
+    def authenticator(userPass: Option[UserPass]): Future[Option[(String, String)]] = {
+      if (login.exists(l => (l._1 == userPass.get.user) && (l._2 == userPass.get.pass))) Future { login }
       else {
         val log = for {
-          l <- (authProxy ? Authenticate(userPass.get.user, userPass.get.pass)).mapTo[Option[String]]
+          l <- (authProxy ? Authenticate(userPass.get.user, userPass.get.pass)).mapTo[Option[(String, String)]]
         } yield l
         log.onSuccess {
           case ok => login = ok

@@ -107,7 +107,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
             complete {
-              (authProxy ? ListCollectionsOf(authInfo)).mapTo[ListTupleResponse]
+              (authProxy ? ListCollectionsOf(authInfo._1)).mapTo[ListTupleResponse]
             }
           }
         }
@@ -120,7 +120,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             headerValueByName("owner") { owner =>
               val coll = ActorbaseCollection(collection, base64ToString(owner))
               complete {
-                (main ? GetFrom(authInfo, coll))
+                (main ? GetFrom(authInfo._1, coll))
                   .mapTo[Either[String, MapResponse]]
                   .map { result =>
                   result match {
@@ -135,14 +135,14 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             headerValueByName("owner") { owner =>
               val coll = ActorbaseCollection(collection, base64ToString(owner))
               complete {
-                (main ? CreateCollection(authInfo, coll)).mapTo[String]
+                (main ? CreateCollection(authInfo._1, coll)).mapTo[String]
               }
             }
           } ~
           delete {
             headerValueByName("owner") { owner =>
               complete {
-                (main ? RemoveFrom(authInfo, base64ToString(owner) + collection)).mapTo[String]
+                (main ? RemoveFrom(authInfo._1, base64ToString(owner) + collection)).mapTo[String]
               }
             }
           }
@@ -155,7 +155,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
               val coll = ActorbaseCollection(collection, base64ToString(owner))
               get {
                 complete {
-                  (main ? GetFrom(authInfo, coll, key))
+                  (main ? GetFrom(authInfo._1, coll, key))
                     .mapTo[Either[String, Response]]
                     .map { result =>
                     result match {
@@ -169,7 +169,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
             delete {
               headerValueByName("owner") { owner =>
                 complete {
-                  (main ? RemoveFrom(authInfo, base64ToString(owner) + collection, key)).mapTo[String]
+                  (main ? RemoveFrom(authInfo._1, base64ToString(owner) + collection, key)).mapTo[String]
                 }
               }
             } ~
@@ -180,7 +180,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                     detach() {
                       complete {
                         val coll = ActorbaseCollection(collection, base64ToString(owner))
-                          (main ? InsertTo(authInfo, coll, key, base64ToBytes(value))).mapTo[String]
+                          (main ? InsertTo(authInfo._1, coll, key, base64ToBytes(value))).mapTo[String]
                       }
                     }
                   }
@@ -194,7 +194,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                     detach() {
                       complete {
                         val coll = ActorbaseCollection(collection, base64ToString(owner))
-                          (main ? InsertTo(authInfo, coll, key, base64ToBytes(value), true)).mapTo[String]
+                          (main ? InsertTo(authInfo._1, coll, key, base64ToBytes(value), true)).mapTo[String]
                       }
                     }
                   }
@@ -221,8 +221,8 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                     val user = new String(base64ToBytes(value), "UTF-8")
                     val uuid = user + collection
                     if (base64ToString(permission) == "read")
-                      (main ? AddContributor(authInfo, user, ActorbaseCollection.Read, uuid)).mapTo[String]
-                    else (main ? AddContributor(authInfo, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
+                      (main ? AddContributor(authInfo._1, user, ActorbaseCollection.Read, uuid)).mapTo[String]
+                    else (main ? AddContributor(authInfo._1, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
                   }
                 }
               }
@@ -236,7 +236,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                 complete {
                   val user = new String(base64ToBytes(value), "UTF-8")
                   val uuid = user + collection
-                    (main ? RemoveContributor(authInfo, user, uuid)).mapTo[String]
+                    (main ? RemoveContributor(authInfo._1, user, uuid)).mapTo[String]
                 }
               }
             }

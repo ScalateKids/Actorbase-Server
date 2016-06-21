@@ -31,6 +31,7 @@ package com.actorbase.actorsystem.actors.clientactor
 import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.pattern.ask
 import com.actorbase.actorsystem.messages.AuthActorMessages.{ Authenticate, UpdateCredentials }
+import scala.util.{ Failure, Success }
 import spray.can.Http
 import spray.http.HttpHeader
 import spray.httpx.SprayJsonSupport._
@@ -55,7 +56,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
     * @param username a String representing the user to be checked as admin
     * @return true only if the user has admin rights, false otherwise
     */
-  def hasAdminPermissions(username: String): Boolean = if (username == "admin") true else false
+  def hasAdminPermissions(auth: String): Boolean = if (auth == "admin") true else false
 
   /**
     * Directives for authentication routes, these lets the management of authentication
@@ -67,8 +68,10 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
         decompressRequest() {
           entity(as[String]) { value =>
             detach() {
-              complete {
-                (authProxy ? Authenticate(user, new String(base64ToBytes(value), "UTF-8"))).mapTo[Option[String]]
+              val future = (authProxy ? Authenticate(user, new String(base64ToBytes(value), "UTF-8"))).mapTo[Option[(String, String)]]
+              onComplete(future) {
+                case Success(value) => complete(value.get._1)
+                case Failure(none) => complete(none)
               }
             }
           }
@@ -106,7 +109,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
       pathEndOrSingleSlash {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
-            authorize(hasAdminPermissions(authInfo)) {
+            authorize(hasAdminPermissions(authInfo._1)) {
               // only admin users can enter here
               complete {
                 (authProxy ? ListUsers).mapTo[ListResponse]
@@ -124,7 +127,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
       */
     pathEndOrSingleSlash {
       authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-        authorize(hasAdminPermissions(authInfo)) {
+        authorize(hasAdminPermissions(authInfo._1)) {
           post {
             // only admin users can enter here
             complete {

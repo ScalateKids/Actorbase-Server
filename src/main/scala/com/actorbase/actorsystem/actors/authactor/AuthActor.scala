@@ -221,7 +221,7 @@ class AuthActor extends Actor with ActorLogging {
         */
       case Authenticate(username, password) =>
         val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
-        optElem map (_ => sender ! Some(username)) getOrElse sender ! Some("None")
+        optElem map (_ => sender ! Some((username -> password))) getOrElse sender ! Some("None" -> "None")
 
       /**
         * Insert description here
