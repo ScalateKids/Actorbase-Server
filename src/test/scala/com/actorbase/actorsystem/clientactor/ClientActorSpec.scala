@@ -30,7 +30,6 @@
 package com.actorbase.actorsystem.clientactor
 
 import akka.util.Timeout
-import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import org.scalatest.FlatSpec
@@ -38,9 +37,6 @@ import org.scalatest.FlatSpec
 import akka.actor.ActorSystem
 import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
-import org.scalatest.matchers.MustMatchers
-import org.scalatest.WordSpecLike
-import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.ActorSystemSpecs._
 import com.actorbase.actorsystem.utils.ActorbaseCollection._
@@ -52,7 +48,8 @@ import com.actorbase.actorsystem.actors.clientactor.ClientActor
 class ClientActorSpec extends TestKit(ActorSystem("ClientActorSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider",
+akka.loglevel = "OFF"
                             """))) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(5 seconds)
@@ -68,6 +65,7 @@ akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
     val authProxy = TestActorRef[AuthActor]
     val mainActorRef = TestActorRef( new Main(authProxy) )
     val clientActorRef = TestActorRef( new ClientActor(mainActorRef, authProxy))
+    val p = TestProbe()
 
     val ab = "value".getBytes
 

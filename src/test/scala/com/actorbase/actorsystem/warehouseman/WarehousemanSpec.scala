@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -45,7 +46,8 @@ import com.actorbase.actorsystem.messages.WarehousemanMessages._
 class WarehousemanSpec extends TestKit(ActorSystem("WarehousemanSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider",
+akka.loglevel = "OFF"
                             """))) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(25 seconds)

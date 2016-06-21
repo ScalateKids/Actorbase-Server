@@ -43,7 +43,8 @@ import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 class ManagerSpec extends TestKit(ActorSystem("ManagerSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider",
+akka.loglevel = "OFF"
   """))) with ActorSystemUnitSpec with ImplicitSender {
 
   /**
