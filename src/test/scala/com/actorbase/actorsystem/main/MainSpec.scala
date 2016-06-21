@@ -78,10 +78,15 @@ akka.loglevel = "OFF"
     }
 
     "create a new collection" in {
-      val size = mainActorRef.underlyingActor.getSize
       p.send(mainActorRef, CreateCollection("admin", testColl))
       p.expectMsg("OK")
     }
+
+    /* server doesn't return an error if the collection is already created
+    "return an error message when trying to create a collection with a name that is already inside the system" in {
+      p.send( mainActorRef, CreateCollection("admin", testColl))
+      println("response is "+p.receiveOne(5 seconds)+"\n")
+    }*/
 
     "insert and retrieve an item" in {
       val value = "testValue".getBytes
@@ -102,12 +107,52 @@ akka.loglevel = "OFF"
       p.expectMsg("OK")
     }
 
+    "return an error message trying to add a contributor to a collection that does not exists" in {
+      p.send( mainActorRef, AddContributor("anonymous", "pluto", ReadWrite, "notExistingUUID"))
+      p.expectMsg("UndefinedCollection")
+    }
+
+    /* does not return an error message
+    "return an error message trying to add a contributor that does not exists to a collection" in {
+      p.send( mainActorRef, AddContributor("anonymous", "notExistingUsername", ReadWrite, testColl.getUUID))
+      println("response is "+p.receiveOne(5 seconds)+"\n")
+    }*/
+
     "remove a contributor from a collection" in {   // this is not responding, can't expect messages
       p.send( mainActorRef, RemoveContributor("anonymous", "pluto", testColl.getUUID ))
     }
 
+    "return an error message trying to remove a contributor to a collection that does not exists" in {
+      p.send( mainActorRef, RemoveContributor("anonymous", "pluto", "notExistingUUID"))
+      p.expectMsg("UndefinedCollection")
+    }
+
     "receive the message CompleteTransaction" in {
       p.send( mainActorRef, CompleteTransaction( authProxy, testColl, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
+    }
+
+    "remove a collection" in {
+      p.send( mainActorRef, RemoveFrom("anonymous", testColl.getUUID) )
+      p.expectMsg("OK")
+    }
+
+    "create a collection that does not exists in the system just by adding an item to it" in {
+      val notExistingCollection = new ActorbaseCollection("collectionName", "anonymous")
+      p.send( mainActorRef, InsertTo("anonymous", notExistingCollection, "anotherKey",  "value".getBytes, false))
+      p.expectMsg("OK")
+    }
+
+    "return an error message trying to insert an item with a key already " +
+    "existing in the system without overwriting" in {
+      val notExistingCollection = new ActorbaseCollection("collectionName", "anonymous")
+      p.send( mainActorRef, InsertTo("anonymous", notExistingCollection, "anotherKey", "value".getBytes, false))
+      p.expectMsg("DuplicatedKey")
+    }
+
+    "return an error message trying to delete a collection that does not exists" in {
+      p.send( mainActorRef, RemoveFrom("anonymous", "notExistingUUID"))
+      p.expectMsg("UndefinedCollection")
+      //println("response is "+p.receiveOne(5 seconds)+"\n")
     }
   }
 }
