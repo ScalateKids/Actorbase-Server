@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-/*
+
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
@@ -34,7 +34,7 @@ import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
-import akka.testkit.{TestKit, TestActorRef, TestProbe}
+import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
@@ -46,14 +46,10 @@ import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 class StorefinderSpec extends TestKit(ActorSystem("StorefinderSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actors.provider = "akka.cluster.ClusterRefProvider"
-"""))) with ActorSystemUnitSpec {
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+  """))) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(25 seconds)
-
-  val actbColl = new ActorbaseCollection("testOwner","testName")
-  val sfRef = TestActorRef(new Storefinder( actbColl ))
-  val p = TestProbe()
 
   /**
     * afterAll method, triggered after all test have ended, it shutdown the
@@ -64,8 +60,8 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
   "Storefinder Actor" should {
 
     val actbColl = new ActorbaseCollection("testCollection", "anonymous")
-
     val sfRef = TestActorRef(new Storefinder( actbColl ))
+    val p = TestProbe()
 
     "be created" in{
       assert(sfRef != None)
@@ -95,8 +91,6 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
     "receive the message PartialMapTransaction" in {  // response is null, can't expect anything
       p.send( sfRef, PartialMapTransaction( sfRef, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
     }
-
   }
 
 }
-*/

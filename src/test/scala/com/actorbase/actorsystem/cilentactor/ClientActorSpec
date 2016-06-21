@@ -21,34 +21,41 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
   */
 
-package com.actorbase.actorsystem.warehouseman
+package com.actorbase.actorsystem.clientactor
 
 import akka.util.Timeout
+import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.typesafe.config.ConfigFactory
-import java.io.File
-import akka.pattern.ask
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.scalatest.FlatSpec
 
 import akka.actor.ActorSystem
+import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
+import org.scalatest.matchers.MustMatchers
+import org.scalatest.WordSpecLike
+import org.scalatest.BeforeAndAfterAll
 
-import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
-import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
-import com.actorbase.actorsystem.messages.WarehousemanMessages._
+import com.actorbase.actorsystem.ActorSystemSpecs._
+import com.actorbase.actorsystem.utils.ActorbaseCollection._
+import com.actorbase.actorsystem.messages.ClientActorMessages._
+import com.actorbase.actorsystem.actors.main.Main
+import com.actorbase.actorsystem.actors.authactor.AuthActor
+import com.actorbase.actorsystem.actors.clientactor.ClientActor
 
-class WarehousemanSpec extends TestKit(ActorSystem("WarehousemanSpec",
+class ClientActorSpec extends TestKit(ActorSystem("ClientActorSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
 akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
                             """))) with ActorSystemUnitSpec with ImplicitSender {
 
-  implicit val timeout = Timeout(25 seconds)
+  implicit val timeout = Timeout(5 seconds)
 
   /**
     * afterAll method, triggered after all test have ended, it shutdown the
@@ -56,44 +63,28 @@ akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
     */
   override def afterAll() : Unit = system.shutdown
 
-  "Warehouseman Actor" should {
+  "ClientActor" should {
 
-    import java.io.File
-    import akka.pattern.ask
-    import scala.concurrent.Await
+    val authProxy = TestActorRef[AuthActor]
+    val mainActorRef = TestActorRef( new Main(authProxy) )
+    val clientActorRef = TestActorRef( new ClientActor(mainActorRef, authProxy))
 
-    val collUuid = "testUuid"
-    val wareRef = TestActorRef(new Warehouseman( collUuid ))
-    val p = TestProbe()
+    val ab = "value".getBytes
 
     "be created" in {
-      assert(wareRef != None)
+      assert(clientActorRef != None)
     }
 
-    "save encrypted data" in {
-      def delete(file: File) {
-        if (file.isDirectory)
-          Option(file.listFiles).map(_.toList).getOrElse(Nil).foreach(delete(_))
-        file.delete
-      }
-      delete( new File("actorbasedata/testUuid/") )
-      val map = Map[String, Array[Byte]]("key0" -> "zero".getBytes(), "key1" -> "one".getBytes(), "key2" -> "two".getBytes())
-      Await.result(wareRef.ask(com.actorbase.actorsystem.messages.WarehousemanMessages.Save(map))(5 seconds).mapTo[Int], Duration.Inf)
-      val nfiles = new File("actorbasedata/testUuid/").list.size
-      assert( nfiles == 1) //should be(true)
+    "receive the message Response" in {
+      p.send( clientActorRef, Response( ab ) )
     }
 
-    "read and decrypt data" in {
-      val dir = new File("actorbasedata/testUuid/")
-      val f = Option(dir.listFiles).map(_.toList).getOrElse(Nil)
-      val map = Await.result(wareRef.ask(com.actorbase.actorsystem.messages.WarehousemanMessages.Read(f.head))(5 seconds).mapTo[Map[String, Any]], Duration.Inf)
-      assert(map.size == 3) // should have size 3
+    "receive the message MapResponse" in {
+      p.send( clientActorRef, MapResponse("user", "user", Map[String, Any]("key" -> "value")) )
     }
 
-    "receive the message clean" in {
-      p.send( wareRef, com.actorbase.actorsystem.messages.WarehousemanMessages.Clean )
+    "receive the message ListResponse" in {
+      p.send( clientActorRef, ListResponse(List[String]("item1", "item2", "item3") ) )
     }
   }
-
-
 }

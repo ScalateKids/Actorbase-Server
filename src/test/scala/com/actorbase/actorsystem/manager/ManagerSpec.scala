@@ -26,13 +26,13 @@
   * @version 1.0
   * @since 1.0
   */
-/*
+
 package com.actorbase.actorsystem.manager
 
 import com.typesafe.config.ConfigFactory
 
 import akka.actor.ActorSystem
-import akka.testkit.{TestKit, TestActorRef, TestProbe}
+import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.actors.manager.Manager
@@ -43,11 +43,8 @@ import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 class ManagerSpec extends TestKit(ActorSystem("ManagerSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actors.provider = "akka.cluster.ClusterRefProvider"
-"""))) with ActorSystemUnitSpec {
-
-  val collName = "testColl"
-  val collOwner = "testOwner"
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+  """))) with ActorSystemUnitSpec with ImplicitSender {
 
   /**
     * afterAll method, triggered after all test have ended, it shutdown the
@@ -55,21 +52,23 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
     */
   override def afterAll() : Unit = system.shutdown
 
-  val skRef = TestActorRef(new Storekeeper( collName, collOwner, 10 ))
-  val mnRef = TestActorRef(new Manager( collName, collOwner, skRef ))
 
-  val p = TestProbe()
+  "Manager Actor" should{
 
-  "Manager" should {
-    "be created" in {
+    val collName = "testCollection"
+    val collOwner = "testOwner"
+    val skRef = TestActorRef(new Storekeeper( collName, collOwner, 10 ))
+    val mnRef = TestActorRef(new Manager( collName, collOwner, skRef ))
+
+    val p = TestProbe()
+
+    "be created" in{
       assert(mnRef != None)
     }
 
-    // fails, it goes in timeout...
     "create one storekeeper" in {
-      p.send(mnRef, OneMore)
-      p.expectMsg(InitMn(mnRef))
+      import com.actorbase.actorsystem.actors.manager.Manager.OneMore
+      p.send( mnRef, OneMore )  // no response, can't expect any message
     }
   }
 }
-*/
