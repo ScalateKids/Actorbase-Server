@@ -48,7 +48,8 @@ import com.actorbase.actorsystem.actors.clientactor.ClientActor
 class ClientActorSpec extends TestKit(ActorSystem("ClientActorSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider",
+akka.loglevel = "OFF"
                             """))) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(5 seconds)
@@ -64,6 +65,7 @@ akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
     val authProxy = TestActorRef[AuthActor]
     val mainActorRef = TestActorRef( new Main(authProxy) )
     val clientActorRef = TestActorRef( new ClientActor(mainActorRef, authProxy))
+    val p = TestProbe()
 
     val ab = "value".getBytes
 

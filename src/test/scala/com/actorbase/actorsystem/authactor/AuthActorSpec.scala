@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -54,7 +55,8 @@ import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 class AuthActorSpec extends TestKit(ActorSystem("AuthActorSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider",
+akka.loglevel = "OFF"
                             """))) with ActorSystemUnitSpec with ImplicitSender {
 
   /**

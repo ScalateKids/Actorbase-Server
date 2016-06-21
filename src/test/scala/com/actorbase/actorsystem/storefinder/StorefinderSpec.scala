@@ -46,7 +46,8 @@ import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 class StorefinderSpec extends TestKit(ActorSystem("StorefinderSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider",
+akka.loglevel = "OFF"
   """))) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(25 seconds)
