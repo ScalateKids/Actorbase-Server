@@ -35,7 +35,7 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 
 import com.actorbase.actorsystem.messages.StorekeeperMessages.Persist
 import com.actorbase.actorsystem.messages.AuthActorMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages.ListResponse
+import com.actorbase.actorsystem.messages.ClientActorMessages.{ ListResponse, ListTupleResponse }
 import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
 import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
 import com.github.t3hnar.bcrypt._
@@ -263,8 +263,8 @@ class AuthActor extends Actor with ActorLogging {
       case ListCollectionsOf(username) =>
         val optElem = profiles find (_.username == username)
         optElem map { set =>
-          val names = set.getCollections map (collection => collection.getName)
-          sender ! ListResponse(names.toList)
+          val names = set.getCollections map (collection => Map(collection.getOwner -> collection.getName))
+          sender ! ListTupleResponse(names.toList)
         }
 
       /**

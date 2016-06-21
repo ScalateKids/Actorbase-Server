@@ -47,14 +47,14 @@ import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.actorbase.actorsystem.utils.ActorbaseCollection._
 import com.actorbase.actorsystem.messages.MainMessages._
-import com.actorbase.actorsystem.messages.StorefinderMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages._
-import com.actorbase.actorsystem.messages.AuthActorMessages._
+/*import com.actorbase.actorsystem.messages.StorefinderMessages._
+import com.actorbase.actorsystem.messages.ClientActorMessages._*/
+import com.actorbase.actorsystem.messages.AuthActorMessages.{AddCredentials}
 
 class MainSpec extends TestKit(ActorSystem("MainSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actor.provider = "akka.cluster.ClusterRefProvider"
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
 """))) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(5 seconds)

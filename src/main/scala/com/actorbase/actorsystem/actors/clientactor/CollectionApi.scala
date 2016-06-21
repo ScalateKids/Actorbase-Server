@@ -107,7 +107,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
             complete {
-              (authProxy ? ListCollectionsOf(authInfo)).mapTo[ListResponse]
+              (authProxy ? ListCollectionsOf(authInfo)).mapTo[ListTupleResponse]
             }
           }
         }

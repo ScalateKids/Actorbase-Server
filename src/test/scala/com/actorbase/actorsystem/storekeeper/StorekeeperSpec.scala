@@ -26,7 +26,7 @@
   * @version 1.0
   * @since 1.0
   */
-/*
+
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
@@ -36,7 +36,7 @@ import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
 import akka.actor.Actor
-import akka.testkit.{TestKit, TestActorRef, TestProbe}
+import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.WordSpecLike
 import org.scalatest.BeforeAndAfterAll
@@ -49,20 +49,13 @@ import com.actorbase.actorsystem.messages.StorefinderMessages.{UpdateCollectionS
 import com.actorbase.actorsystem.messages.WarehousemanMessages.Save
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 
-class StorekeeperSpec extends TestKit(ActorSystem("StorekeeperSpec", ConfigFactory.parseString("""
+class StorekeeperSpec extends TestKit(ActorSystem("StorekeeperSpec",
+  ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
-akka.actors.provider = "akka.cluster.ClusterRefProvider"
-"""))) with ActorSystemUnitSpec {
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+  """))) with ActorSystemUnitSpec with ImplicitSender {
 
   implicit val timeout = Timeout(25 seconds)
-
-  //val actbColl = new ActorbaseCollection("testOwner","testName")
-  val collName = "testName"
-  val collOwner = "testOwner"
-  val skRef = TestActorRef(new Storekeeper( collName, collOwner, 256 ))
-  val actbColl = new ActorbaseCollection("testOwner","testName")
-  val sfRef = TestActorRef(new Storefinder( actbColl ))
-  val p = TestProbe()
 
   /**
     * afterAll method, triggered after all test have ended, it shutdown the
@@ -73,15 +66,15 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
   val valore = "value".getBytes()
 
   "Storekeeper Actor" should{
+
     val collName = "testName"
     val collOwner = "testOwner"
-    val skRef = TestActorRef(new Storekeeper( collName, collOwner, 10 ))
+    val skRef = TestActorRef(new Storekeeper( collName, collOwner, 256 ))
+    val actbColl = new ActorbaseCollection( collName, collOwner)
+    val sfRef = TestActorRef(new Storefinder( actbColl ))
     val p = TestProbe()
 
     val valore = "value".getBytes()
-
-    val actbColl = new ActorbaseCollection("testOwner","testName")
-    val sfRef = TestActorRef(new Storefinder( actbColl ))
 
     "be created" in {
       assert(skRef != None)
@@ -92,9 +85,9 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
       p.expectMsg("OK")
     }
 
-    /* "get an item" in { lancia eccezioni
+    /* "get an item" in { // no response, can't expect anything
        p.send( skRef, GetItem("key") )
-     //  println("response is "+p.receiveOne(5 seconds)+"\n")
+       //println("response is "+p.receiveOne(5 seconds)+"\n")
      }*/
 
     "remove an item" in {
@@ -113,12 +106,10 @@ akka.actors.provider = "akka.cluster.ClusterRefProvider"
       p.expectMsg( PartialMapTransaction( p.ref, Map[String, Array[Byte]]("key" -> valore)) )
     }
 
-    "able to receive a message Initmn to initialize his manager" in {   // response is null, can't expect anything
+    "able to receive a message Initmn to initialize his manager" in {   // no response, can't expect anything
       p.send( skRef, InitMn( sfRef))
       //println("response is "+p.receiveOne(5 seconds)+"\n")
     }
-
   }
 
 }
-*/
