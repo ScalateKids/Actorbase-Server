@@ -161,6 +161,12 @@ case class ActorbaseCollection (private var name: String,
     case _ => false
   }
 
+ /* override def toString: String = {
+    var contr = ""
+    contributors foreach (x => contr += (x._1 + "-->" + x._2+" "))
+    return name+" "+owner+" "+size+" "+contr
+  }*/
+  
   /**
     * Method that overrides the Any class method hashCode
     *

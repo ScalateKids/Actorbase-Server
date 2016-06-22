@@ -235,6 +235,7 @@ class AuthActor extends Actor with ActorLogging {
         optElem map { x =>
           x.addCollection(collection)
           persist(profiles + x)
+          sender ! "OK"
           context become running (profiles + x)
         } getOrElse log.error(s"AuthActor: Failed to add ${collection.getUUID} to $username")
 

@@ -299,7 +299,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         optColl map { x =>
           x._1.addContributor(username, permission)
           if (x._1.getOwner == requester)
-            authProxy ! AddCollectionTo(username, x._1)
+            authProxy forward AddCollectionTo(username, x._1)
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
 
