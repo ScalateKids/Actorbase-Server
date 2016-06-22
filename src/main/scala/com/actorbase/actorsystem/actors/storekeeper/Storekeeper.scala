@@ -30,23 +30,24 @@ package com.actorbase.actorsystem.actors.storekeeper
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, OneForOneStrategy, Props }
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.MemberUp
+// import akka.cluster.ClusterEvent.MemberUp
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.cluster.pubsub.DistributedPubSub
 import akka.actor.SupervisorStrategy._
 
-import scala.concurrent.ExecutionContext
-import ExecutionContext.Implicits.global
+// import scala.concurrent.ExecutionContext
+// import ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransaction, UpdateCollectionSize}
-import com.actorbase.actorsystem.messages.WarehousemanMessages.{ Init, Save, SaveRow }
+import com.actorbase.actorsystem.messages.WarehousemanMessages.{ Init, Save, Clean }
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.actors.manager.Manager.OneMore
 import com.actorbase.actorsystem.utils.CryptoUtils
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 object Storekeeper {
 
@@ -67,8 +68,8 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
   // subscribe to the topic named "persist-data"
   mediator ! Subscribe("persist-data", self)
 
-  private val initDelay = 40 seconds       // delay for the first persistence message to be sent
-  private val intervalDelay = 50 seconds   // interval in-between each persistence message has to be sent
+  // private val initDelay = 40 seconds       // delay for the first persistence message to be sent
+  // private val intervalDelay = 50 seconds   // interval in-between each persistence message has to be sent
   private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props( collectionOwner + collectionName ))
   private var manager: Option[ActorRef] = None
@@ -104,6 +105,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * @throws
     */
   override def postStop(): Unit = {
+      warehouseman ! Clean
     // scheduler.cancel()
     // cluster.unsubscribe(self)
   }

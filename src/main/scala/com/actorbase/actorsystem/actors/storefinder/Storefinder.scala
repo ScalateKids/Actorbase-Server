@@ -37,7 +37,7 @@ import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.MemberUp
 import akka.cluster.routing.ClusterRouterPool
 import akka.cluster.routing.ClusterRouterPoolSettings
-import akka.routing.{ ActorRefRoutee, ConsistentHashingPool, FromConfig, Router }
+import akka.routing.ConsistentHashingPool
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
 import akka.actor.SupervisorStrategy._
@@ -51,6 +51,7 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 object Storefinder {
   def props(collection: ActorbaseCollection): Props = Props(new Storefinder(collection))
@@ -84,10 +85,7 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: Exception      => Resume
-        // case _: NullPointerException     => Restart
-        // case _: IllegalArgumentException => Stop
-        // case _: Exception                => Escalate
+      case _: Exception => Resume
     }
 
   /**
