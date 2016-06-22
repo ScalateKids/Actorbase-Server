@@ -30,7 +30,7 @@
 package com.actorbase.actorsystem.actors.main
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props }
-import akka.cluster.sharding.ShardRegion
+//import akka.cluster.sharding.ShardRegion
 import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
 import akka.actor.SupervisorStrategy._
 
@@ -243,7 +243,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
             log.info(s"${colMap._2.size} - ${collection.getSize}")
             if (colMap._2.size == collection.getSize) {
               def bytesToAny(bytes: Array[Byte]): Any = {
-                import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+                import java.io.{ByteArrayInputStream, ObjectInputStream}
                 val in = new ObjectInputStream(new ByteArrayInputStream(bytes))
                 in.readUnshared().asInstanceOf[Any]
               }
@@ -298,7 +298,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
           x._1.addContributor(username, permission)
-          if (x._1.getOwner == requester)
+          if (x._1.getOwner == requester || requester == "admin")
             authProxy forward AddCollectionTo(username, x._1)
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
@@ -315,7 +315,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
           x._1.removeContributor(username)
-          if (x._1.getOwner == requester)
+          if (x._1.getOwner == requester || requester == "admin")
             authProxy ! RemoveCollectionFrom(username, x._1)
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
