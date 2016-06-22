@@ -40,7 +40,7 @@ import akka.actor.SupervisorStrategy._
 
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransaction, UpdateCollectionSize}
-import com.actorbase.actorsystem.messages.WarehousemanMessages.{ Init, Save, Clean }
+import com.actorbase.actorsystem.messages.WarehousemanMessages.{ Init, Save }
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.actors.manager.Manager.OneMore
