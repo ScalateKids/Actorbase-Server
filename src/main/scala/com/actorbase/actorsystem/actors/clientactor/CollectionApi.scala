@@ -31,7 +31,7 @@ package com.actorbase.actorsystem.actors.clientactor
 import akka.actor.ActorRef
 import akka.util.Timeout
 import com.actorbase.actorsystem.messages.MainMessages.{ AddContributor, RemoveContributor }
-import spray.http.{ HttpEntity, HttpResponse, StatusCodes }
+import spray.http.{ HttpResponse, StatusCodes }
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.marshalling.ToResponseMarshallable
 import spray.httpx.marshalling._
@@ -41,12 +41,13 @@ import akka.pattern.ask
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import java.util.Base64
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages.{InsertTo, GetFrom, RemoveFrom, CreateCollection}
 import com.actorbase.actorsystem.messages.ClientActorMessages._
-import com.actorbase.actorsystem.messages.AuthActorMessages.{ ListCollectionsOf, ListUUIDsOwnedBy }
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ ListCollectionsOf }
 
 /**
   * Trait used to handle routes that are related to ActorbaseCollection

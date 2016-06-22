@@ -22,7 +22,7 @@
   * SOFTWARE.
   * <p/>
   *
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */

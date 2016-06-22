@@ -44,6 +44,7 @@ import com.actorbase.actorsystem.messages.WarehousemanMessages.{ Init, Save, Sav
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
 import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.actors.manager.Manager.OneMore
+import com.actorbase.actorsystem.utils.CryptoUtils
 
 import scala.concurrent.duration._
 
@@ -145,12 +146,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         */
       case GetItem(key)  =>
-        def bytesToAny(bytes: Array[Byte]): Any = {
-          import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-          val in = new ObjectInputStream(new ByteArrayInputStream(bytes))
-          in.readUnshared().asInstanceOf[Any]
-        }
-        data get key map (v => sender ! Right(Response(bytesToAny(v)))) getOrElse sender ! Left("UndefinedKey")
+        data get key map (v => sender ! Right(Response(CryptoUtils.bytesToAny(v)))) getOrElse sender ! Left("UndefinedKey")
 
       /**
         * GetAllItem message, this actor will send back the collection name and all the collection.
