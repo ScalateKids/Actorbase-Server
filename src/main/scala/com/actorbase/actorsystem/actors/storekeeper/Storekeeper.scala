@@ -105,7 +105,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * @throws
     */
   override def postStop(): Unit = {
-      warehouseman ! Clean
+     //  warehouseman ! Clean
     // scheduler.cancel()
     // cluster.unsubscribe(self)
   }
