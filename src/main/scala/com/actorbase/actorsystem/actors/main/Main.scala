@@ -30,7 +30,6 @@
 package com.actorbase.actorsystem.actors.main
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props }
-import akka.cluster.sharding.ShardRegion
 import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
 import akka.actor.SupervisorStrategy._
 
@@ -40,9 +39,11 @@ import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.MapResponse
+import com.actorbase.actorsystem.utils.CryptoUtils
 
 import scala.collection.mutable
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /**
   * Class that represents a Main actor. This actor is responsible of managing
@@ -243,12 +244,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
             colMap._2 ++= items
             log.info(s"${colMap._2.size} - ${collection.getSize}")
             if (colMap._2.size == collection.getSize) {
-              def bytesToAny(bytes: Array[Byte]): Any = {
-                import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-                val in = new ObjectInputStream(new ByteArrayInputStream(bytes))
-                in.readUnshared().asInstanceOf[Any]
-              }
-              val k = colMap._2.toMap mapValues (v => bytesToAny(v))
+              val k = colMap._2.toMap mapValues (v => CryptoUtils.bytesToAny(v))
               clientRef ! Right(MapResponse(collection.getOwner, collection.getName, k))
               // clientRef ! Right(MapResponse(collection.getOwner, collection.getName, colMap._2.toMap))
               colMap._2.clear
@@ -299,7 +295,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
           x._1.addContributor(username, permission)
-          if (x._1.getOwner == requester)
+          if (x._1.getOwner == requester || requester == "admin")
             authProxy forward AddCollectionTo(username, x._1)
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
@@ -313,11 +309,10 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         *
         */
       case RemoveContributor(requester, username, uuid) =>
-        println(Console.YELLOW +"removing "+username+" from "+uuid+" requested by "+requester)
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
           x._1.removeContributor(username)
-          if (x._1.getOwner == requester)
+          if (x._1.getOwner == requester || requester == "admin")
             authProxy forward RemoveCollectionFrom(username, x._1)
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"

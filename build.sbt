@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.1.3"
 )
 
+javacOptions ++= Seq("-XX:+HeapDumpOnOutOfMemoryError")
 
 // addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.3.5")
 

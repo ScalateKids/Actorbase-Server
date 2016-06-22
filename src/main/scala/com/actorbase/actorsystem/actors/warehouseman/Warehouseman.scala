@@ -48,6 +48,12 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
   private val wareUUID = java.util.UUID.randomUUID.toString
   private val rootFolder = config getString "save-folder"
 
+  override def postStop: Unit = {
+      log.info("Cleaning directory")
+      new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
+      new File(rootFolder + collectionUUID + "/collection-meta.actbmeta").delete()
+  }
+  
   /**
     * Receive method of the Warehouseman actor, it does different things based on the message it receives:<br>
     * _Init: when the actor receives this message it inserts the item in the collection requested by the user.<br>
@@ -95,6 +101,7 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         * @param range a KeyRange representing the range of the file to delete
         */
       case Clean =>
+        log.info("Cleaning directory")
         new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
         new File(rootFolder + collectionUUID + "/collection-meta.actbmeta").delete()
 

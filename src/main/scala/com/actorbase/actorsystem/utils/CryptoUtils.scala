@@ -43,6 +43,11 @@ object CryptoUtils {
   val Algorithm = "AES"
   val Transformation = "AES"
 
+  def bytesToAny(bytes: Array[Byte]): Any = {
+    val in = new ObjectInputStream(new ByteArrayInputStream(bytes))
+    in.readUnshared().asInstanceOf[Any]
+  }
+
   /**
     * Translate a map of String and Any to an array of bytes
     *
@@ -74,7 +79,7 @@ object CryptoUtils {
   @throws(classOf[InvalidKeyException])
   @throws(classOf[IllegalBlockSizeException])
   @throws(classOf[IOException])
-  def bytesToAny(key: String, inputFile: File): Any = {
+  def readFromFile(key: String, inputFile: File): Any = {
     val cipherMode: Int = Cipher.DECRYPT_MODE
     val secretKey = new SecretKeySpec(key.getBytes(), Algorithm)
     val cipher = Cipher.getInstance(Transformation)
@@ -146,6 +151,6 @@ object CryptoUtils {
     * @throws NoSuchAlgorithmException, NoSuchPaddingException,
     * InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException
     */
-  def decrypt[T <: Any](key: String, inputFile: File): T = bytesToAny(key, inputFile).asInstanceOf[T]
+  def decrypt[T <: Any](key: String, inputFile: File): T = readFromFile(key, inputFile).asInstanceOf[T]
 
 }

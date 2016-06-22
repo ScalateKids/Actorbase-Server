@@ -31,12 +31,10 @@ package com.actorbase.actorsystem.actors.httpserver
 
 import akka.actor.{Actor, ActorSystem, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.io.IO
-import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, UpdateCredentials, Init, Save, Clean }
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ Init, Save, Clean }
 import spray.can.Http
 import akka.event.LoggingReceive
 
-import akka.cluster._
-import akka.cluster.routing._
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings, ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import com.typesafe.config.ConfigFactory
@@ -47,7 +45,6 @@ import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
-import com.actorbase.actorsystem.messages.AuthActorMessages.AddCredentials
 import com.actorbase.actorsystem.utils.CryptoUtils
 
 import scala.collection.mutable.Queue
@@ -83,7 +80,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     val root = new File(config getString "save-folder")
     var dataShard = Map.empty[String, Array[Byte]]
     var usersmap = Map.empty[String, String]
-    var contributors = Map.empty[String, Tuple2[ActorbaseCollection.Permissions, Set[ActorbaseCollection]]]
+    var contributors = Map.empty[String, Tuple2[Permissions, Set[ActorbaseCollection]]]
     var data = Queue.empty[(ActorbaseCollection, Map[String, Array[Byte]])]
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
@@ -99,7 +96,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
             case user if (user.getName == "usersdata.shadow") =>
               usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
             case contributor if (contributor.getName == "contributors.shadow") =>
-              contributors ++= CryptoUtils.decrypt[Map[String, Tuple2[ActorbaseCollection.Permissions, Set[ActorbaseCollection]]]](config getString "encryption-key", contributor)
+              contributors ++= CryptoUtils.decrypt[Map[String, Tuple2[Permissions, Set[ActorbaseCollection]]]](config getString "encryption-key", contributor)
             case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Array[Byte]]](config getString "encryption-key", x)
           }
         }
