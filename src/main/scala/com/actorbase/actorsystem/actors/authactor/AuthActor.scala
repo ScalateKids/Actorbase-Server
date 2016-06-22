@@ -252,9 +252,10 @@ class AuthActor extends Actor with ActorLogging {
           if (x.contains(collection)) {
             x.removeCollection(collection)
             persist(profiles + x)
+            sender ! "OK"
             context become running (profiles + x)
           }
-        } getOrElse log.error(s"AuthActor: Failed to remove ${collection.getUUID} from $username")
+        } getOrElse log.error(s"AuthActor: Failed to remove $username from ${collection.getUUID}")
 
       /**
         * Build a list of collection names and reply it to the sender

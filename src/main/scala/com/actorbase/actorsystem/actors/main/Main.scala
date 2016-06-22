@@ -202,6 +202,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param key a String representing the key to be retrieved
         */
       case GetFrom(requester, collection, key) =>
+        //sfMap foreach( x => println(x.toString)) debug
         if (key.nonEmpty)
           sfMap.find(x => (x._1 == collection) || (x._1.containsReadContributor(requester)) || (x._1.containsReadWriteContributor(requester))) map { c =>
             if (c._1.getOwner == requester || c._1.containsReadWriteContributor(requester) || c._1.containsReadContributor(requester))
@@ -312,7 +313,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         optColl map  { x =>
           x._1.removeContributor(username)
           if (x._1.getOwner == requester || requester == "admin")
-            authProxy ! RemoveCollectionFrom(username, x._1)
+            authProxy forward RemoveCollectionFrom(username, x._1)
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
 

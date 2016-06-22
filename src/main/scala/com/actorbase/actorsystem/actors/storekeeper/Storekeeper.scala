@@ -186,26 +186,37 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           *
           * @param update boolean. 1 if the insert allow an update, 0 otherwise
           * @param key String representing the key of the item
-          * @param value Any representing the value of the item
           */
         def insertOrUpdate(update: Boolean, key: String): Boolean = {
           var done = true
           if (!update && !data.contains(key)) {
-            log.info("SK: got work!")
-            ins.parentRef ! UpdateCollectionSize(true)
-            // warehouseman ! SaveRow( (key -> ins.value) )
-            // warehouseman ! Save(data)
-            if (data.size > indicativeSize && !checked) {
-              checked = true
-              manager map (_ ! OneMore) getOrElse (checked = false)
-            }
+            insertWithoutUpdate
           }
           else if (!update && data.contains(key)) {
             // warehouseman ! Save( data )
             log.error(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
+          else if (update && !data.contains(key)){
+            insertWithoutUpdate
+          }
           done
+        }
+
+        /**
+          * Private method used to insert an item without overwriting. This method update the size
+          * of the collection and proceed to ask the manager to create another Storekeeper if
+          * this is full
+          */
+        def insertWithoutUpdate: Unit = {
+          log.info("SK: Got work!")
+          ins.parentRef ! UpdateCollectionSize(true)
+          // warehouseman ! SaveRow( (key -> ins.value) )
+          // warehouseman ! Save(data)
+          if (data.size > indicativeSize && !checked) {
+            checked = true
+            manager map (_ ! OneMore) getOrElse (checked = false)
+          }
         }
 
         if (insertOrUpdate(ins.update, ins.key) == true) {
