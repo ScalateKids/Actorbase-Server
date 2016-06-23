@@ -82,12 +82,6 @@ akka.loglevel = "OFF"
       p.expectMsg("OK")
     }
 
-    /* server doesn't return an error if the collection is already created
-    "return an error message when trying to create a collection with a name that is already inside the system" in {
-      p.send( mainActorRef, CreateCollection("admin", testColl))
-      println("response is "+p.receiveOne(5 seconds)+"\n")
-    }*/
-
     "insert and retrieve an item" in {
       val value = "testValue".getBytes
       p.send( mainActorRef, InsertTo("anonymous", testColl, "testKey",  value, false))
@@ -104,8 +98,8 @@ akka.loglevel = "OFF"
     "add a contributor to a collection" in {
       p.send( authProxy, AddCredentials("pluto", "p4sswordPluto"))
       p.send( mainActorRef, AddContributor("anonymous", "pluto", ReadWrite, testColl.getUUID))
-      p.expectMsg("OK")
-      p.expectMsg("OK")
+      p.expectMsg("OK") //sent by AddCredentials
+      p.expectMsg("OK") //sent by AddContributor
     }
 
     "return an error message trying to add a contributor to a collection that does not exists" in {

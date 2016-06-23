@@ -86,9 +86,8 @@ akka.loglevel = "OFF"
       p.expectMsg("OK")
     }
 
-    /* "get an item" in { // no response, can't expect anything
+    /*"get an item" in { // no response, can't expect anything if uncommented makes remove stop working
        p.send( skRef, GetItem("key") )
-       //println("response is "+p.receiveOne(5 seconds)+"\n")
      }*/
 
     "remove an item" in {
@@ -109,7 +108,7 @@ akka.loglevel = "OFF"
 
     "able to receive a message Initmn to initialize his manager" in {   // no response, can't expect anything
       p.send( skRef, InitMn( sfRef))
-      //println("response is "+p.receiveOne(5 seconds)+"\n")
+
     }
   }
 
