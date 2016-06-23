@@ -86,14 +86,26 @@ akka.loglevel = "OFF"
       p.expectMsg("OK")
     }
 
-    /*"get an item" in { // no response, can't expect anything if uncommented makes remove stop working
-       p.send( skRef, GetItem("key") )
-     }*/
-
     "remove an item" in {
       p.send( skRef, RemoveItem(sfRef, "key") )
       p.expectMsg("OK")
     }
+
+    "send an error message if the key to be removed isn't in this storekeeper" in { // no response, can't expect anything if uncommented makes remove stop working
+      p.send( skRef, RemoveItem(sfRef, "key") )
+      p.expectMsg("UndefinedKey")
+    }
+
+    "send an error message if the key searched isn't in this storekeeper" in { // no response, can't expect anything if uncommented makes remove stop working
+      p.send( skRef, GetItem("key") )
+      p.expectMsg(Left("UndefinedKey"))
+    }
+
+    "get an item" in { // no response, can't expect anything if uncommented makes remove stop working
+       p.send( skRef, InsertItem(sfRef, "key", valore , false) )
+       p.send( skRef, GetItem("key") )
+       p.expectMsg("OK")
+     }
 
     "return all items" in {
       p.send( skRef, InsertItem(sfRef, "key", valore , false) )
