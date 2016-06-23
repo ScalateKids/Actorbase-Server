@@ -102,9 +102,10 @@ akka.loglevel = "OFF"
     }
 
     "receive the message UpdateCredential and change the password of a user" in {
+      import akka.actor.SupervisorStrategy._
       p.send(authRef, UpdateCredentials("pippo", "Pluto7632", "Pluto7633"))
       p.expectMsg("OK")
-      p.expectMsg("Stop")
+      p.expectMsg(Stop)
     }
 
     "Receive the message RemoveCredential and remove a user from the system" in {
