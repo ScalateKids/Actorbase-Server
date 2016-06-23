@@ -105,6 +105,7 @@ akka.loglevel = "OFF"
       p.send( authProxy, AddCredentials("pluto", "p4sswordPluto"))
       p.send( mainActorRef, AddContributor("anonymous", "pluto", ReadWrite, testColl.getUUID))
       p.expectMsg("OK")
+      p.expectMsg("OK")
     }
 
     "return an error message trying to add a contributor to a collection that does not exists" in {
@@ -112,14 +113,14 @@ akka.loglevel = "OFF"
       p.expectMsg("UndefinedCollection")
     }
 
-    /* does not return an error message
     "return an error message trying to add a contributor that does not exists to a collection" in {
       p.send( mainActorRef, AddContributor("anonymous", "notExistingUsername", ReadWrite, testColl.getUUID))
-      println("response is "+p.receiveOne(5 seconds)+"\n")
-    }*/
+      p.expectMsg("UndefinedUser")
+    }
 
-    "remove a contributor from a collection" in {   // this is not responding, can't expect messages
+    "remove a contributor from a collection" in {
       p.send( mainActorRef, RemoveContributor("anonymous", "pluto", testColl.getUUID ))
+      p.expectMsg("OK")
     }
 
     "return an error message trying to remove a contributor to a collection that does not exists" in {
@@ -152,7 +153,6 @@ akka.loglevel = "OFF"
     "return an error message trying to delete a collection that does not exists" in {
       p.send( mainActorRef, RemoveFrom("anonymous", "notExistingUUID"))
       p.expectMsg("UndefinedCollection")
-      //println("response is "+p.receiveOne(5 seconds)+"\n")
     }
   }
 }

@@ -237,7 +237,7 @@ class AuthActor extends Actor with ActorLogging {
           persist(profiles + x)
           sender ! "OK"
           context become running (profiles + x)
-        } getOrElse log.error(s"AuthActor: Failed to add ${collection.getUUID} to $username")
+        } getOrElse sender ! "UndefinedUser"
 
       /**
         * Insert description here
