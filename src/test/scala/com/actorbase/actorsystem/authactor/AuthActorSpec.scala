@@ -80,13 +80,11 @@ akka.loglevel = "OFF"
       p.expectMsg("OK")
     }
 
-    /* does not return an error, returns OK
+    // does not return an error, returns OK
     "Return an error message if the user that has to be created has a username already used in the system" in {
-
       p.send( authRef, AddCredentials("pippo", "Pluto7632"))
-      println("response2 is "+p.receiveOne(5 seconds)+"\n")
-      p.expectMsg("OK")
-    }*/
+      p.expectMsg("UsernameUsed")
+    }
 
     "receive the message Authenticate and check if the credentials are valid" in {
       p.send(authRef, Authenticate("pippo", "Pluto7632"))
