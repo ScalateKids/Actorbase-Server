@@ -170,7 +170,7 @@ class AuthActor extends Actor with ActorLogging {
             sender ! "OK"
             persist(profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
             context become running (profiles + Profile(username, salt, Set.empty[ActorbaseCollection]))
-          } else sender ! "UsernameUsed"
+          } else sender ! "UsernameAlreadyExists"
         } getOrElse sender ! "WrongCredentials"
 
       /**
