@@ -112,7 +112,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: Exception      => Resume
+      case _: Exception => Resume
     }
 
   /**
