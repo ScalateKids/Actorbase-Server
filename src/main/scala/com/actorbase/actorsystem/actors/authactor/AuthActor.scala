@@ -255,7 +255,7 @@ class AuthActor extends Actor with ActorLogging {
             sender ! "OK"
             context become running (profiles + x)
           }
-        } getOrElse log.error(s"AuthActor: Failed to remove $username from ${collection.getUUID}")
+        } getOrElse sender ! "UndefinedUser"
 
       /**
         * Build a list of collection names and reply it to the sender

@@ -230,10 +230,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
                 (y._1.containsReadContributor(requester)) ||
                 (y._1.containsReadWriteContributor(requester))
               } map (_._2 forward GetAllItems) getOrElse sender ! Left("UndefinedCollection")
-            else {
-              sender ! Right(MapResponse(collection.getOwner, collection.getName, extractContributors(collection), Map[String, Array[Byte]]()))
-              println(collection.getContributors)
-            }
+            else
+              sender ! Right(MapResponse(collection.getOwner, collection.getName, extractContributors(coll._1), Map[String, Array[Byte]]()))
             // } else sender ! Left("UndefinedCollection")
           } getOrElse sender ! Left("UndefinedCollection")
         }
@@ -306,9 +304,12 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       case AddContributor(requester, username, permission, uuid) =>
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
-          x._1.addContributor(username, permission)
-          if (x._1.getOwner == requester || requester == "admin")
+          if (x._1.getOwner == requester || requester == "admin") {
             authProxy forward AddCollectionTo(username, x._1)
+            println(x._1.getContributors)
+            x._1.addContributor(username, permission)
+            println(x._1.getContributors)
+          }
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
 
@@ -323,9 +324,10 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       case RemoveContributor(requester, username, uuid) =>
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
-          x._1.removeContributor(username)
-          if (x._1.getOwner == requester || requester == "admin")
+          if (x._1.getOwner == requester || requester == "admin") {
             authProxy forward RemoveCollectionFrom(username, x._1)
+            x._1.removeContributor(username)
+          }
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
 
