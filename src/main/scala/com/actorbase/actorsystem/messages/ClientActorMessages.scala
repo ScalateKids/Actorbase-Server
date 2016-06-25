@@ -88,7 +88,7 @@ case object Response {
   * @param collection the collection of the map responses
   * @param map the map with the responses
   */
-final case class MapResponse(owner: String, collectionName: String, data: Map[String, Any])
+final case class MapResponse(owner: String, collectionName: String, contributors: Map[String, Boolean], data: Map[String, Any])
 
 object MapResponse {
 
@@ -120,5 +120,5 @@ object MapResponse {
 
   }
 
-  implicit val goJson = jsonFormat3(MapResponse.apply)
+  implicit val goJson = jsonFormat4(MapResponse.apply)
 }
