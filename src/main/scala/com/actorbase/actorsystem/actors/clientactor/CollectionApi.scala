@@ -216,14 +216,18 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         post {
           decompressRequest() {
             headerValueByName("permission") { permission =>
-              entity(as[String]) { value =>
-                detach() {
-                  complete {
-                    val user = new String(base64ToBytes(value), "UTF-8")
-                    val uuid = authInfo._1 + collection
-                    if (base64ToString(permission) == "read")
+              headerValueByName("owner") { owner =>
+                entity(as[String]) { value =>
+                  detach() {
+                    complete {
+                      val user = new String(base64ToBytes(value), "UTF-8")
+                      val originalOwner = base64ToString(owner)
+                      println(originalOwner)
+                      val uuid = originalOwner + collection
+                      if (base64ToString(permission) == "read")
                       (main ? AddContributor(authInfo._1, user, ActorbaseCollection.Read, uuid)).mapTo[String]
-                    else (main ? AddContributor(authInfo._1, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
+                      else (main ? AddContributor(authInfo._1, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
+                    }
                   }
                 }
               }
@@ -232,12 +236,14 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         } ~
         delete {
           decompressRequest() {
-            entity(as[String]) { value =>
-              detach() {
-                complete {
-                  val user = new String(base64ToBytes(value), "UTF-8")
-                  val uuid = authInfo._1 + collection
+            headerValueByName("owner") { owner =>
+              entity(as[String]) { value =>
+                detach() {
+                  complete {
+                    val user = new String(base64ToBytes(value), "UTF-8")
+                    val uuid = base64ToString(owner) + collection
                     (main ? RemoveContributor(authInfo._1, user, uuid)).mapTo[String]
+                  }
                 }
               }
             }
