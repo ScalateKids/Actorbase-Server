@@ -74,6 +74,14 @@ case class ActorbaseCollection (private var name: String,
   def getSize: Int = size
 
   /**
+    * Return a map containing contributors and their permission on the collection
+    *
+    * @return a Map of String -> Boolean, representing contributors username associated to their
+    * permission on the collection
+    */
+  def getContributors: Map[String, ActorbaseCollection.Permissions] = contributors
+  
+  /**
     * Check if the user passed as param has read permission
     * on this actorbasecollection
     *

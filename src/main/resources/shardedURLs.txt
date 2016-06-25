@@ -1,6 +1,2 @@
-http://localhost:9999/collections/customers/keyOne
-http://localhost:9999/collections/customersB/keyTwo
-http://localhost:9999/collections/customers/keyThree
-http://localhost:9999/collections/customersB/keyFour
-http://localhost:9999/collections/customers/keyFive
-http://localhost:9999/collections/customersB/keySix
+http://127.0.0.1:8000/collections/json1/WVxISgUEBQvQ
+http://127.0.0.1:8000/collections/json1/WVxISgUEBQvQ

@@ -78,7 +78,7 @@ akka.loglevel = "OFF"
     }
 
     "receive the message MapResponse" in {
-      p.send( clientActorRef, MapResponse("user", "user", Map[String, Any]("key" -> "value")) )
+      p.send( clientActorRef, MapResponse("user", "user", Map[String, Boolean]("admin" -> true), Map[String, Any]("key" -> "value")) )
     }
 
     "receive the message ListResponse" in {

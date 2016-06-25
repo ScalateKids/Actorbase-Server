@@ -36,6 +36,7 @@ import akka.actor.SupervisorStrategy._
 import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, RemoveCollectionFrom }
 import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.actorbase.actorsystem.utils.ActorbaseCollection.{ Read, ReadWrite }
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.MapResponse
@@ -125,13 +126,22 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
     else {
       if (collection.getOwner != "admin") {
         authProxy ! AddCollectionTo("admin", collection)
-        collection.addContributor("admin", ActorbaseCollection.ReadWrite)
+        collection.addContributor("admin", ReadWrite)
       }
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
       sfMap += (collection -> sf)
       authProxy ! AddCollectionTo(collection.getOwner, collection)
       Some(sf)
+    }
+  }
+
+  private def extractContributors(collection: ActorbaseCollection): Map[String, Boolean] = {
+    collection.getContributors mapValues { c =>
+      c match {
+        case Read => false
+        case ReadWrite => true
+      }
     }
   }
 
@@ -220,8 +230,10 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
                 (y._1.containsReadContributor(requester)) ||
                 (y._1.containsReadWriteContributor(requester))
               } map (_._2 forward GetAllItems) getOrElse sender ! Left("UndefinedCollection")
-            else
-              sender ! Right(MapResponse(collection.getOwner, collection.getName, Map[String, Array[Byte]]()))
+            else {
+              sender ! Right(MapResponse(collection.getOwner, collection.getName, extractContributors(collection), Map[String, Array[Byte]]()))
+              println(collection.getContributors)
+            }
             // } else sender ! Left("UndefinedCollection")
           } getOrElse sender ! Left("UndefinedCollection")
         }
@@ -245,7 +257,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
             log.info(s"${colMap._2.size} - ${collection.getSize}")
             if (colMap._2.size == collection.getSize) {
               val k = colMap._2.toMap mapValues (v => CryptoUtils.bytesToAny(v))
-              clientRef ! Right(MapResponse(collection.getOwner, collection.getName, k))
+              clientRef ! Right(MapResponse(collection.getOwner, collection.getName, extractContributors(collection),  k))
               // clientRef ! Right(MapResponse(collection.getOwner, collection.getName, colMap._2.toMap))
               colMap._2.clear
               ref._2.-(collection.getUUID)
