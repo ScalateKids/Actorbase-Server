@@ -313,9 +313,11 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       case RemoveContributor(requester, username, uuid) =>
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
-          if (x._1.getOwner == requester || requester == "admin")
-            authProxy forward RemoveCollectionFrom(username, x._1)
-          else sender ! "NoPrivileges"
+          if (x._1.getOwner == requester || requester == "admin") {
+            if (username != "admin")
+              authProxy forward RemoveCollectionFrom(username, x._1)
+            else sender ! "NoPrivileges"
+          } else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
 
     }
