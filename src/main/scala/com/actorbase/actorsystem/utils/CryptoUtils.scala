@@ -30,7 +30,7 @@ package com.actorbase.actorsystem.utils
 
 import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream, FileOutputStream, IOException, ObjectInputStream, ObjectOutputStream }
 import java.security.{InvalidKeyException, NoSuchAlgorithmException}
-import java.util.zip.{ DeflaterOutputStream, InflaterInputStream }
+import java.util.zip.{ DataFormatException, Deflater, DeflaterOutputStream, Inflater, InflaterInputStream }
 import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoSuchPaddingException}
 import javax.crypto.spec.SecretKeySpec
 
@@ -43,6 +43,36 @@ object CryptoUtils {
   /** configuration init */
   val Algorithm = "AES"
   val Transformation = "AES"
+
+  @throws(classOf[IOException])
+  def compress(data: Array[Byte]): Array[Byte] = {
+    val deflater = new Deflater()
+    deflater.setInput(data);
+    val outputStream = new ByteArrayOutputStream(data.length)
+    deflater.finish()
+    val buffer  = new Array[Byte](1024)
+    while (!deflater.finished()) {
+      val count = deflater.deflate(buffer) // returns the generated code... index
+      outputStream.write(buffer, 0, count)
+    }
+    outputStream.close()
+    outputStream.toByteArray()
+  }
+
+  @throws(classOf[IOException])
+  @throws(classOf[DataFormatException])
+  def decompress(data: Array[Byte]): Array[Byte] = {
+    val inflater = new Inflater()
+    inflater.setInput(data)
+    val outputStream = new ByteArrayOutputStream(data.length)
+    val buffer = new Array[Byte](1024)
+    while (!inflater.finished()) {
+      val count = inflater.inflate(buffer)
+      outputStream.write(buffer, 0, count)
+    }
+    outputStream.close()
+    outputStream.toByteArray()
+  }
 
   def compress(text: String): Array[Byte] = {
     val baos = new ByteArrayOutputStream()
