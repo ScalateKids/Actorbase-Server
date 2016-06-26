@@ -83,7 +83,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     var usersmap = Map.empty[String, String]
     var contributors = Map.empty[String, List[(String, Boolean)]]
     var data = Queue.empty[(ActorbaseCollection, Map[String, Array[Byte]])]
-    println("\n LOADING ......... ")
+    log.info("LOADING ......... ")
     if (root.exists && root.isDirectory) {
       var (name, owner) = ("", "")
       root.listFiles.filter(_.isDirectory).foreach { x =>

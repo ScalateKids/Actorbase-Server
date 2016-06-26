@@ -29,6 +29,7 @@
 package com.actorbase.actorsystem.messages.AuthActorMessages
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
 
 /**
  * Trait that contains all the messages processable from the AuthActor
@@ -76,7 +77,7 @@ final case class Authenticate(username: String, password: String) extends AuthAc
  * @param username a string with the username to associate at the collection
  * @param collection the collection to associate at the username
  */
-final case class AddCollectionTo(username: String, collection: ActorbaseCollection) extends AuthActorMessages
+final case class AddCollectionTo(username: String, collection: ActorbaseCollection, permissions: Permissions) extends AuthActorMessages
 /**
  * Message used to the dissociate collection to an user
  * @param username a string with the username to dissociate from collection

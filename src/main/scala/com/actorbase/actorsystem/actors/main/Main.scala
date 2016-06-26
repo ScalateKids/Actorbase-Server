@@ -124,14 +124,12 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
     if (sfMap.contains(collection))
       sfMap get collection
     else {
-      if (collection.getOwner != "admin") {
-        authProxy ! AddCollectionTo("admin", collection)
-        collection.addContributor("admin", ReadWrite)
-      }
+      if (collection.getOwner != "admin")
+        authProxy ! AddCollectionTo("admin", collection, ReadWrite)
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
       sfMap += (collection -> sf)
-      authProxy ! AddCollectionTo(collection.getOwner, collection)
+      authProxy ! AddCollectionTo(collection.getOwner, collection, ReadWrite)
       Some(sf)
     }
   }
@@ -144,14 +142,6 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       }
     }
   }
-
-  /**
-    * Method that creates a collection in Actorbase.
-    *
-    * @return an Int value representing the number of Storefinders contained in this Main actor
-    */
-
-  // def getSize(): Int = sfMap.size
 
   /**
     * Receive method of the Main actor, it does different things based on the message it receives:<br>
@@ -216,7 +206,6 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @param key a String representing the key to be retrieved
         */
       case GetFrom(requester, collection, key) =>
-        //sfMap foreach( x => println(x.toString)) debug
         if (key.nonEmpty)
           sfMap.find(x => (x._1 == collection) || (x._1.containsReadContributor(requester)) || (x._1.containsReadWriteContributor(requester))) map { c =>
             if (c._1.getOwner == requester || c._1.containsReadWriteContributor(requester) || c._1.containsReadContributor(requester))
@@ -308,12 +297,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       case AddContributor(requester, username, permission, uuid) =>
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
-          if (x._1.getOwner == requester || requester == "admin") {
-            authProxy forward AddCollectionTo(username, x._1)
-            println(x._1.getContributors)
-            x._1.addContributor(username, permission)
-            println(x._1.getContributors)
-          }
+          if (x._1.getOwner == requester || requester == "admin")
+            authProxy forward AddCollectionTo(username, x._1, permission)
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
 
@@ -328,10 +313,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       case RemoveContributor(requester, username, uuid) =>
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
-          if (x._1.getOwner == requester || requester == "admin") {
+          if (x._1.getOwner == requester || requester == "admin")
             authProxy forward RemoveCollectionFrom(username, x._1)
-            x._1.removeContributor(username)
-          }
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
 

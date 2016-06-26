@@ -222,7 +222,6 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                     complete {
                       val user = new String(base64ToBytes(value), "UTF-8")
                       val originalOwner = base64ToString(owner)
-                      println(originalOwner)
                       val uuid = originalOwner + collection
                       if (base64ToString(permission) == "read")
                         (main ? AddContributor(authInfo._1, user, ActorbaseCollection.Read, uuid)).mapTo[String]

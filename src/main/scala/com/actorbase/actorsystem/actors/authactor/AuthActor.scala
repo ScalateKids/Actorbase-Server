@@ -229,9 +229,10 @@ class AuthActor extends Actor with ActorLogging {
         * @return
         * @throws
         */
-      case AddCollectionTo(username, collection) =>
+      case AddCollectionTo(username, collection, permissions) =>
         val optElem = profiles find (_.username == username)
         optElem map { x =>
+          collection.addContributor(username, permissions)
           x.addCollection(collection)
           persist(profiles + x)
           sender ! "OK"
@@ -249,6 +250,7 @@ class AuthActor extends Actor with ActorLogging {
         val optElem = profiles find (_.username == username)
         optElem map { x =>
           if (x.contains(collection)) {
+            collection.removeContributor(username)
             x.removeCollection(collection)
             persist(profiles + x)
             sender ! "OK"
