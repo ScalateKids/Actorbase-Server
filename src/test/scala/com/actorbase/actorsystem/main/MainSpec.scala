@@ -109,7 +109,7 @@ akka.loglevel = "OFF"
 
     "return an error message trying to add a contributor that does not exists to a collection" in {
       p.send( mainActorRef, AddContributor("anonymous", "notExistingUsername", ReadWrite, testColl.getUUID))
-      p.expectMsg("UndefinedUser")
+      p.expectMsg("UndefinedUsername")
     }
 
     "remove a contributor from a collection" in {
