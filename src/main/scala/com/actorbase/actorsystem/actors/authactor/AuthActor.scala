@@ -101,18 +101,17 @@ class AuthActor extends Actor with ActorLogging {
     */
   def persist(profiles: Set[Profile]): Unit = {
     var profileMap = Map.empty[String, String]
-    var contributorMap = Map.empty[String, Tuple2[ActorbaseCollection.Permissions, Set[ActorbaseCollection]]]
+    var contributorMap = Map.empty[String, List[(String, Boolean)]]
     profiles map  { x =>
       profileMap += (x.username -> x.password)
-      var colls = Set.empty[ActorbaseCollection]
+      var list = List.empty[(String, Boolean)]
       x.getCollections filter (c => c.containsReadContributor(x.username)) map { rc =>
-        colls += rc
-        contributorMap += (x.username -> (ActorbaseCollection.Read -> colls))
+        list ::= (rc.getUUID -> false)
       }
-      colls = colls.empty
       x.getCollections filter (c => c.containsReadWriteContributor(x.username)) map { rc =>
-        contributorMap += (x.username -> (ActorbaseCollection.ReadWrite -> colls))
+        list ::= (rc.getUUID -> true)
       }
+      contributorMap += (x.username -> list)
     }
     val key = config getString("encryption-key")
     val encryptedProfilesFile = new File(rootFolder + "/usersdata.shadow")

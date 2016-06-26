@@ -45,7 +45,7 @@ import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.utils.ActorbaseCollection
-import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
+import com.actorbase.actorsystem.utils.ActorbaseCollection. { Permissions, Read, ReadWrite }
 import com.actorbase.actorsystem.utils.CryptoUtils
 
 import scala.collection.mutable.Queue
@@ -81,7 +81,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
     val root = new File(config getString "save-folder")
     var dataShard = Map.empty[String, Array[Byte]]
     var usersmap = Map.empty[String, String]
-    var contributors = Map.empty[String, Tuple2[Permissions, Set[ActorbaseCollection]]]
+    var contributors = Map.empty[String, List[(String, Boolean)]]
     var data = Queue.empty[(ActorbaseCollection, Map[String, Array[Byte]])]
     println("\n LOADING ......... ")
     if (root.exists && root.isDirectory) {
@@ -97,7 +97,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
             case user if (user.getName == "usersdata.shadow") =>
               usersmap ++= CryptoUtils.decrypt[Map[String, String]](config getString "encryption-key", user)
             case contributor if (contributor.getName == "contributors.shadow") =>
-              contributors ++= CryptoUtils.decrypt[Map[String, Tuple2[Permissions, Set[ActorbaseCollection]]]](config getString "encryption-key", contributor)
+              contributors ++= CryptoUtils.decrypt[Map[String, List[(String, Boolean)]]](config getString "encryption-key", contributor)
             case _ => dataShard ++= CryptoUtils.decrypt[Map[String, Array[Byte]]](config getString "encryption-key", x)
           }
         }
@@ -126,15 +126,9 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
 
       contributors.foreach {
         case (k, v) =>
-          v._1 match {
-            case ActorbaseCollection.Read =>
-              v._2.foreach { coll =>
-                main ! AddContributor("admin", k, ActorbaseCollection.Read, coll.getUUID)
-              }
-            case ActorbaseCollection.ReadWrite =>
-              v._2.foreach { coll =>
-                main ! AddContributor("admin", k, ActorbaseCollection.ReadWrite, coll.getUUID)
-              }
+          v.foreach { item =>
+            val permission = if (item._2) ReadWrite else Read
+            main ! AddContributor("admin", k, permission, item._1)
           }
       }
 
