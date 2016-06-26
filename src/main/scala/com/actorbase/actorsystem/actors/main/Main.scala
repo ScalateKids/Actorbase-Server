@@ -151,7 +151,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
     * @return an Int value representing the number of Storefinders contained in this Main actor
     */
 
-  def getSize(): Int = sfMap.size
+  // def getSize(): Int = sfMap.size
 
   /**
     * Receive method of the Main actor, it does different things based on the message it receives:<br>
@@ -188,8 +188,12 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         sfMap.find(x => x._1 == collection) map { c =>
           if (requester == c._1.getOwner || c._1.containsReadWriteContributor(requester))
             c._2 forward Insert(key, value, update)
-        } getOrElse (
-          createCollection(collection) map (_ forward Insert(key, value, update)) getOrElse sender ! "UndefinedCollection") // perhaps-fix
+          else sender ! "NoPrivileges"
+        } getOrElse {
+          if (requester == "admin" || requester == collection.getOwner)
+            createCollection(collection) map (_ forward Insert(key, value, update)) getOrElse sender ! "UndefinedCollection"
+          else sender ! "NoPrivileges"
+        }
 
       /**
         * Create a collection in the system

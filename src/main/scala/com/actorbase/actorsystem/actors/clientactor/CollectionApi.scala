@@ -181,7 +181,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                     detach() {
                       complete {
                         val coll = ActorbaseCollection(collection, base64ToString(owner))
-                          (main ? InsertTo(authInfo._1, coll, key, base64ToBytes(value))).mapTo[String]
+                          (main ? InsertTo(authInfo._1, coll, key, CryptoUtils.compress(base64ToBytes(value)))).mapTo[String]
                       }
                     }
                   }
