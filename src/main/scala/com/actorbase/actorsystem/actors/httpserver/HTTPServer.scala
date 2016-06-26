@@ -36,6 +36,7 @@ import spray.can.Http
 import akka.event.LoggingReceive
 
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings, ClusterSingletonProxy, ClusterSingletonProxySettings}
+import akka.cluster._
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import com.typesafe.config.ConfigFactory
 

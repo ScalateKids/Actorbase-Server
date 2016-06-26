@@ -28,8 +28,9 @@
 
 package com.actorbase.actorsystem.utils
 
-import java.io.{File, ByteArrayInputStream, ByteArrayOutputStream, FileInputStream, FileOutputStream, IOException, ObjectInputStream, ObjectOutputStream}
+import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream, FileOutputStream, IOException, ObjectInputStream, ObjectOutputStream }
 import java.security.{InvalidKeyException, NoSuchAlgorithmException}
+import java.util.zip.{ DeflaterOutputStream, InflaterInputStream }
 import javax.crypto.{BadPaddingException, Cipher, IllegalBlockSizeException, NoSuchPaddingException}
 import javax.crypto.spec.SecretKeySpec
 
@@ -42,6 +43,35 @@ object CryptoUtils {
   /** configuration init */
   val Algorithm = "AES"
   val Transformation = "AES"
+
+  def compress(text: String): Array[Byte] = {
+    val baos = new ByteArrayOutputStream()
+    try {
+      val out = new DeflaterOutputStream(baos)
+      out.write(text.getBytes("UTF-8"))
+      out.close()
+    } catch {
+      case e: IOException => throw new AssertionError(e)
+    }
+    baos.toByteArray()
+  }
+
+
+  def decompress(bytes: Array[Byte]): String = {
+    val in = new InflaterInputStream(new ByteArrayInputStream(bytes))
+    val baos = new ByteArrayOutputStream()
+    try {
+      val buffer = new Array[Byte](8192)
+      var len = in.read(buffer)
+      while(len  > 0) {
+        baos.write(buffer, 0, len);
+        len = in.read(buffer)
+      }
+      new String(baos.toByteArray(), "UTF-8");
+    } catch {
+      case e: IOException => throw new AssertionError(e);
+    }
+  }
 
   def bytesToAny(bytes: Array[Byte]): Any = {
     val in = new ObjectInputStream(new ByteArrayInputStream(bytes))
