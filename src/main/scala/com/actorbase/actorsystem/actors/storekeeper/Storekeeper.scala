@@ -126,9 +126,9 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     *
     */
 
-  def receive = running(Map[Array[Byte], Array[Byte]]().empty)
+  def receive = running(Map[String, Array[Byte]]().empty)
 
-  def running(data: Map[Array[Byte], Array[Byte]]): Receive = {
+  def running(data: Map[String, Array[Byte]]): Receive = {
 
     case message: StorekeeperMessage => message match {
 
@@ -148,27 +148,25 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         */
       case GetItem(key)  =>
-        // data get CryptoUtils.compress(key) map (v => sender ! Right(Response(CryptoUtils.bytesToAny(v)))) getOrElse sender ! Left("UndefinedKey")
-        val m = data map (x => CryptoUtils.decompress(x._1) -> x._2)
-        m get key map (v => sender ! Right(Response(CryptoUtils.bytesToAny(v)))) getOrElse sender ! Left("UndefinedKey")
+        data get key map (v => sender ! Right(Response(CryptoUtils.bytesToAny(v)))) getOrElse sender ! Left("UndefinedKey")
 
       /**
         * GetAllItem message, this actor will send back the collection name and all the collection.
         */
       case GetAll(parent) =>
         if (data.nonEmpty)
-          parent ! PartialMapTransaction(sender, data map (x => CryptoUtils.decompress(x._1) -> x._2))
+          parent ! PartialMapTransaction(sender, data)
 
       /**
         * RemoveItem message, when the actor receive this message it will erase the item associated with the
         * key in input. This method doesn't throw an exception if the item is not present.
         */
       case RemoveItem(parent, key) =>
-        if (data contains(CryptoUtils.compress(key))) {
+        if (data contains(key)) {
           parent ! UpdateCollectionSize(false)
           sender ! "OK"
           // warehouseman ! Save( data )
-          context become running(data - CryptoUtils.compress(key))
+          context become running(data - key)
         } else sender ! "UndefinedKey"
 
       /**
@@ -191,15 +189,15 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           */
         def insertOrUpdate(update: Boolean, key: String): Boolean = {
           var done = true
-          if (!update && !data.contains(CryptoUtils.compress(key))) {
+          if (!update && !data.contains(key)) {
             insertWithoutUpdate
           }
-          else if (!update && data.contains(CryptoUtils.compress(key))) {
+          else if (!update && data.contains(key)) {
             // warehouseman ! Save( data )
             log.error(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
-          else if (update && !data.contains(CryptoUtils.compress(key))){
+          else if (update && !data.contains(key)){
             insertWithoutUpdate
           }
           done
@@ -224,13 +222,13 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         if (insertOrUpdate(ins.update, ins.key) == true) {
           // warehouseman ! Save( data + (ins.key -> ins.value) )
           sender ! "OK"
-          context become running(data + (CryptoUtils.compress(ins.key) -> ins.value))
+          context become running(data + (ins.key -> ins.value))
         } else sender ! "DuplicatedKey"
 
       /**
         * Persist data to disk
         */
-      case Persist => if (data.size > 0 && collectionOwner != "anonymous") warehouseman ! Save( data map (x => CryptoUtils.decompress(x._1) -> x._2) )
+      case Persist => if (data.size > 0 && collectionOwner != "anonymous") warehouseman ! Save( data )
 
     }
   }
