@@ -80,7 +80,7 @@ case class ActorbaseCollection (private var name: String,
     * permission on the collection
     */
   def getContributors: Map[String, ActorbaseCollection.Permissions] = contributors
-  
+
   /**
     * Check if the user passed as param has read permission
     * on this actorbasecollection
@@ -168,12 +168,6 @@ case class ActorbaseCollection (private var name: String,
     case that: ActorbaseCollection => that.uuid.equals(this.uuid)
     case _ => false
   }
-
-/*  override def toString: String = {
-    var contr = ""
-    contributors foreach (x => contr += (x._1 + "-->" + x._2+" "))
-    return name+" "+owner+" "+size+" "+contr
-  }*/
 
   /**
     * Method that overrides the Any class method hashCode

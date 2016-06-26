@@ -210,7 +210,7 @@ class AuthActor extends Actor with ActorLogging {
           persist(profiles - x)
           sender ! "OK"
           context become running(profiles - x)
-        } getOrElse sender ! "UndefinedUser"
+        } getOrElse sender ! "UndefinedUsername"
 
       /**
         * Insert description here
@@ -237,7 +237,7 @@ class AuthActor extends Actor with ActorLogging {
           persist(profiles + x)
           sender ! "OK"
           context become running (profiles + x)
-        } getOrElse sender ! "UndefinedUser"
+        } getOrElse sender ! "UndefinedUsername"
 
       /**
         * Insert description here
@@ -255,7 +255,7 @@ class AuthActor extends Actor with ActorLogging {
             sender ! "OK"
             context become running (profiles + x)
           }
-        } getOrElse sender ! "UndefinedUser"
+        } getOrElse sender ! "UndefinedUsername"
 
       /**
         * Build a list of collection names and reply it to the sender
@@ -291,6 +291,7 @@ class AuthActor extends Actor with ActorLogging {
         sender ! ListResponse(users)
 
       case PersistDB =>
+        // persist(profiles)
         mediator ! Publish("persist-data", Persist)
     }
   }

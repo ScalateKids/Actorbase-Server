@@ -114,14 +114,14 @@ akka.loglevel = "OFF"
 
     "Return an error message if the username to remove is not existing in the system" in {
       p.send( authRef, RemoveCredentials("notExistingUsername"))
-      p.expectMsg("UndefinedUser")
+      p.expectMsg("UndefinedUsername")
     }
 
      "Return an error message if the credentials passed to log in the system are not valid" in {
       p.send( authRef, Authenticate("userNotExisting", "p4sswordOfUser"))
       p.expectMsg(Some("None", "None"))
     }
-  
+
 
    "Return an error message if the username combined to the password that has to be changed is not existing in the system" in {
       p.send( authRef, UpdateCredentials("notExistingUsername", "P4ssword", "NewP4ssword"))
