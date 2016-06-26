@@ -50,10 +50,10 @@ object CryptoUtils {
     deflater.setInput(data);
     val outputStream = new ByteArrayOutputStream(data.length)
     deflater.finish()
-    val buffer  = new Array[Byte](1024)
+    val buffer  = new Array[Byte](128)
     while (!deflater.finished()) {
-      val count = deflater.deflate(buffer) // returns the generated code... index
-      outputStream.write(buffer, 0, count)
+      // val count = deflater.deflate(buffer) // returns the generated code... index
+      outputStream.write(buffer, 0, deflater.deflate(buffer))
     }
     outputStream.close()
     outputStream.toByteArray()
@@ -74,34 +74,34 @@ object CryptoUtils {
     outputStream.toByteArray()
   }
 
-  def compress(text: String): Array[Byte] = {
-    val baos = new ByteArrayOutputStream()
-    try {
-      val out = new DeflaterOutputStream(baos)
-      out.write(text.getBytes("UTF-8"))
-      out.close()
-    } catch {
-      case e: IOException => throw new AssertionError(e)
-    }
-    baos.toByteArray()
-  }
+  // def compress(text: String): Array[Byte] = {
+  //   val baos = new ByteArrayOutputStream()
+  //   try {
+  //     val out = new DeflaterOutputStream(baos)
+  //     out.write(text.getBytes("UTF-8"))
+  //     out.close()
+  //   } catch {
+  //     case e: IOException => throw new AssertionError(e)
+  //   }
+  //   baos.toByteArray()
+  // }
 
 
-  def decompress(bytes: Array[Byte]): String = {
-    val in = new InflaterInputStream(new ByteArrayInputStream(bytes))
-    val baos = new ByteArrayOutputStream()
-    try {
-      val buffer = new Array[Byte](8192)
-      var len = in.read(buffer)
-      while(len  > 0) {
-        baos.write(buffer, 0, len);
-        len = in.read(buffer)
-      }
-      new String(baos.toByteArray(), "UTF-8");
-    } catch {
-      case e: IOException => throw new AssertionError(e);
-    }
-  }
+  // def decompress(bytes: Array[Byte]): String = {
+  //   val in = new InflaterInputStream(new ByteArrayInputStream(bytes))
+  //   val baos = new ByteArrayOutputStream()
+  //   try {
+  //     val buffer = new Array[Byte](8192)
+  //     var len = in.read(buffer)
+  //     while(len  > 0) {
+  //       baos.write(buffer, 0, len);
+  //       len = in.read(buffer)
+  //     }
+  //     new String(baos.toByteArray(), "UTF-8");
+  //   } catch {
+  //     case e: IOException => throw new AssertionError(e);
+  //   }
+  // }
 
   def bytesToAny(bytes: Array[Byte]): Any = {
     val in = new ObjectInputStream(new ByteArrayInputStream(bytes))

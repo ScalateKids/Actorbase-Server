@@ -30,13 +30,12 @@ package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.ActorRef
 import akka.util.Timeout
-import com.actorbase.actorsystem.messages.MainMessages.{ AddContributor, RemoveContributor }
+import akka.pattern.ask
 import spray.http.{ HttpResponse, StatusCodes }
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.marshalling.ToResponseMarshallable
 import spray.httpx.marshalling._
 import spray.routing._
-import akka.pattern.ask
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -45,9 +44,10 @@ import scala.language.postfixOps
 import java.util.Base64
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
-import com.actorbase.actorsystem.messages.MainMessages.{InsertTo, GetFrom, RemoveFrom, CreateCollection}
+import com.actorbase.actorsystem.messages.MainMessages.{InsertTo, GetFrom, RemoveFrom, CreateCollection, AddContributor, RemoveContributor}
 import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.messages.AuthActorMessages.{ ListCollectionsOf }
+import com.actorbase.actorsystem.utils.CryptoUtils
 
 /**
   * Trait used to handle routes that are related to ActorbaseCollection
@@ -181,7 +181,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                     detach() {
                       complete {
                         val coll = ActorbaseCollection(collection, base64ToString(owner))
-                          (main ? InsertTo(authInfo._1, coll, key, CryptoUtils.compress(base64ToBytes(value)))).mapTo[String]
+                          (main ? InsertTo(authInfo._1, coll, key, base64ToBytes(value))).mapTo[String]
                       }
                     }
                   }
