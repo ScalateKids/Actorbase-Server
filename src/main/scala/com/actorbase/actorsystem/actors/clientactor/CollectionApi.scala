@@ -135,7 +135,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
           post {
             headerValueByName("owner") { owner =>
               complete {
-                println(s"ROUTE: create for $owner from ${authInfo._1}")
+                println(s"ROUTE: create for ${base64ToString(owner)} from ${authInfo._1}")
                 val coll = ActorbaseCollection(collection, base64ToString(owner))
                   (main ? CreateCollection(authInfo._1, coll)).mapTo[String]
               }
@@ -224,7 +224,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                       val user = new String(base64ToBytes(value), "UTF-8")
                       val originalOwner = base64ToString(owner)
                       val uuid = originalOwner + collection
-                      println(s"ROUTE: add $owner to $uuid from ${authInfo._1}")
+                      println(s"ROUTE: add $originalOwner to $uuid from ${authInfo._1}")
                       if (base64ToString(permission) == "read")
                         (main ? AddContributor(authInfo._1, user, ActorbaseCollection.Read, uuid)).mapTo[String]
                       else (main ? AddContributor(authInfo._1, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
