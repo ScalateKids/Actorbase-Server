@@ -21,34 +21,35 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids TODO DA CAMBIARE
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
 
-package com.actorbase.actorsystem
+package com.actorbase.actorsystem.messages.WarehousemanMessages
 
-import org.scalatest._
-import org.scalatest.concurrent._
+import java.io.File
 
+sealed abstract trait WarehousemanMessage
 /**
-  * Module containing all specifications for testing driver components.
-  * All types of specifications and tests related to the Driver component
-  * should be added here.
-  *
-  * @param
-  * @return
-  * @throws
-  */
-object ActorSystemSpecs {
+ * Message used to ask to warehouseman to clean data on disk
+ */
+final case object Clean extends WarehousemanMessage
+/**
+ * Message used to initialize collection on drive
+ * @param collection name of collection to store
+ * @param owner string with name of the collection owner
+ */
+final case class Init(collection: String, owner: String) extends WarehousemanMessage
+/**
+ * Message used to recall a save operation on drive
+ * @param map map with data to save on permanent memory
+ */
+final case class Save(map: Map[String, Array[Byte]]) extends WarehousemanMessage
 
-  /**
-    * Basic unit-testing class with Future capabilities
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  trait ActorSystemUnitSpec extends WordSpecLike with MustMatchers with ScalaFutures with BeforeAndAfterAll
-
-}
+final case class SaveRow(row: (String, Any)) extends WarehousemanMessage
+/**
+ * Message used to ask at warehouseman to read data from permanent memory
+ * @param file file that warehouseman will read
+ */
+final case class Read(file: File) extends WarehousemanMessage

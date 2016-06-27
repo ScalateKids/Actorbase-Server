@@ -21,6 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
+  *
   * @author Scalatekids TODO DA CAMBIARE
   * @version 1.0
   * @since 1.0
@@ -28,10 +29,124 @@
 
 package com.actorbase.actorsystem.main
 
+import akka.util.Timeout
+import com.actorbase.actorsystem.utils.ActorbaseCollection
+import com.typesafe.config.ConfigFactory
+import scala.concurrent.duration._
 import org.scalatest.FlatSpec
 
-class MainSpec extends FlatSpec {
-  "Main actor" should "Main actor" in {
-    assert(1 === 1)
+import akka.actor.ActorSystem
+import akka.actor.Actor
+import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
+import org.scalatest.matchers.MustMatchers
+import org.scalatest.WordSpecLike
+import org.scalatest.BeforeAndAfterAll
+
+import com.actorbase.actorsystem.ActorSystemSpecs._
+import com.actorbase.actorsystem.actors.main.Main
+import com.actorbase.actorsystem.actors.authactor.AuthActor
+import com.actorbase.actorsystem.utils.ActorbaseCollection._
+import com.actorbase.actorsystem.messages.MainMessages._
+/*import com.actorbase.actorsystem.messages.StorefinderMessages._
+import com.actorbase.actorsystem.messages.ClientActorMessages._*/
+import com.actorbase.actorsystem.messages.AuthActorMessages.{AddCredentials}
+
+class MainSpec extends TestKit(ActorSystem("MainSpec",
+  ConfigFactory.parseString("""
+akka.remote.netty.tcp.port = 0,
+akka.actor.provider = "akka.cluster.ClusterActorRefProvider",
+akka.loglevel = "OFF"
+"""))) with ActorSystemUnitSpec with ImplicitSender {
+
+  implicit val timeout = Timeout(5 seconds)
+
+  /**
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
+  override def afterAll() : Unit = system.shutdown
+
+  "Main actor" should{
+
+    val p = TestProbe()
+    val authProxy = TestActorRef( new AuthActor)
+    val mainActorRef = TestActorRef( new Main(authProxy) )
+    val testColl = new ActorbaseCollection("testCollection", "anonymous")
+
+    "should be created" in {
+      assert(mainActorRef != None)
+    }
+
+    "create a new collection" in {
+      p.send(mainActorRef, CreateCollection("admin", testColl))
+      p.expectMsg("OK")
+    }
+
+    "insert and retrieve an item" in {
+      val value = "testValue".getBytes
+      p.send( mainActorRef, InsertTo("anonymous", testColl, "testKey",  value, false))
+      p.send( mainActorRef, GetFrom("anonymous", testColl, "testKey"))
+      p.expectMsg("OK")
+    }
+
+    "remove an item" in {
+      val value = "testValue".getBytes
+      p.send(mainActorRef, RemoveFrom("anonymous", testColl.getUUID, "testKey"))
+      p.expectMsg("OK")
+    }
+
+    "add a contributor to a collection" in {
+      p.send( authProxy, AddCredentials("pluto", "p4sswordPluto"))
+      p.send( mainActorRef, AddContributor("anonymous", "pluto", ReadWrite, testColl.getUUID))
+      p.expectMsg("OK") //sent by AddCredentials
+      p.expectMsg("OK") //sent by AddContributor
+    }
+
+    "return an error message trying to add a contributor to a collection that does not exists" in {
+      p.send( mainActorRef, AddContributor("anonymous", "pluto", ReadWrite, "notExistingUUID"))
+      p.expectMsg("UndefinedCollection")
+    }
+
+    "return an error message trying to add a contributor that does not exists to a collection" in {
+      p.send( mainActorRef, AddContributor("anonymous", "notExistingUsername", ReadWrite, testColl.getUUID))
+      p.expectMsg("UndefinedUsername")
+    }
+
+    "remove a contributor from a collection" in {
+      p.send( mainActorRef, RemoveContributor("anonymous", "pluto", testColl.getUUID ))
+      p.expectMsg("OK")
+    }
+
+    "return an error message trying to remove a contributor to a collection that does not exists" in {
+      p.send( mainActorRef, RemoveContributor("anonymous", "pluto", "notExistingUUID"))
+      p.expectMsg("UndefinedCollection")
+    }
+
+    "receive the message CompleteTransaction" in {
+      p.send( mainActorRef, CompleteTransaction( authProxy, testColl, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
+    }
+
+    "remove a collection" in {
+      p.send( mainActorRef, RemoveFrom("anonymous", testColl.getUUID) )
+      p.expectMsg("OK")
+    }
+
+    "create a collection that does not exists in the system just by adding an item to it" in {
+      val notExistingCollection = new ActorbaseCollection("collectionName", "anonymous")
+      p.send( mainActorRef, InsertTo("anonymous", notExistingCollection, "anotherKey",  "value".getBytes, false))
+      p.expectMsg("OK")
+    }
+
+    "return an error message trying to insert an item with a key already " +
+    "existing in the system without overwriting" in {
+      val notExistingCollection = new ActorbaseCollection("collectionName", "anonymous")
+      p.send( mainActorRef, InsertTo("anonymous", notExistingCollection, "anotherKey", "value".getBytes, false))
+      p.expectMsg("DuplicatedKey")
+    }
+
+    "return an error message trying to delete a collection that does not exists" in {
+      p.send( mainActorRef, RemoveFrom("anonymous", "notExistingUUID"))
+      p.expectMsg("UndefinedCollection")
+    }
   }
 }

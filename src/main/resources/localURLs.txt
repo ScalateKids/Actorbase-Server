@@ -1,0 +1,5 @@
+http://localhost:9999/collections/customers
+http://localhost:9999/collections/customers
+http://localhost:9999/collections/customers
+http://localhost:9999/collections/customers
+http://localhost:9999/collections/customers
