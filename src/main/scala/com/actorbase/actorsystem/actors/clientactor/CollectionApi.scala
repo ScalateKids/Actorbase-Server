@@ -153,9 +153,9 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         pathEndOrSingleSlash {
           authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
             headerValueByName("owner") { owner =>
-              val coll = ActorbaseCollection(collection, base64ToString(owner))
               get {
                 complete {
+                  val coll = ActorbaseCollection(collection, base64ToString(owner))
                   (main ? GetFrom(authInfo._1, coll, key))
                     .mapTo[Either[String, Response]]
                     .map { result =>
