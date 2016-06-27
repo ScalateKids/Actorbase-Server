@@ -299,6 +299,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       case AddContributor(requester, username, permission, uuid) =>
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
+          println(x._1.toString)
           if (x._1.getOwner == requester || requester == "admin")
             authProxy forward AddCollectionTo(username, x._1, permission)
           else sender ! "NoPrivileges"
