@@ -91,7 +91,7 @@ akka.loglevel = "OFF"
     }
 
     "receive the message AddCollectionTo and adding a collection to a user" in {
-      p.send(authRef, AddCollectionTo("pippo", actbColl))
+      p.send(authRef, AddCollectionTo("pippo", actbColl, ActorbaseCollection.Read))
       p.expectMsg("OK")
     }
 
