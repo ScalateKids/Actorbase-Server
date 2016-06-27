@@ -302,7 +302,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         optColl map { x =>
           println("[MAIN] Add contributor " + x._1)
           if (x._1.getOwner == requester || requester == "admin") {
-            x._1.addContributor(username, permission)
+            if (username != "admin")
+              x._1.addContributor(username, permission)
             authProxy forward AddCollectionTo(username, x._1, permission)
           }
           else sender ! "NoPrivileges"

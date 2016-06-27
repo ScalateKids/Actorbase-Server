@@ -204,12 +204,14 @@ class AuthActor extends Actor with ActorLogging {
         * @throws
         */
       case RemoveCredentials(username) =>
-        val optElem = profiles find (_.username == username)
-        optElem map { x =>
-          persist(profiles - x)
-          sender ! "OK"
-          context become running(profiles - x)
-        } getOrElse sender ! "UndefinedUsername"
+        if (username != "admin") {
+          val optElem = profiles find (_.username == username)
+          optElem map { x =>
+            persist(profiles - x)
+            sender ! "OK"
+            context become running(profiles - x)
+          } getOrElse sender ! "UndefinedUsername"
+        }
 
       /**
         * Insert description here
