@@ -135,9 +135,9 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
       /**
         * Message that returns the entire collection mapped by this Storefinder
         */
-      case GetAllItems =>
+      case GetAllItems(requester) =>
         // log.info("SF: getallitem")
-        storekeepers forward Broadcast(GetAll(self))
+        storekeepers forward Broadcast(GetAll(self, requester))
 
       /**
         * Message that removes an item with the given key
@@ -169,8 +169,8 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         * @param items a Map[String, Any] containing all key-value pair of the partial
         * collection contained inside a single storekeeper, receive order is unpredictable
         */
-      case PartialMapTransaction(clientRef, items) =>
-        context.parent ! CompleteTransaction(clientRef, collection, items)
+      case PartialMapTransaction(requester, clientRef, items) =>
+        context.parent ! CompleteTransaction(requester, clientRef, collection, items)
 
     }
   }

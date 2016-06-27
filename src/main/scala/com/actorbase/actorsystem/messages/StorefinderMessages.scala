@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -35,12 +35,12 @@ sealed abstract trait StorefinderMessage
 /**
  * Message used to request to get all item from the Storefinder
  */
-final case object GetAllItems extends StorefinderMessage
+final case class GetAllItems(requester: String) extends StorefinderMessage
 /**
  * Message used to update the collection size after an insert or a remove operation
  * @param increment boolean flag to do an increment or decrement operation with size (true = increment ; false = decrement)
  */
- 
+
 final case class UpdateCollectionSize(increment: Boolean = true) extends StorefinderMessage with ControlMessage
 /**
  * Message used to get data from the collection associated at the storefinder
@@ -52,7 +52,7 @@ final case class Get(key: String) extends StorefinderMessage
  * @param clientRef reference to client that made the request and will receive the response
  * @param items map that contain the shards of collection to return
  */
-final case class PartialMapTransaction(clientRef: ActorRef, items: Map[String, Array[Byte]]) extends StorefinderMessage with ControlMessage
+final case class PartialMapTransaction(requester: String, clientRef: ActorRef, items: Map[String, Array[Byte]]) extends StorefinderMessage with ControlMessage
 /**
  * Message used to remove data from the collection associated at the storefinder
  * @param key a string with the key of the value that will be trashed

@@ -21,7 +21,7 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
@@ -42,11 +42,11 @@ final case object Persist extends StorekeeperMessage with ControlMessage
  * @param mn reference to actor manager to initialize
  */
 final case class InitMn(mn: ActorRef) extends StorekeeperMessage with ControlMessage
-/** 
+/**
  * Message used to get all data in the Storekeeper
  * @param parent storefinder actor that made the request and where data will be sent
  */
- final case class GetAll(parent: ActorRef) extends StorekeeperMessage
+ final case class GetAll(parent: ActorRef, requester: String) extends StorekeeperMessage
 
 // final case class Init(manager: ActorRef, range: KeyRange) extends StorekeeperMessage
 /**

@@ -57,7 +57,7 @@ final case class GetFrom(requester: String, collection: ActorbaseCollection, key
  * @param collection the collection that contain the pieces to send
  * @param key key of pieces to collect
  */
-final case class CompleteTransaction(clientRef: ActorRef, collection: ActorbaseCollection, items: Map[String, Array[Byte]]) extends MainMessage with ControlMessage
+final case class CompleteTransaction(requester: String, clientRef: ActorRef, collection: ActorbaseCollection, items: Map[String, Array[Byte]]) extends MainMessage with ControlMessage
 /**
  * Message used to remove item from collection
  * @param requester a string with username of who made the remove request

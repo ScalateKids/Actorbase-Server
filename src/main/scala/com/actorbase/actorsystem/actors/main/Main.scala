@@ -215,14 +215,14 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         else {
           sfMap.find(x => (x._1 == collection) || (x._1.containsReadContributor(requester)) || (x._1.containsReadWriteContributor(requester))) map { coll =>
             if (coll._1.getOwner == requester || coll._1.containsReadWriteContributor(requester) || coll._1.containsReadContributor(requester)) {
-              requestMap.find(_._1 == coll._1.getOwner) map (_._2 += (coll._1.getUUID -> mutable.Map[String, Array[Byte]]())) getOrElse (
-                requestMap += (collection.getOwner -> mutable.Map(coll._1.getUUID -> mutable.Map[String, Array[Byte]]())))
+              requestMap.find(_._1 == requester) map (_._2 += (coll._1.getUUID -> mutable.Map[String, Array[Byte]]())) getOrElse (
+                requestMap += (requester -> mutable.Map(coll._1.getUUID -> mutable.Map[String, Array[Byte]]())))
               if (coll._1.getSize > 0)
                 sfMap find { y =>
                   (y._1 == collection) ||
                   (y._1.containsReadContributor(requester)) ||
                   (y._1.containsReadWriteContributor(requester))
-                } map (_._2 forward GetAllItems) getOrElse sender ! Left("UndefinedCollection")
+                } map (_._2 forward GetAllItems(requester)) getOrElse sender ! Left("UndefinedCollection")
               else
                 sender ! Right(MapResponse(collection.getOwner, collection.getName, extractContributors(coll._1), Map[String, Array[Byte]]()))
             } else sender ! Left("UndefinedCollection")
@@ -241,8 +241,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * @return
         * @throws
         */
-      case CompleteTransaction(clientRef, collection, items) =>
-        requestMap.find(_._1 == collection.getOwner) map { ref =>
+      case CompleteTransaction(requester, clientRef, collection, items) =>
+        requestMap.find(_._1 == requester) map { ref =>
           ref._2.find(_._1 == collection.getUUID) map { colMap =>
             colMap._2 ++= items
             log.info(s"${colMap._2.size} - ${collection.getSize}")
