@@ -135,8 +135,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
   }
 
   private def extractContributors(collection: ActorbaseCollection): Map[String, Boolean] = {
-    println(sfMap)
-    println(collection.getContributors)
+    println("[MAIN] content: " + sfMap)
+    println("[MAIN] contributor to be extracted " + collection.getContributors)
     collection.getContributors mapValues { c =>
       c match {
         case Read => false
@@ -299,7 +299,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       case AddContributor(requester, username, permission, uuid) =>
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
-          println(x._1.toString)
+          println("[MAIN] Add contributor " + x._1)
           if (x._1.getOwner == requester || requester == "admin")
             authProxy forward AddCollectionTo(username, x._1, permission)
           else sender ! "NoPrivileges"

@@ -119,24 +119,25 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
         authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
           get {
             headerValueByName("owner") { owner =>
-              val coll = ActorbaseCollection(collection, base64ToString(owner))
               complete {
-                (main ? GetFrom(authInfo._1, coll))
+                val coll = ActorbaseCollection(collection, base64ToString(owner))
+                  (main ? GetFrom(authInfo._1, coll))
                   .mapTo[Either[String, MapResponse]]
                   .map { result =>
-                  result match {
-                    case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
-                    case Right(map) => map: ToResponseMarshallable
+                    result match {
+                      case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                      case Right(map) => map: ToResponseMarshallable
+                    }
                   }
-                }
               }
             }
           } ~
           post {
             headerValueByName("owner") { owner =>
-              val coll = ActorbaseCollection(collection, base64ToString(owner))
               complete {
-                (main ? CreateCollection(authInfo._1, coll)).mapTo[String]
+                println(s"ROUTE: create for $owner from ${authInfo._1}")
+                val coll = ActorbaseCollection(collection, base64ToString(owner))
+                  (main ? CreateCollection(authInfo._1, coll)).mapTo[String]
               }
             }
           } ~
@@ -156,14 +157,14 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
               get {
                 complete {
                   val coll = ActorbaseCollection(collection, base64ToString(owner))
-                  (main ? GetFrom(authInfo._1, coll, key))
+                    (main ? GetFrom(authInfo._1, coll, key))
                     .mapTo[Either[String, Response]]
                     .map { result =>
-                    result match {
-                      case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
-                      case Right(response) => response: ToResponseMarshallable
+                      result match {
+                        case Left(string) => HttpResponse(StatusCodes.NotFound, entity = string): ToResponseMarshallable
+                        case Right(response) => response: ToResponseMarshallable
+                      }
                     }
-                  }
                 }
               }
             } ~
@@ -223,6 +224,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
                       val user = new String(base64ToBytes(value), "UTF-8")
                       val originalOwner = base64ToString(owner)
                       val uuid = originalOwner + collection
+                      println(s"ROUTE: add $owner to $uuid from ${authInfo._1}")
                       if (base64ToString(permission) == "read")
                         (main ? AddContributor(authInfo._1, user, ActorbaseCollection.Read, uuid)).mapTo[String]
                       else (main ? AddContributor(authInfo._1, user, ActorbaseCollection.ReadWrite, uuid)).mapTo[String]
