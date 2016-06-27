@@ -135,6 +135,8 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
   }
 
   private def extractContributors(collection: ActorbaseCollection): Map[String, Boolean] = {
+    println(sfMap)
+    println(collection.getContributors)
     collection.getContributors mapValues { c =>
       c match {
         case Read => false

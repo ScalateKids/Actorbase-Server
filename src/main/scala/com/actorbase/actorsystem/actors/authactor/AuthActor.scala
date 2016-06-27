@@ -233,11 +233,15 @@ class AuthActor extends Actor with ActorLogging {
         val optElem = profiles find (_.username == username)
         optElem map { x =>
           collection.addContributor(username, permissions)
+          println(collection.getContributors)
           x.addCollection(collection)
           persist(profiles + x)
           sender ! "OK"
           context become running (profiles + x)
-        } getOrElse sender ! "UndefinedUsername"
+        } getOrElse {
+          sender ! "UndefinedUsername"
+          println("Not")
+        }
 
       /**
         * Insert description here
