@@ -129,7 +129,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
       sfMap += (collection -> sf)
-      collection.addContributor( collection.getOwner, ReadWrite)
+      // collection.addContributor(collection.getOwner, ReadWrite)
       authProxy ! AddCollectionTo(collection.getOwner, collection, ReadWrite)
       Some(sf)
     }
@@ -301,8 +301,10 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
           println("[MAIN] Add contributor " + x._1)
-          if (x._1.getOwner == requester || requester == "admin")
+          if (x._1.getOwner == requester || requester == "admin") {
+            x._1.addContributor(username, permission)
             authProxy forward AddCollectionTo(username, x._1, permission)
+          }
           else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"
 
@@ -318,8 +320,10 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
           if (x._1.getOwner == requester || requester == "admin") {
-            if (username != "admin")
+            if (username != "admin") {
+              x._1.removeContributor(username)
               authProxy forward RemoveCollectionFrom(username, x._1)
+            }
             else sender ! "NoPrivileges"
           } else sender ! "NoPrivileges"
         } getOrElse sender ! "UndefinedCollection"

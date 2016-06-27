@@ -232,7 +232,8 @@ class AuthActor extends Actor with ActorLogging {
       case AddCollectionTo(username, collection, permissions) =>
         val optElem = profiles find (_.username == username)
         optElem map { x =>
-          // collection.addContributor(username, permissions)
+          if (username != collection.getOwner)
+            collection.addContributor(username, permissions)
           println("[AUTHACTOR] addColl " + collection.getContributors)
           x.addCollection(collection)
           persist(profiles + x)
