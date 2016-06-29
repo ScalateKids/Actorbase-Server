@@ -29,16 +29,17 @@
 
 package com.actorbase.actorsystem.warehouseman
 
-import akka.util.Timeout
-import com.typesafe.config.ConfigFactory
 import java.io.File
-import akka.pattern.ask
+import scala.util.Success
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import akka.pattern.ask
+import akka.util.Timeout
 import akka.actor.ActorSystem
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 
+import com.typesafe.config.ConfigFactory
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
 import com.actorbase.actorsystem.messages.WarehousemanMessages._
@@ -60,10 +61,6 @@ akka.loglevel = "OFF"
 
   "Warehouseman Actor" should {
 
-    import java.io.File
-    import akka.pattern.ask
-    import scala.concurrent.Await
-
     val collUuid = "testUuid"
     val wareRef = TestActorRef(new Warehouseman( collUuid ))
     val p = TestProbe()
@@ -79,17 +76,23 @@ akka.loglevel = "OFF"
         file.delete
       }
       delete( new File("actorbasedata/testUuid/") )
-      val map = Map[String, Array[Byte]]("key0" -> "zero".getBytes(), "key1" -> "one".getBytes(), "key2" -> "two".getBytes())
-      Await.result(wareRef.ask(com.actorbase.actorsystem.messages.WarehousemanMessages.Save(map))(5 seconds).mapTo[Int], Duration.Inf)
-      val nfiles = new File("actorbasedata/testUuid/").list.size
-      assert( nfiles == 1) //should be(true)
+      val map = Map[String, Array[Byte]]("key0" -> "zero".getBytes("UTF-8"), "key1" -> "one".getBytes("UTF-8"), "key2" -> "two".getBytes("UTF-8"))
+      val future = (wareRef ? com.actorbase.actorsystem.messages.WarehousemanMessages.Save(map)).mapTo[Int]
+      future onSuccess {
+        case s =>
+          val nfiles = new File("actorbasedata/testUuid/").list.size
+          assert( nfiles == 1) //should be(true)
+      }
     }
 
     "read and decrypt data" in {
       val dir = new File("actorbasedata/testUuid/")
       val f = Option(dir.listFiles).map(_.toList).getOrElse(Nil)
-      val map = Await.result(wareRef.ask(com.actorbase.actorsystem.messages.WarehousemanMessages.Read(f.head))(5 seconds).mapTo[Map[String, Any]], Duration.Inf)
-      assert(map.size == 3) // should have size 3
+      val map = (wareRef ? com.actorbase.actorsystem.messages.WarehousemanMessages.Read(f.head)).mapTo[Map[String, Any]]
+      map onSuccess {
+        case m =>
+          assert(m.size == 3) // should have size 3
+      }
     }
 
     "receive the message clean" in {

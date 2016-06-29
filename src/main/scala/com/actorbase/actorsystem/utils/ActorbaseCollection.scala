@@ -32,10 +32,19 @@ import scala.math.Ordered.orderingToOrdered
 
 case object ActorbaseCollection {
 
+  /**
+    * Trait defining generic permission type
+    */
   sealed trait Permissions
 
+  /**
+    * Define permission of type read-only
+    */
   case object Read extends Permissions
 
+  /**
+    * Define permission of type readwrite
+    */
   case object ReadWrite extends Permissions
 }
 
@@ -50,7 +59,6 @@ case class ActorbaseCollection (private var name: String,
   private var size: Int = 0) extends Ordered[ActorbaseCollection] {
 
   private val uuid: String = owner + name
-
   private var contributors = Map[String, ActorbaseCollection.Permissions]("admin" -> ActorbaseCollection.ReadWrite)
 
   /**

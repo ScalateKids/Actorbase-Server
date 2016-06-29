@@ -69,7 +69,7 @@ akka.loglevel = "OFF"
     }
 
     "insert and get an item" in {
-      val value = "value".getBytes()
+      val value = "value".getBytes("UTF-8")
       p.send( sfRef, Insert("key", value , false) )
       p.send( sfRef, Get("key") )
       p.expectMsg("OK")
@@ -80,7 +80,7 @@ akka.loglevel = "OFF"
     }
 
     "remove an item" in {
-      val value = "value".getBytes()
+      val value = "value".getBytes("UTF-8")
       p.send( sfRef, Remove("key"))
       p.expectMsg("OK")
     }
@@ -90,7 +90,7 @@ akka.loglevel = "OFF"
     }
 
     "receive the message PartialMapTransaction" in {  // response is null, can't expect anything
-      p.send( sfRef, PartialMapTransaction( sfRef, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
+      p.send( sfRef, PartialMapTransaction( "anonymous", sfRef, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
     }
   }
 

@@ -47,8 +47,6 @@ import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.actorbase.actorsystem.utils.ActorbaseCollection._
 import com.actorbase.actorsystem.messages.MainMessages._
-/*import com.actorbase.actorsystem.messages.StorefinderMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages._*/
 import com.actorbase.actorsystem.messages.AuthActorMessages.{AddCredentials}
 
 class MainSpec extends TestKit(ActorSystem("MainSpec",
@@ -83,14 +81,14 @@ akka.loglevel = "OFF"
     }
 
     "insert and retrieve an item" in {
-      val value = "testValue".getBytes
+      val value = "testValue".getBytes("UTF-8")
       p.send( mainActorRef, InsertTo("anonymous", testColl, "testKey",  value, false))
       p.send( mainActorRef, GetFrom("anonymous", testColl, "testKey"))
       p.expectMsg("OK")
     }
 
     "remove an item" in {
-      val value = "testValue".getBytes
+      val value = "testValue".getBytes("UTF-8")
       p.send(mainActorRef, RemoveFrom("anonymous", testColl.getUUID, "testKey"))
       p.expectMsg("OK")
     }
@@ -123,7 +121,7 @@ akka.loglevel = "OFF"
     }
 
     "receive the message CompleteTransaction" in {
-      p.send( mainActorRef, CompleteTransaction( authProxy, testColl, Map[String, Array[Byte]]("key" -> "value".getBytes ) ) )
+      p.send( mainActorRef, CompleteTransaction( "anonymous", authProxy, testColl, Map[String, Array[Byte]]("key" -> "value".getBytes("UTF-8") ) ) )
     }
 
     "remove a collection" in {
@@ -133,14 +131,14 @@ akka.loglevel = "OFF"
 
     "create a collection that does not exists in the system just by adding an item to it" in {
       val notExistingCollection = new ActorbaseCollection("collectionName", "anonymous")
-      p.send( mainActorRef, InsertTo("anonymous", notExistingCollection, "anotherKey",  "value".getBytes, false))
+      p.send( mainActorRef, InsertTo("anonymous", notExistingCollection, "anotherKey",  "value".getBytes("UTF-8"), false))
       p.expectMsg("OK")
     }
 
     "return an error message trying to insert an item with a key already " +
     "existing in the system without overwriting" in {
       val notExistingCollection = new ActorbaseCollection("collectionName", "anonymous")
-      p.send( mainActorRef, InsertTo("anonymous", notExistingCollection, "anotherKey", "value".getBytes, false))
+      p.send( mainActorRef, InsertTo("anonymous", notExistingCollection, "anotherKey", "value".getBytes("UTF-8"), false))
       p.expectMsg("DuplicatedKey")
     }
 

@@ -79,6 +79,11 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
           CryptoUtils.encrypt(key, Map("collection" -> collection, "owner" -> owner), encryptedMetaFile)
         }
 
+      /**
+        * Persist data to disk, encrypting with pre-defined encryption algorithm
+        *
+        * @param map a Map containing key-values to persist to disk
+        */
       case Save(map) =>
         log.info("warehouseman: save " + rootFolder + collectionUUID + "/" + wareUUID + ".actb")
         val key = config getString("encryption-key")
@@ -86,6 +91,18 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         encryptedShardFile.getParentFile.mkdirs
         CryptoUtils.encrypt(key, map, encryptedShardFile, false)
         sender ! 0 // ok reply
+
+      /**
+        * Read a file from filesystem and decrypt the content
+        * extracting the map shard contained
+        *
+        * @param f an encrypted file containing the shard of the collection
+        */
+      case Read(f) =>
+        log.info("warehouseman: read")
+        val key = config getString("encryption-key")
+        val m = CryptoUtils.decrypt[Map[String, Any]](key, f)
+        sender ! m // ok reply
 
       /**
         * Delete a file with the Range with the keys passed in

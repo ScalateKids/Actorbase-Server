@@ -67,7 +67,7 @@ akka.loglevel = "OFF"
     val clientActorRef = TestActorRef( new ClientActor(mainActorRef, authProxy))
     val p = TestProbe()
 
-    val ab = "value".getBytes
+    val ab = "value".getBytes("UTF-8")
 
     "be created" in {
       assert(clientActorRef != None)

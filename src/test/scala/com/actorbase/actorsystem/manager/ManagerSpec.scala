@@ -36,7 +36,7 @@ import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.actors.manager.Manager
-import com.actorbase.actorsystem.actors.manager.Manager.OneMore
+import com.actorbase.actorsystem.messages.ManagerMessages.OneMore
 import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 
@@ -68,7 +68,6 @@ akka.loglevel = "OFF"
     }
 
     "create one storekeeper" in {
-      import com.actorbase.actorsystem.actors.manager.Manager.OneMore
       p.send( mnRef, OneMore )  // no response, can't expect any message
     }
   }

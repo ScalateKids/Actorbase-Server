@@ -64,7 +64,7 @@ akka.loglevel = "OFF"
     */
   override def afterAll() : Unit = system.shutdown
 
-  val valore = "value".getBytes()
+  val valore = "value".getBytes("UTF-8")
 
   "Storekeeper Actor" should{
 
@@ -75,7 +75,7 @@ akka.loglevel = "OFF"
     val sfRef = TestActorRef(new Storefinder( actbColl ))
     val p = TestProbe()
 
-    val valore = "value".getBytes()
+    val valore = "value".getBytes("UTF-8")
 
     "be created" in {
       assert(skRef != None)
@@ -109,13 +109,13 @@ akka.loglevel = "OFF"
 
     "return all items" in {
       p.send( skRef, InsertItem(sfRef, "key", valore , false) )
-      p.send( skRef, GetAll( p.ref ) )
+      p.send( skRef, GetAll( p.ref, "anonymous" ) )
       p.expectMsg("OK")
     }
 
     "persist data sending message to the warehouseman" in {
       p.send( skRef, Persist )
-      p.expectMsg( PartialMapTransaction( p.ref, Map[String, Array[Byte]]("key" -> valore)) )
+      p.expectMsg( PartialMapTransaction( "anonymous", p.ref, Map[String, Array[Byte]]("key" -> valore)) )
     }
 
     "able to receive a message Initmn to initialize his manager" in {   // no response, can't expect anything
