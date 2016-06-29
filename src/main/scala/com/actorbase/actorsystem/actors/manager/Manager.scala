@@ -21,26 +21,25 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   * <p/>
-  * @author Scalatekids 
+  * @author Scalatekids
   * @version 1.0
   * @since 1.0
   */
 
 package com.actorbase.actorsystem.actors.manager
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Address, AddressFromURIString, Deploy, OneForOneStrategy, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, OneForOneStrategy, Props }
 import akka.routing.{ ActorRefRoutee, AddRoutee }
-import akka.remote.RemoteScope
 import akka.actor.SupervisorStrategy._
 
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
+import com.actorbase.actorsystem.messages.ManagerMessages._
 import com.typesafe.config.ConfigFactory
+
 import scala.concurrent.duration._
 
 object Manager {
-
-  case object OneMore
 
   def props(collection: String, owner: String, router: ActorRef): Props = Props(classOf[Manager], collection, owner, router)
 
@@ -53,8 +52,6 @@ object Manager {
   * to properly redistribute that load and add it to the SF router.
   */
 class Manager(val collection: String, val owner: String, val router: ActorRef) extends Actor with ActorLogging {
-
-  import Manager._
 
   var reports = 0
   val config = ConfigFactory.load().getConfig("storekeepers")
@@ -75,12 +72,16 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
     * _OneMore: when the actor receives this message it creates a new storekeeper <br>
     *
     */
-  def receive = {
-    case OneMore =>
-      reports += 1
-      log.info("new storekeeper added to [POOL]")
-      val newSk = context.actorOf(Storekeeper.props(collection, owner, config getInt "size"), s"managerStorekeeper-$reports")
-      newSk ! InitMn(self)
-      router ! AddRoutee(ActorRefRoutee(newSk))
+  def receive = { case message: ManagerMessage =>
+
+    message match {
+
+      case OneMore =>
+        reports += 1
+        log.info("new storekeeper added to [POOL]")
+        val newSk = context.actorOf(Storekeeper.props(collection, owner, config getInt "size"), s"managerStorekeeper-$reports")
+        newSk ! InitMn(self)
+        router ! AddRoutee(ActorRefRoutee(newSk))
+    }
   }
 }

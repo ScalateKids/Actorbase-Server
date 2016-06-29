@@ -144,21 +144,34 @@ class AuthActor extends Actor with ActorLogging {
 
     case message: AuthActorMessages => message match {
 
+      /**
+        * Clean the content of the profile set
+        */
       case Clean =>
         context become running(profiles.empty)
 
+      /**
+        * Persist data to disk using a defined encryption algorithm
+        */
       case Save =>
         persist(profiles)
 
+      /**
+        * Initialize data contained inside profile set, used when reading data
+        * from disk during the boot of the system.
+        *
+        * @param username a String representing the username of the user
+        * @param password a String representing the password of the user
+        */
       case Init(username, password) =>
         context become running (profiles + Profile(username, password, Set.empty[ActorbaseCollection]))
 
       /**
-        * Insert description here
+        * Add a pair username-password generating an hash to store the password,
+        * togheter they represents credentials for a new user.
         *
-        * @param
-        * @return
-        * @throws
+        * @param username a String representing the username of the new user added
+        * @param password a String representing the password of the new user added
         */
       case AddCredentials(username, password) =>
         val passwordCheck = """^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$""".r
@@ -197,11 +210,9 @@ class AuthActor extends Actor with ActorLogging {
         } getOrElse sender ! "WrongNewPassword"
 
       /**
-        * Insert description here
+        * Remove a pair username-password identified by a given username,
         *
-        * @param
-        * @return
-        * @throws
+        * @param username a String representing the username of the user to be removed
         */
       case RemoveCredentials(username) =>
         if (username != "admin") {
@@ -214,44 +225,42 @@ class AuthActor extends Actor with ActorLogging {
         }
 
       /**
-        * Insert description here
+        * Authenticate a user by comparing a pair username-password with
+        * previously stored inside profiles.
         *
-        * @param
-        * @return
-        * @throws
+        * @param username a String representing the username of the user to authenticate
+        * @param password a String representing the password of the user to authenticate
         */
       case Authenticate(username, password) =>
         val optElem = profiles find (elem => (elem.username == username) && BCrypt.checkpw(password, elem.password))
         optElem map (_ => sender ! Some((username -> password))) getOrElse sender ! Some("None" -> "None")
 
       /**
-        * Insert description here
+        * Add a collection to a given user
         *
-        * @param
-        * @return
-        * @throws
+        * @param username a String representing the username of the user designed to get a new collection
+        * @param collection a Collection reference serialized, represents the collection to be added to the user
+        * @param permissions a Permission reference serialized, represents the permission level of the user against the new added collection
+        * as contributor
         */
       case AddCollectionTo(username, collection, permissions) =>
         val optElem = profiles find (_.username == username)
         optElem map { x =>
           if (username != collection.getOwner)
             collection.addContributor(username, permissions)
-          println("[AUTHACTOR] addColl " + collection.getContributors)
           x.addCollection(collection)
           persist(profiles + x)
           sender ! "OK"
           context become running (profiles + x)
         } getOrElse {
           sender ! "UndefinedUsername"
-          println("Not")
         }
 
       /**
-        * Insert description here
+        * Remove a collection from a username
         *
-        * @param
-        * @return
-        * @throws
+        * @param username a String representing the username of the user designed for removal of the collection
+        * @param collection a reference to a Collection, represents the collection to be added to the user
         */
       case RemoveCollectionFrom(username, collection) =>
         val optElem = profiles find (_.username == username)
@@ -280,6 +289,8 @@ class AuthActor extends Actor with ActorLogging {
       /**
         * Build a list of UUIDs of collections owned by the username
         * that request them
+        *
+        * @param username a String representing the username of the user designed for retrieval of his collections
         */
       case ListUUIDsOwnedBy(username) =>
         val optElem = profiles find (_.username == username)
@@ -298,8 +309,13 @@ class AuthActor extends Actor with ActorLogging {
         profiles map (profile => users ::= profile.username)
         sender ! ListResponse(users)
 
+      /**
+        * Command warehouseman to persist data to disk using a defined
+        * encryption algorithm. Sends a message to the distributed pub sub, every
+        * warehouseman actor is subscribed to the topic "persist-data" so it receive
+        * the message sent.
+        */
       case PersistDB =>
-        // persist(profiles)
         mediator ! Publish("persist-data", Persist)
     }
   }

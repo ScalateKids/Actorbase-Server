@@ -41,10 +41,20 @@ sealed trait AuthActorMessages
   */
 case object ListUsers extends AuthActorMessages
 
+/**
+  * Message used to persist data contained in memory to disk
+  */
 case object Save extends AuthActorMessages
 
+/**
+  * Message used to ask to the AuthActor the deletion of all in-memory contents
+  */
 case object Clean extends AuthActorMessages
 
+/**
+  * Message used to send to the distributed pub-sub a broadcast message of
+  * persistence of the data contained inside the storekeeper actors to the disk case
+  */
 case object PersistDB extends AuthActorMessages
 
 /**
@@ -102,4 +112,9 @@ final case class ListCollectionsOf(username: String) extends AuthActorMessages
   */
 final case class Init(username: String, password: String) extends AuthActorMessages
 
+/**
+  * Message used to request a list of collections owned by a given user
+  *
+  * @param username a String representing the username of the user
+  */
 final case class ListUUIDsOwnedBy(username: String) extends AuthActorMessages

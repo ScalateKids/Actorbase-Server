@@ -28,22 +28,18 @@
 
 package com.actorbase.actorsystem.actors.storekeeper
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Cancellable, OneForOneStrategy, Props }
-import akka.cluster.Cluster
-// import akka.cluster.ClusterEvent.MemberUp
+import akka.actor.{ Actor, ActorLogging, ActorRef, OneForOneStrategy, Props }
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.cluster.pubsub.DistributedPubSub
 import akka.actor.SupervisorStrategy._
 
-// import scala.concurrent.ExecutionContext
-// import ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages.{PartialMapTransaction, UpdateCollectionSize}
 import com.actorbase.actorsystem.messages.WarehousemanMessages.{ Init, Save }
 import com.actorbase.actorsystem.messages.ClientActorMessages.Response
+import com.actorbase.actorsystem.messages.ManagerMessages.OneMore
 import com.actorbase.actorsystem.actors.warehouseman.Warehouseman
-import com.actorbase.actorsystem.actors.manager.Manager.OneMore
 import com.actorbase.actorsystem.utils.CryptoUtils
 
 import scala.concurrent.duration._
@@ -68,47 +64,11 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
   // subscribe to the topic named "persist-data"
   mediator ! Subscribe("persist-data", self)
 
-  // private val initDelay = 40 seconds       // delay for the first persistence message to be sent
-  // private val intervalDelay = 50 seconds   // interval in-between each persistence message has to be sent
-  private var scheduler: Cancellable = _   // akka scheduler used to track time
   private val warehouseman = context.actorOf(Warehouseman.props( collectionOwner + collectionName ))
   private var manager: Option[ActorRef] = None
   private var checked = false
-  val cluster = Cluster(context.system)
 
   warehouseman ! Init( collectionName, collectionOwner)
-
-  /**
-    * Actor lifecycle method, initialize a scheduler to persist data after some time
-    * and continously based on a fixed interval
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  override def preStart(): Unit = {
-    // cluster.subscribe(self, classOf[MemberUp])
-    // scheduler = context.system.scheduler.schedule(
-    //   initialDelay = initDelay,
-    //   interval = intervalDelay,
-    //   receiver = self,
-    //   message = Persist
-    // )
-  }
-
-  /**
-    * Actor lifecycle method, cancel the scheduler in order to not send persistence
-    * messages to the void
-    *
-    * @param
-    * @return
-    * @throws
-    */
-  override def postStop(): Unit = {
-     //  warehouseman ! Clean
-    // scheduler.cancel()
-    // cluster.unsubscribe(self)
-  }
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
@@ -125,9 +85,12 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
     * _Persist: when the actor receives this message it persists its data to disk.<br>
     *
     */
-
   def receive = running(Map[String, Array[Byte]]().empty)
 
+  /**
+    * Represents the state of the actor during process of the messages inside
+    * his mailbox
+    */
   def running(data: Map[String, Array[Byte]]): Receive = {
 
     case message: StorekeeperMessage => message match {
@@ -137,9 +100,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         * @param mn a manager actor rapresenting the corresponding manager
         */
-      case InitMn(mn) =>
-        // log.info("new MN received")
-        manager = Some(mn)
+      case InitMn(mn) => manager = Some(mn)
 
       /**
         * GetItem message, this actor will send back a value associated with the input key
@@ -165,7 +126,6 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         if (data contains(key)) {
           parent ! UpdateCollectionSize(false)
           sender ! "OK"
-          // warehouseman ! Save( data )
           context become running(data - key)
         } else sender ! "UndefinedKey"
 
@@ -193,8 +153,6 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
             insertWithoutUpdate
           }
           else if (!update && data.contains(key)) {
-            // warehouseman ! Save( data )
-            log.error(s"SK: Duplicate key found, cannot insert $key")
             done = false
           }
           else if (update && !data.contains(key)){
@@ -211,8 +169,6 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         def insertWithoutUpdate: Unit = {
           log.info("SK: Got work!")
           ins.parentRef ! UpdateCollectionSize(true)
-          // warehouseman ! SaveRow( (key -> ins.value) )
-          // warehouseman ! Save(data)
           if (data.size > indicativeSize && !checked) {
             checked = true
             manager map (_ ! OneMore) getOrElse (checked = false)
@@ -220,7 +176,6 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         }
 
         if (insertOrUpdate(ins.update, ins.key) == true) {
-          // warehouseman ! Save( data + (ins.key -> ins.value) )
           sender ! "OK"
           context become running(data + (ins.key -> ins.value))
         } else sender ! "DuplicatedKey"

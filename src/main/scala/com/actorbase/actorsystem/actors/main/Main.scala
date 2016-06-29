@@ -41,6 +41,7 @@ import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.MapResponse
 import com.actorbase.actorsystem.utils.CryptoUtils
+import com.typesafe.config.ConfigFactory
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -51,6 +52,12 @@ import scala.language.postfixOps
   * incoming requests.
   */
 object Main {
+
+  /**
+    * Read from configuration the number of shards, typically equals to the
+    * (number of nodes) x (a factor of ten)
+    */
+  lazy val numberOfShards = ConfigFactory.load().getInt("shard-number")
 
   /**
     * Props method, used to build an instance of Main actor
@@ -69,12 +76,12 @@ object Main {
     * @return a String representing an UUID of a shard-region where the actor belongs to
     */
   val extractShardId: ExtractShardId = {
-    case CreateCollection(_, collection) => (collection.getUUID.hashCode % 30).toString
-    case RemoveFrom(_, uuid, _) => (uuid.hashCode % 30).toString
-    case InsertTo(_,collection, _, _, _) => (collection.getUUID.hashCode % 30).toString
-    case GetFrom(_,collection, _) => (collection.getUUID.hashCode % 30).toString
-    case AddContributor(_, _, _, uuid) => (uuid.hashCode % 30).toString
-    case RemoveContributor(_, _, uuid) => (uuid.hashCode % 30).toString
+    case CreateCollection(_, collection) => (collection.getUUID.hashCode % numberOfShards).toString
+    case RemoveFrom(_, uuid, _) => (uuid.hashCode % numberOfShards).toString
+    case InsertTo(_,collection, _, _, _) => (collection.getUUID.hashCode % numberOfShards).toString
+    case GetFrom(_,collection, _) => (collection.getUUID.hashCode % numberOfShards).toString
+    case AddContributor(_, _, _, uuid) => (uuid.hashCode % numberOfShards).toString
+    case RemoveContributor(_, _, uuid) => (uuid.hashCode % numberOfShards).toString
   }
 
   /**
@@ -104,11 +111,9 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
   private var requestMap = Map[String, mutable.Map[String, mutable.Map[String, Array[Byte]]]]() // a bit clunky, should switch to a queue
 
 
-
   /**
     * Method that overrides the supervisorStrategy method.
     */
-
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Exception => Resume
@@ -129,15 +134,12 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       log.info(s"creating ${collection.getName} for ${collection.getOwner}")
       val sf = context.actorOf(Storefinder.props(collection))
       sfMap += (collection -> sf)
-      // collection.addContributor(collection.getOwner, ReadWrite)
       authProxy ! AddCollectionTo(collection.getOwner, collection, ReadWrite)
       Some(sf)
     }
   }
 
   private def extractContributors(collection: ActorbaseCollection): Map[String, Boolean] = {
-    println("[MAIN] content: " + sfMap)
-    println("[MAIN] contributor to be extracted " + collection.getContributors)
     collection.getContributors mapValues { c =>
       c match {
         case Read => false
@@ -237,6 +239,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         * a given number of response, equals to the number of key-value pairs
         * of the collection requested
         *
+        * @param requester a String representing the requester of the action
         * @param clientRef the reference of the client demanding the collection
         * @param collection an ActorbaseCollection item containing the number of response
         * expected for the requested collection at the current state
@@ -300,7 +303,6 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
       case AddContributor(requester, username, permission, uuid) =>
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
-          println("[MAIN] Add contributor " + x._1)
           if (x._1.getOwner == requester || requester == "admin") {
             if (username != "admin")
               x._1.addContributor(username, permission)

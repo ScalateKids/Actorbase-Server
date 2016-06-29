@@ -27,8 +27,6 @@
   * @since 1.0
   */
 
-// TEMPORARY BRIDGE BETWEEN MAIN AND STOREKEEPER
-
 package com.actorbase.actorsystem.actors.storefinder
 
 import akka.actor.{ Actor, ActorLogging, OneForOneStrategy, Props }
@@ -103,13 +101,6 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
     case message: StorefinderMessage => message match {
 
       /**
-        *
-        */
-      // case com.actorbase.actorsystem.storefinder.messages.Init(name, manager, range) =>
-      //   log.info("SF: init")
-
-
-      /**
         * Insert message, insert a key/value into a designed collection
         *
         * @param key a String representing the new key to be inserted
@@ -120,7 +111,6 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         *
         */
       case ins: Insert =>
-        // log.info("SF: inserting " + ins.key)
         storekeepers forward (ConsistentHashableEnvelope(message = InsertItem(self, ins.key, ins.value, ins.update), hashKey = ins.key))
 
       /**
@@ -129,15 +119,12 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         * @param key a String representing the key of the item to be retrieved
         */
       case Get(key) =>
-        // log.info(s"SF: getItem of key -> ${key}")
         storekeepers forward (ConsistentHashableEnvelope(message = GetItem(key), hashKey = key))
 
       /**
         * Message that returns the entire collection mapped by this Storefinder
         */
-      case GetAllItems(requester) =>
-        // log.info("SF: getallitem")
-        storekeepers forward Broadcast(GetAll(self, requester))
+      case GetAllItems(requester) =>  storekeepers forward Broadcast(GetAll(self, requester))
 
       /**
         * Message that removes an item with the given key
@@ -156,7 +143,6 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         * or decreased by a remove operation
         */
       case UpdateCollectionSize(increment) =>
-        // log.info(s"SF: Update size ${collection.getOwner}")
         if (increment)
           collection.incrementSize
         else collection.decrementSize
@@ -174,5 +160,4 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
 
     }
   }
-
 }

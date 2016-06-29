@@ -49,11 +49,11 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
   private val rootFolder = config getString "save-folder"
 
   override def postStop: Unit = {
-      log.info("Cleaning directory")
-      new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
-      new File(rootFolder + collectionUUID + "/collection-meta.actbmeta").delete()
+    log.info("Cleaning directory")
+    new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
+    new File(rootFolder + collectionUUID + "/collection-meta.actbmeta").delete()
   }
-  
+
   /**
     * Receive method of the Warehouseman actor, it does different things based on the message it receives:<br>
     * _Init: when the actor receives this message it inserts the item in the collection requested by the user.<br>
@@ -87,14 +87,6 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         CryptoUtils.encrypt(key, map, encryptedShardFile, false)
         sender ! 0 // ok reply
 
-      case SaveRow(row) =>
-        log.info("warehouseman: save " + rootFolder + collectionUUID + "/" + wareUUID + ".actb")
-        val key = config getString("encryption-key")
-        val encryptedShardFile = new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb")
-        encryptedShardFile.getParentFile.mkdirs
-        CryptoUtils.encrypt(key, row, encryptedShardFile, true)
-        sender ! 0 // ok reply
-
       /**
         * Delete a file with the Range with the keys passed in
         *
@@ -105,30 +97,6 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         new File(rootFolder + collectionUUID + "/" + wareUUID + ".actb").delete()
         new File(rootFolder + collectionUUID + "/collection-meta.actbmeta").delete()
 
-      /**
-        * Read a file from filesystem and decrypt the content
-        * extracting the map shard contained
-        *
-        * @param f an encrypted file containing the shard of the collection
-        */
-      case Read(f) =>
-        log.info("warehouseman: read")
-        val key = config getString("encryption-key")
-        val m = CryptoUtils.decrypt[Map[String, Any]](key, f)
-        sender ! m // ok reply
     }
-
-      /**
-        *
-        * @param path
-        */
-      /*private def removeAll(path: String) = {   //TODO forse bisogna controllare che i file ci siano
-
-       def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
-
-       getRecursively(new File(path)).foreach { f => f.delete() }
-
-       val dir = new File(path).delete()
-       }*/
   }
 }
