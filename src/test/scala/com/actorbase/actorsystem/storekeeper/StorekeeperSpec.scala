@@ -35,19 +35,13 @@ import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
-import org.scalatest.matchers.MustMatchers
-import org.scalatest.WordSpecLike
-import org.scalatest.BeforeAndAfterAll
 
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 import com.actorbase.actorsystem.messages.StorekeeperMessages._
-import com.actorbase.actorsystem.messages.StorefinderMessages.{UpdateCollectionSize, PartialMapTransaction}
-import com.actorbase.actorsystem.messages.WarehousemanMessages.Save
-import com.actorbase.actorsystem.messages.ClientActorMessages.Response
+import com.actorbase.actorsystem.messages.StorefinderMessages.PartialMapTransaction
 
 class StorekeeperSpec extends TestKit(ActorSystem("StorekeeperSpec",
   ConfigFactory.parseString("""

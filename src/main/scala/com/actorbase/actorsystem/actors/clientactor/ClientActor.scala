@@ -30,7 +30,7 @@ package com.actorbase.actorsystem.actors.clientactor
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.pattern.ask
-import com.actorbase.actorsystem.messages.AuthActorMessages.{ Authenticate, UpdateCredentials }
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ Authenticate, UpdateCredentials, ResetPassword }
 import scala.util.{ Failure, Success }
 import spray.can.Http
 import spray.http.HttpHeader
@@ -142,8 +142,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
               */
             // only admin users can enter here
             complete {
-              val value = "Actorb4se"
-                (authProxy ? UpdateCredentials(user, value, value)).mapTo[String]
+                (authProxy ? ResetPassword(user)).mapTo[String]
             }
           } ~
           delete {

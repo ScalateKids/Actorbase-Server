@@ -40,8 +40,6 @@ import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.messages.StorefinderMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages._
-import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 
 class StorefinderSpec extends TestKit(ActorSystem("StorefinderSpec",
   ConfigFactory.parseString("""

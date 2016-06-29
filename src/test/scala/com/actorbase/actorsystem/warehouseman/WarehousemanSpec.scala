@@ -30,14 +30,14 @@
 package com.actorbase.actorsystem.warehouseman
 
 import java.io.File
-import scala.util.Success
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Await
 
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.actor.ActorSystem
-import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
+import akka.testkit.{ TestKit, TestActorRef, ImplicitSender, TestProbe }
 
 import com.typesafe.config.ConfigFactory
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
@@ -70,6 +70,7 @@ akka.loglevel = "OFF"
     }
 
     "save encrypted data" in {
+
       def delete(file: File) {
         if (file.isDirectory)
           Option(file.listFiles).map(_.toList).getOrElse(Nil).foreach(delete(_))
@@ -77,26 +78,20 @@ akka.loglevel = "OFF"
       }
       delete( new File("actorbasedata/testUuid/") )
       val map = Map[String, Array[Byte]]("key0" -> "zero".getBytes("UTF-8"), "key1" -> "one".getBytes("UTF-8"), "key2" -> "two".getBytes("UTF-8"))
-      val future = (wareRef ? com.actorbase.actorsystem.messages.WarehousemanMessages.Save(map)).mapTo[Int]
-      future onSuccess {
-        case s =>
-          val nfiles = new File("actorbasedata/testUuid/").list.size
-          assert( nfiles == 1) //should be(true)
-      }
+      Await.result(wareRef.ask(Save(map))(5 seconds).mapTo[Int], Duration.Inf)
+      val nfiles = new File("actorbasedata/testUuid/").list.size
+      assert( nfiles == 1) //should be(true)
     }
 
     "read and decrypt data" in {
       val dir = new File("actorbasedata/testUuid/")
       val f = Option(dir.listFiles).map(_.toList).getOrElse(Nil)
-      val map = (wareRef ? com.actorbase.actorsystem.messages.WarehousemanMessages.Read(f.head)).mapTo[Map[String, Any]]
-      map onSuccess {
-        case m =>
-          assert(m.size == 3) // should have size 3
-      }
+      val map = Await.result(wareRef.ask(Read(f.head))(5 seconds).mapTo[Map[String, Any]], Duration.Inf)
+      assert(map.size == 3) // should have size 3
     }
 
     "receive the message clean" in {
-      p.send( wareRef, com.actorbase.actorsystem.messages.WarehousemanMessages.Clean )
+      p.send( wareRef, Clean )
     }
   }
 

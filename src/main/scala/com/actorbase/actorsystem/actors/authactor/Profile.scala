@@ -63,7 +63,6 @@ case class Profile(username: String, password: String, private var collections: 
     */
   def removeCollection(collection: ActorbaseCollection): Unit = {
     if (collections.contains(collection)) {
-      println("removed collection" + collection.getUUID + " from " + username)
       collections -= collection
     }
   }

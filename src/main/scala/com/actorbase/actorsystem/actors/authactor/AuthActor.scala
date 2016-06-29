@@ -218,9 +218,26 @@ class AuthActor extends Actor with ActorLogging {
         if (username != "admin") {
           val optElem = profiles find (_.username == username)
           optElem map { x =>
-            persist(profiles - x)
+            val newProfile = x.copy(password = java.util.UUID.randomUUID().toString.bcrypt(generateSalt))
+            persist(profiles - x + newProfile)
             sender ! "OK"
-            context become running(profiles - x)
+            context become running(profiles - x + newProfile)
+          } getOrElse sender ! "UndefinedUsername"
+        }
+
+      /**
+        * Reset the password associated to an existing user, identified by his username
+        *
+        * @param username a String representing the username of the user designed for password reset
+        */
+      case ResetPassword(username) =>
+        if (username != "admin") {
+          val optElem = profiles find (_.username == username)
+          optElem map { x =>
+            val newProfile = x.copy(password = "Actorb4se".bcrypt(generateSalt))
+            persist(profiles - x + newProfile)
+            sender ! "OK"
+            context become running(profiles - x + newProfile)
           } getOrElse sender ! "UndefinedUsername"
         }
 

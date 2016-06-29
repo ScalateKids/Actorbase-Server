@@ -32,14 +32,11 @@ package com.actorbase.actorsystem.clientactor
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
-import org.scalatest.FlatSpec
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
 import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 
 import com.actorbase.actorsystem.ActorSystemSpecs._
-import com.actorbase.actorsystem.utils.ActorbaseCollection._
 import com.actorbase.actorsystem.messages.ClientActorMessages._
 import com.actorbase.actorsystem.actors.main.Main
 import com.actorbase.actorsystem.actors.authactor.AuthActor

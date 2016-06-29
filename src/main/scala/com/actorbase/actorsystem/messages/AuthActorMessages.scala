@@ -79,6 +79,12 @@ final case class UpdateCredentials(username: String, password: String, newPasswo
 final case class RemoveCredentials(username: String) extends AuthActorMessages
 
 /**
+  * Message used to reset the password of an existing credential
+  * @param username a string with the username designed for password reset
+  */
+final case class ResetPassword(username: String) extends AuthActorMessages
+
+/**
   * Message used to do an authentication request
   * @param username a string with the username for the authentication request
   */

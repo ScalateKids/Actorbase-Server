@@ -29,29 +29,24 @@
 
 package com.actorbase.actorsystem.authactor
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.ActorSystem
+import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
+
 import com.typesafe.config.ConfigFactory
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import akka.pattern.ask
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.actorbase.actorsystem.messages.AuthActorMessages._
-
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 
-import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 
 /**
-   * Userkeeper specification tests
-   *
-   * @param
-   * @return
-   * @throws
-   */
+  * Userkeeper specification tests
+  *
+  * @param
+  * @return
+  * @throws
+  */
 class AuthActorSpec extends TestKit(ActorSystem("AuthActorSpec",
   ConfigFactory.parseString("""
 akka.remote.netty.tcp.port = 0,
@@ -60,9 +55,9 @@ akka.loglevel = "OFF"
                             """))) with ActorSystemUnitSpec with ImplicitSender {
 
   /**
-   * afterAll method, triggered after all test have ended, it shutdown the
-   * actorsystem.
-   */
+    * afterAll method, triggered after all test have ended, it shutdown the
+    * actorsystem.
+    */
   override def afterAll() : Unit = system.shutdown
 
   "AuthActor" should {
@@ -112,18 +107,23 @@ akka.loglevel = "OFF"
       p.expectMsg("OK")
     }
 
+    "Receive the message ResetPassword and reset a user password to the Actorbase default" in {
+      p.send( authRef, ResetPassword("pippo"))
+      p.expectMsg("OK")
+    }
+
     "Return an error message if the username to remove is not existing in the system" in {
       p.send( authRef, RemoveCredentials("notExistingUsername"))
       p.expectMsg("UndefinedUsername")
     }
 
-     "Return an error message if the credentials passed to log in the system are not valid" in {
+    "Return an error message if the credentials passed to log in the system are not valid" in {
       p.send( authRef, Authenticate("userNotExisting", "p4sswordOfUser"))
       p.expectMsg(Some("None", "None"))
     }
 
 
-   "Return an error message if the username combined to the password that has to be changed is not existing in the system" in {
+    "Return an error message if the username combined to the password that has to be changed is not existing in the system" in {
       p.send( authRef, UpdateCredentials("notExistingUsername", "P4ssword", "NewP4ssword"))
       p.expectMsg("UndefinedUsername")
     }

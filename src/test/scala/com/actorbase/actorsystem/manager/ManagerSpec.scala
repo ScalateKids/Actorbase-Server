@@ -37,7 +37,6 @@ import akka.testkit.{TestKit, TestActorRef, ImplicitSender, TestProbe}
 import com.actorbase.actorsystem.ActorSystemSpecs.ActorSystemUnitSpec
 import com.actorbase.actorsystem.actors.manager.Manager
 import com.actorbase.actorsystem.messages.ManagerMessages.OneMore
-import com.actorbase.actorsystem.messages.StorekeeperMessages.InitMn
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
 
 class ManagerSpec extends TestKit(ActorSystem("ManagerSpec",
