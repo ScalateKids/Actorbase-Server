@@ -283,6 +283,10 @@ class AuthActor extends Actor with ActorLogging {
           if (x.contains(collection)) {
             collection.removeContributor(username)
             x.removeCollection(collection)
+            profiles.foreach { p =>
+              p.getCollections map { c => if (c.containsReadContributor(username) || c.containsReadWriteContributor(username)) c.removeContributor(username) }
+              if (p.contains(collection)) p.removeCollection(collection)
+            }
             persist(profiles + x)
             sender ! "OK"
             context become running (profiles + x)
