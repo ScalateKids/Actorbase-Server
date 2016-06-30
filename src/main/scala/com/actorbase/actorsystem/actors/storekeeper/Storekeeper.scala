@@ -168,7 +168,8 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           */
         def insertWithoutUpdate: Unit = {
           log.info("SK: Got work!")
-          ins.parentRef ! UpdateCollectionSize(ins.value.length + ins.key.getBytes("UTF-8").length, true)
+          val w = ins.value.length.toLong + ins.key.getBytes("UTF-8").length.toLong
+          ins.parentRef ! UpdateCollectionSize(w, true)
           if (data.size > indicativeSize && !checked) {
             checked = true
             manager map (_ ! OneMore) getOrElse (checked = false)
