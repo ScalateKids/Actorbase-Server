@@ -323,12 +323,14 @@ class AuthActor extends Actor with ActorLogging {
       case UpdateCollectionSizeOf(collection, weight, increment) =>
         profiles find ( x => x.contains(collection) ) map { x =>
           x.getCollections map { c =>
-            if (increment) {
-              c.incrementSize
-              c.incrementWeight(weight)
-            } else {
-              c.decrementSize
-              c.decrementWeight(weight)
+            if (c == collection) {
+              if (increment) {
+                c.incrementSize
+                c.incrementWeight(weight)
+              } else {
+                c.decrementSize
+                c.decrementWeight(weight)
+              }
             }
           }
         }
