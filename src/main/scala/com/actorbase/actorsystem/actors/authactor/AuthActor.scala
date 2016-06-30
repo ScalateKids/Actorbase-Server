@@ -299,10 +299,11 @@ class AuthActor extends Actor with ActorLogging {
         * @param owner a String representing the owner of the requested collection name list
         */
       case ListCollectionsOf(username) =>
+        println(username)
         val optElem = profiles find (_.username == username)
         optElem map { set =>
+          println(set.getCollections)
           val names = set.getCollections map (collection => Map(collection.getOwner -> List(collection.getName, collection.getWeight.toString)))
-          println(names)
           sender ! ListTupleResponse(names.toList)
         }
 
