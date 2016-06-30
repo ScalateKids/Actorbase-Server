@@ -159,12 +159,31 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
   */
 object HTTPServer {
   def main(args: Array[String]) = {
-    val (hostname, port) =
-      if (args.nonEmpty)
-        (args(0), args(1))
-      else {
-        ("127.0.0.1", 2500)
+    var (hostname, port) = ("127.0.0.1", 9999)
+    //Argument GrammarParser
+    if (args.length == 0)
+      println("[!] no arg, Client loaded by default param");
+    else {
+      val arglist = args.toList
+      type OptionMap = Map[String, String]
+
+      def nextOption(map : OptionMap, list: List[String]) : OptionMap = {
+        def isSwitch(s : String) = (s(0) == '-')
+        list match {
+          case Nil => map
+          case "-h" :: value :: tail =>
+            nextOption(map ++ Map("host" -> value), tail)
+          case "-p" :: value :: tail =>
+            nextOption(map ++ Map("port" -> value), tail)
+          case string :: Nil => nextOption(map ++ Map("error" -> string), list.tail)
+          case _ :: value :: tail =>
+            nextOption(map ++ Map("error" -> value), tail)
+        }
       }
+      val options = nextOption(Map(), arglist)
+      options get "host" map (hostname = _)
+      options get "port" map (s => port = s.toInt)
+    }    
     val config = ConfigFactory.parseString(s"""
 akka.remote.netty.tcp.hostname=${hostname}
 akka.remote.netty.tcp.port=${port}
