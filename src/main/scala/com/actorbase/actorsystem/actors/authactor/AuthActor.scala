@@ -302,6 +302,7 @@ class AuthActor extends Actor with ActorLogging {
         val optElem = profiles find (_.username == username)
         optElem map { set =>
           val names = set.getCollections map (collection => Map(collection.getOwner -> List(collection.getName, collection.getWeight.toString)))
+          println(names)
           sender ! ListTupleResponse(names.toList)
         }
 
