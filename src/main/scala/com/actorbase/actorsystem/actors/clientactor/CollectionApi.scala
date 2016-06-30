@@ -210,9 +210,9 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
   pathPrefix("contributors" / "\\S+".r) { collection =>
     pathEndOrSingleSlash {
       authenticate(basicUserAuthenticator(ec, authProxy)) { authInfo =>
-        get {
-          complete("contr")
-        } ~
+        // get {
+        //   complete("contr")
+        // } ~
         post {
           decompressRequest() {
             headerValueByName("permission") { permission =>
