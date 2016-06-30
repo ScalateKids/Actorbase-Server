@@ -13,3 +13,7 @@ $ sbt run -Dlisten-on=<ip-address>
 ```sh
 $ sbt run -Dlisten-on=<ip-address> -Dexposed-port=9998 -Dclustering-port=2501
 ```
+### Server-side configuration
+```sh
+$ sbt
+```
