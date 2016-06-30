@@ -152,7 +152,7 @@ class Storefinder(private var collection: ActorbaseCollection, authProxy: ActorR
           collection.decrementSize
           collection.decrementWeight(weight)
         }
-        authProxy ! UpdateCollectionSizeOf(collection, weight, increment)
+        // authProxy ! UpdateCollectionSizeOf(collection, weight, increment)
 
 
       /**
