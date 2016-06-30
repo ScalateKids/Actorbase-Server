@@ -165,7 +165,7 @@ case class ActorbaseCollection (private var name: String,
     */
   def incrementWeight(w: Long) = weight += w
 
-  def setWeigh(w: Long) = weight = w
+  def setWeight(w: Long) = weight = w
   /**
     * Decrement the weight of this actorbasecollection by a given value
     *
