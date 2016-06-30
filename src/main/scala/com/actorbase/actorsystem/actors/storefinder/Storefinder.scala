@@ -29,7 +29,7 @@
 
 package com.actorbase.actorsystem.actors.storefinder
 
-import akka.actor.{ Actor, ActorLogging, OneForOneStrategy, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, OneForOneStrategy, Props }
 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.MemberUp
@@ -39,11 +39,11 @@ import akka.routing.ConsistentHashingPool
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
 import akka.actor.SupervisorStrategy._
-
 import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.StorekeeperMessages.{GetItem, GetAll, InsertItem, RemoveItem, InitMn}
 import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
+import com.actorbase.actorsystem.messages.AuthActorMessages.UpdateCollectionSizeOf
 import com.actorbase.actorsystem.actors.manager.Manager
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.typesafe.config.ConfigFactory
@@ -52,7 +52,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object Storefinder {
-  def props(collection: ActorbaseCollection): Props = Props(new Storefinder(collection))
+  def props(collection: ActorbaseCollection, authProxy: ActorRef): Props = Props(new Storefinder(collection, authProxy))
 }
 
 /**
@@ -63,7 +63,7 @@ object Storefinder {
   * @param range represent the range of the keys mappable in this storefinder
   * @param maxSize represent the max size of the collection
   */
-class Storefinder(private var collection: ActorbaseCollection) extends Actor with ActorLogging {
+class Storefinder(private var collection: ActorbaseCollection, authProxy: ActorRef) extends Actor with ActorLogging {
 
   val cluster = Cluster(context.system)
   val config = ConfigFactory.load().getConfig("storekeepers")
@@ -124,7 +124,7 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
       /**
         * Message that returns the entire collection mapped by this Storefinder
         */
-      case GetAllItems(requester) =>  storekeepers forward Broadcast(GetAll(self, requester))
+      case GetAllItems(requester) => storekeepers forward Broadcast(GetAll(self, requester))
 
       /**
         * Message that removes an item with the given key
@@ -152,6 +152,8 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
           collection.decrementSize
           collection.decrementWeight(weight)
         }
+        authProxy ! UpdateCollectionSizeOf(collection, weight, increment)
+
 
       /**
         * Await for storekeeper entire partial map returning, and

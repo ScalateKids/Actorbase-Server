@@ -124,3 +124,5 @@ final case class Init(username: String, password: String) extends AuthActorMessa
   * @param username a String representing the username of the user
   */
 final case class ListUUIDsOwnedBy(username: String) extends AuthActorMessages
+
+final case class UpdateCollectionSizeOf(collection: ActorbaseCollection, weight: Long, increment: Boolean) extends AuthActorMessages

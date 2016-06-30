@@ -320,6 +320,19 @@ class AuthActor extends Actor with ActorLogging {
           sender ! ListResponse(uuids.toList)
         }
 
+      case UpdateCollectionSizeOf(collection, weight, increment) =>
+        profiles find ( x => x.contains(collection) ) map { x =>
+          x.getCollections map { c =>
+            if (increment) {
+              c.incrementSize
+              c.incrementWeight(weight)
+            } else {
+              c.decrementSize
+              c.decrementWeight(weight)
+            }
+          }
+        }
+
       /**
         * Return all users contained in the system as a List[String]
         */
