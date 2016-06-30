@@ -223,7 +223,7 @@ class AuthActor extends Actor with ActorLogging {
             sender ! "OK"
             context become running(profiles - x + newProfile)
           } getOrElse sender ! "UndefinedUsername"
-        }
+        } else sender ! "UndefinedUsername"
 
       /**
         * Reset the password associated to an existing user, identified by his username
@@ -239,7 +239,7 @@ class AuthActor extends Actor with ActorLogging {
             sender ! "OK"
             context become running(profiles - x + newProfile)
           } getOrElse sender ! "UndefinedUsername"
-        }
+        } else sender ! "UndefinedUsername"
 
       /**
         * Authenticate a user by comparing a pair username-password with
@@ -269,9 +269,7 @@ class AuthActor extends Actor with ActorLogging {
           persist(profiles + x)
           sender ! "OK"
           context become running (profiles + x)
-        } getOrElse {
-          sender ! "UndefinedUsername"
-        }
+        } getOrElse sender ! "UndefinedUsername"
 
       /**
         * Remove a collection from a username
@@ -332,8 +330,7 @@ class AuthActor extends Actor with ActorLogging {
         * warehouseman actor is subscribed to the topic "persist-data" so it receive
         * the message sent.
         */
-      case PersistDB =>
-        mediator ! Publish("persist-data", Persist)
+      case PersistDB => mediator ! Publish("persist-data", Persist)
     }
   }
 }
