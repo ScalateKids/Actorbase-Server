@@ -48,7 +48,7 @@ final case class GetAllItems(requester: String) extends StorefinderMessage
   * @param increment boolean flag to do an increment or decrement operation with size (true = increment ; false = decrement)
   */
 
-final case class UpdateCollectionSize(increment: Boolean = true) extends StorefinderMessage with ControlMessage
+final case class UpdateCollectionSize(valueSize: Long, increment: Boolean = true) extends StorefinderMessage with ControlMessage
 
 /**
   * Message used to get data from the collection associated at the storefinder

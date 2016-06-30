@@ -138,14 +138,20 @@ class Storefinder(private var collection: ActorbaseCollection) extends Actor wit
         * increasing it if a insert is performed, decreasing it in case of
         * a remove
         *
+        * @param weight a Long parameter representing the weight value to be updated
         * @param increment a Boolean value representing whether the collection
-        * represented by this storefinder is increased in size by an insert operation
-        * or decreased by a remove operation
+        * represented by this storefinder is increased in size by an insert
+        * operation or decreased by a remove operation
         */
-      case UpdateCollectionSize(increment) =>
-        if (increment)
+      case UpdateCollectionSize(weight, increment) =>
+        if (increment) {
           collection.incrementSize
-        else collection.decrementSize
+          collection.incrementWeight(weight)
+        }
+        else {
+          collection.decrementSize
+          collection.decrementWeight(weight)
+        }
 
       /**
         * Await for storekeeper entire partial map returning, and

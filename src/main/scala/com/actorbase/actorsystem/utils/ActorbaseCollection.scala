@@ -56,7 +56,8 @@ case object ActorbaseCollection {
   */
 case class ActorbaseCollection (private var name: String,
   private var owner: String,
-  private var size: Int = 0) extends Ordered[ActorbaseCollection] {
+  private var size: Int = 0,
+  private var weight: Long = 0) extends Ordered[ActorbaseCollection] {
 
   private val uuid: String = owner + name
   private var contributors = Map[String, ActorbaseCollection.Permissions]("admin" -> ActorbaseCollection.ReadWrite)
@@ -80,6 +81,11 @@ case class ActorbaseCollection (private var name: String,
     * @return the size of the collection
     */
   def getSize: Int = size
+
+  /**
+    * @return the weight of the collection
+    */
+  def getWeight: Long = weight
 
   /**
     * Return a map containing contributors and their permission on the collection
@@ -151,6 +157,20 @@ case class ActorbaseCollection (private var name: String,
     * Decrement the size of this actorbasecollection by 1
     */
   def decrementSize = size -= 1
+
+  /**
+    * Increment the weight of this actorbasecollection by a given value
+    *
+    * @param w a Long value to be added
+    */
+  def incrementWeight(w: Long) = weight += w
+
+  /**
+    * Decrement the weight of this actorbasecollection by a given value
+    *
+    * @param w a Long value to be removed
+    */
+  def decrementWeight(w: Long) = weight -= w
 
   /**
     * override the compare method of comparable trait. This methods

@@ -31,7 +31,7 @@ package com.actorbase.actorsystem.messages.ClientActorMessages
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
-final case class ListTupleResponse(tuples: List[Map[String, String]])
+final case class ListTupleResponse(tuples: List[Map[String, List[String]]])
 
 case object ListTupleResponse {
   implicit val goJson = jsonFormat1(ListTupleResponse.apply)
