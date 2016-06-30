@@ -159,7 +159,7 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
   */
 object HTTPServer {
   def main(args: Array[String]) = {
-    var (hostname, port) = ("127.0.0.1", 9999)
+    var (hostname, port) = ("127.0.0.1", 2500)
     //Argument GrammarParser
     if (args.length == 0)
       println("[!] no arg, Client loaded by default param");
