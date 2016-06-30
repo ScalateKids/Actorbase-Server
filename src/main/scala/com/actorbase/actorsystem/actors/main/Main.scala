@@ -32,20 +32,23 @@ package com.actorbase.actorsystem.actors.main
 import akka.actor.{ Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props }
 import akka.cluster.sharding.ShardRegion.{ExtractEntityId, ExtractShardId}
 import akka.actor.SupervisorStrategy._
+import akka.pattern.ask
+import akka.util.Timeout
 
-import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, RemoveCollectionFrom }
+import com.actorbase.actorsystem.messages.AuthActorMessages.{ AddCollectionTo, RemoveCollectionFrom, ListUsers }
 import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.actorbase.actorsystem.utils.ActorbaseCollection.{ Read, ReadWrite }
 import com.actorbase.actorsystem.messages.MainMessages._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
-import com.actorbase.actorsystem.messages.ClientActorMessages.MapResponse
+import com.actorbase.actorsystem.messages.ClientActorMessages.{ MapResponse, ListResponse }
 import com.actorbase.actorsystem.utils.CryptoUtils
 import com.typesafe.config.ConfigFactory
 
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Class that represents a Main actor. This actor is responsible of managing
@@ -301,11 +304,15 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         *
         */
       case AddContributor(requester, username, permission, uuid) =>
+        implicit val timeout = Timeout(5 seconds)
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map { x =>
           if (x._1.getOwner == requester || requester == "admin") {
-            if (username != "admin")
-              x._1.addContributor(username, permission)
+            if (username != "admin") {
+              (authProxy ? ListUsers).mapTo[ListResponse] onSuccess {
+                case users => if (users.list.contains(username)) x._1.addContributor(username, permission)
+              }
+            }
             authProxy forward AddCollectionTo(username, x._1, permission)
           }
           else sender ! "NoPrivileges"
@@ -320,11 +327,14 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         *
         */
       case RemoveContributor(requester, username, uuid) =>
+        implicit val timeout = Timeout(5 seconds)
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
           if (x._1.getOwner == requester || requester == "admin") {
             if (username != "admin") {
-              x._1.removeContributor(username)
+              (authProxy ? ListUsers).mapTo[ListResponse] onSuccess {
+                case users => if (users.list.contains(username)) x._1.removeContributor(username)
+              }
               authProxy forward RemoveCollectionFrom(username, x._1)
             }
             else sender ! "NoPrivileges"
