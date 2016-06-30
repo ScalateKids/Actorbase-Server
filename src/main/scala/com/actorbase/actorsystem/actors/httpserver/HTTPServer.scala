@@ -183,7 +183,7 @@ object HTTPServer {
       val options = nextOption(Map(), arglist)
       options get "host" map (hostname = _)
       options get "port" map (s => port = s.toInt)
-    }    
+    }
     val config = ConfigFactory.parseString(s"""
 akka.remote.netty.tcp.hostname=${hostname}
 akka.remote.netty.tcp.port=${port}
