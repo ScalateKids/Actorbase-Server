@@ -331,7 +331,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
         val optColl = sfMap find (_._1.getUUID == uuid)
         optColl map  { x =>
           if (x._1.getOwner == requester || requester == "admin") {
-            if (!x.containsReadContributor(username) && !x.containsReadWriteContributor(username))
+            if (!x._1.containsReadContributor(username) && !x._1.containsReadWriteContributor(username))
               sender ! "UndefinedUsername"
             else {
               if (username != "admin") {
