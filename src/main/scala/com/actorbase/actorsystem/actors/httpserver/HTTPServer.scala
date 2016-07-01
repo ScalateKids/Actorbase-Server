@@ -105,14 +105,6 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
         data += (collection -> dataShard)
         dataShard = dataShard.empty
       }
-      // // create collections
-      // data.foreach {
-      //   case (k, v) =>
-      //     v.foreach {
-      //       case (kk, vv) =>
-      //         main ! CreateCollection(k.getOwner, k)
-      //     }
-      // }
 
       authProxy ! Clean
 
