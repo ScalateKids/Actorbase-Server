@@ -142,7 +142,7 @@ class ClientActor(main: ActorRef, authProxy: ActorRef) extends Actor with ActorL
               */
             // only admin users can enter here
             complete {
-                (authProxy ? ResetPassword(user)).mapTo[String]
+              (authProxy ? ResetPassword(user)).mapTo[String]
             }
           } ~
           delete {

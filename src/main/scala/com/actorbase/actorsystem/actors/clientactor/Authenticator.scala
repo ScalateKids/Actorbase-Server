@@ -51,7 +51,7 @@ trait Authenticator {
 
   implicit val timeout = Timeout(5 seconds)
 
-  var login: Option[(String, String)] = None
+  var login: Option[(String, String)] = Some("anonymous", "Actorb4se")
 
   /**
     * Basic authentication method
@@ -73,9 +73,7 @@ trait Authenticator {
     def authenticator(userPass: Option[UserPass]): Future[Option[(String, String)]] = {
       if (login.exists(l => (l._1 == userPass.get.user) && (l._2 == userPass.get.pass))) Future { login }
       else {
-        val log = for {
-          l <- (authProxy ? Authenticate(userPass.get.user, userPass.get.pass)).mapTo[Option[(String, String)]]
-        } yield l
+        val log = (authProxy ? Authenticate(userPass.get.user, userPass.get.pass)).mapTo[Option[(String, String)]]
         log.onSuccess {
           case ok => login = ok
         }
