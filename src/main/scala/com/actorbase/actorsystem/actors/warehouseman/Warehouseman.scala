@@ -76,7 +76,8 @@ class Warehouseman(collectionUUID: String = "namecollection-owner") extends Acto
         val encryptedMetaFile = new File(rootFolder + collectionUUID + "/collection-meta.actbmeta")
         if (!encryptedMetaFile.exists) {
           encryptedMetaFile.getParentFile.mkdirs
-          CryptoUtils.encrypt(key, Map("collection" -> collection, "owner" -> owner), encryptedMetaFile)
+          if (owner != "anonymous")
+            CryptoUtils.encrypt(key, Map("collection" -> collection, "owner" -> owner), encryptedMetaFile)
         }
 
       /**
