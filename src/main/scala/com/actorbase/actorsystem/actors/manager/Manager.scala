@@ -62,10 +62,7 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: Exception      => Resume
-        // case _: NullPointerException     => Restart
-        // case _: IllegalArgumentException => Stop
-        // case _: Exception                => Escalate
+      case _: Exception => Resume
     }
   /**
     * Receive method of the Manager actor it inserts the item in the collection requested by the user.<br>
@@ -78,7 +75,7 @@ class Manager(val collection: String, val owner: String, val router: ActorRef) e
 
       case OneMore =>
         reports += 1
-        log.info("new storekeeper added to [POOL]")
+        // log.info("new storekeeper added to [POOL]")
         val newSk = context.actorOf(Storekeeper.props(collection, owner, config getInt "size"), s"managerStorekeeper-$reports")
         newSk ! InitMn(self)
         router ! AddRoutee(ActorRefRoutee(newSk))

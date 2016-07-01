@@ -167,7 +167,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           * this is full
           */
         def insertWithoutUpdate: Unit = {
-          log.info("SK: Got work!")
+          // log.info("SK: Got work!")
           val w = ins.value.length.toLong + ins.key.getBytes("UTF-8").length.toLong
           ins.parentRef ! UpdateCollectionSize(w, true)
           if (data.size > indicativeSize && !checked) {
