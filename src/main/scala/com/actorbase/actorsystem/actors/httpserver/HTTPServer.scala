@@ -105,19 +105,13 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
         data += (collection -> dataShard)
         dataShard = dataShard.empty
       }
-
+      // create collections
       data.foreach {
         case (k, v) =>
           v.foreach {
             case (kk, vv) =>
-              main ! InsertTo(k.getOwner, k, kk, vv, false)
+              main ! CreateCollection(k.getOwner, k)
           }
-      }
-
-      def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
-      getRecursively( root ).foreach { f =>
-        if (!f.getName.endsWith("shadow") && f.getName != "usersdata")
-          f.delete()
       }
 
       authProxy ! Clean
@@ -133,6 +127,20 @@ class HTTPServer(main: ActorRef, authProxy: ActorRef, address: String, listenPor
       }
 
       contributors = contributors.empty
+      // populate collections
+      data.foreach {
+        case (k, v) =>
+          v.foreach {
+            case (kk, vv) =>
+              main ! InsertTo(k.getOwner, k, kk, vv, false)
+          }
+      }
+
+      def getRecursively(f: File): Seq[File] = f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+      getRecursively( root ).foreach { f =>
+        if (!f.getName.endsWith("shadow") && f.getName != "usersdata")
+          f.delete()
+      }
 
     } else log.warning("Directory not found!")
 

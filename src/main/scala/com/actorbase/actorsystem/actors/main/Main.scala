@@ -258,7 +258,7 @@ class Main(authProxy: ActorRef) extends Actor with ActorLogging {
             if (colMap._2.size == collection.getSize) {
               val k = colMap._2.toMap mapValues (v => CryptoUtils.bytesToAny(v))
               clientRef ! Right(MapResponse(collection.getOwner, collection.getName, extractContributors(collection),  k))
-              // clientRef ! Right(MapResponse(collection.getOwner, collection.getName, colMap._2.toMap))
+              // clientRef ! Right(MapResponse(collection.getOwner, collection.getName, extractContributors(collection), colMap._2.toMap))
               colMap._2.clear
               ref._2.-(collection.getUUID)
             }
