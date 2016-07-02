@@ -36,7 +36,6 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import com.actorbase.actorsystem.messages.StorekeeperMessages.Persist
 import com.actorbase.actorsystem.messages.AuthActorMessages._
 import com.actorbase.actorsystem.messages.ClientActorMessages.{ ListResponse, ListTupleResponse }
-import com.actorbase.actorsystem.utils.ActorbaseCollection.Permissions
 import com.actorbase.actorsystem.utils.{ ActorbaseCollection, CryptoUtils }
 import com.github.t3hnar.bcrypt._
 import com.typesafe.config.ConfigFactory
@@ -147,14 +146,12 @@ class AuthActor extends Actor with ActorLogging {
       /**
         * Clean the content of the profile set
         */
-      case Clean =>
-        context become running(profiles.empty)
+      case Clean => context become running(profiles.empty)
 
       /**
         * Persist data to disk using a defined encryption algorithm
         */
-      case Save =>
-        persist(profiles)
+      case Save => persist(profiles)
 
       /**
         * Initialize data contained inside profile set, used when reading data
@@ -320,7 +317,10 @@ class AuthActor extends Actor with ActorLogging {
           sender ! ListResponse(uuids.toList)
         }
 
-      case UpdateCollectionSizeOf(collection, weight, increment) =>
+      /**
+        * Update collection weight
+        */
+      case SetCollectionWeightOf(collection, weight) =>
         profiles filter ( x => x.contains(collection) ) map { x =>
           x.getCollections map { c =>
             if (c == collection) {

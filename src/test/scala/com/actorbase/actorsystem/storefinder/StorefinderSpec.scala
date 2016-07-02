@@ -30,6 +30,7 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
+import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
@@ -59,7 +60,8 @@ akka.loglevel = "OFF"
   "Storefinder Actor" should {
 
     val actbColl = new ActorbaseCollection("testCollection", "anonymous")
-    val sfRef = TestActorRef(new Storefinder( actbColl ))
+    val authRef = TestActorRef(new AuthActor)
+    val sfRef = TestActorRef(new Storefinder( actbColl, authRef ))
     val p = TestProbe()
 
     "be created" in{
@@ -84,7 +86,7 @@ akka.loglevel = "OFF"
     }
 
     "update the collection size" in { // response is null, can't expect anything
-      p.send( sfRef, UpdateCollectionSize( true ) )
+      p.send( sfRef, UpdateCollectionSize( 10l, true ) )
     }
 
     "receive the message PartialMapTransaction" in {  // response is null, can't expect anything

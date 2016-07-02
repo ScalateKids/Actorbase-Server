@@ -30,6 +30,7 @@
 package com.actorbase.actorsystem.storefinder
 
 import akka.util.Timeout
+import com.actorbase.actorsystem.actors.authactor.AuthActor
 import com.actorbase.actorsystem.actors.storefinder.Storefinder
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
@@ -66,7 +67,8 @@ akka.loglevel = "OFF"
     val collOwner = "testOwner"
     val skRef = TestActorRef(new Storekeeper( collName, collOwner, 256 ))
     val actbColl = new ActorbaseCollection( collName, collOwner)
-    val sfRef = TestActorRef(new Storefinder( actbColl ))
+    val authRef = TestActorRef(new AuthActor)
+    val sfRef = TestActorRef(new Storefinder( actbColl, authRef ))
     val p = TestProbe()
 
     val valore = "value".getBytes("UTF-8")
@@ -96,10 +98,10 @@ akka.loglevel = "OFF"
     }
 
     "get an item" in { // no response, can't expect anything if uncommented makes remove stop working
-       p.send( skRef, InsertItem(sfRef, "key", valore , false) )
-       p.send( skRef, GetItem("key") )
-       p.expectMsg("OK")
-     }
+      p.send( skRef, InsertItem(sfRef, "key", valore , false) )
+      p.send( skRef, GetItem("key") )
+      p.expectMsg("OK")
+    }
 
     "return all items" in {
       p.send( skRef, InsertItem(sfRef, "key", valore , false) )

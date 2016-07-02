@@ -43,7 +43,7 @@ import com.actorbase.actorsystem.messages.StorefinderMessages._
 import com.actorbase.actorsystem.messages.StorekeeperMessages.{GetItem, GetAll, InsertItem, RemoveItem, InitMn}
 import com.actorbase.actorsystem.messages.MainMessages.CompleteTransaction
 import com.actorbase.actorsystem.actors.storekeeper.Storekeeper
-import com.actorbase.actorsystem.messages.AuthActorMessages.UpdateCollectionSizeOf
+import com.actorbase.actorsystem.messages.AuthActorMessages.SetCollectionWeightOf
 import com.actorbase.actorsystem.actors.manager.Manager
 import com.actorbase.actorsystem.utils.ActorbaseCollection
 import com.typesafe.config.ConfigFactory
@@ -152,7 +152,7 @@ class Storefinder(private var collection: ActorbaseCollection, authProxy: ActorR
           collection.decrementSize
           collection.decrementWeight(weight)
         }
-        authProxy ! UpdateCollectionSizeOf(collection, weight, increment)
+        authProxy ! SetCollectionWeightOf(collection, weight)
 
 
       /**

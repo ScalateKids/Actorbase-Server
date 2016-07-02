@@ -125,4 +125,7 @@ final case class Init(username: String, password: String) extends AuthActorMessa
   */
 final case class ListUUIDsOwnedBy(username: String) extends AuthActorMessages
 
-final case class UpdateCollectionSizeOf(collection: ActorbaseCollection, weight: Long, increment: Boolean) extends AuthActorMessages
+/**
+  * Message used to update weight of a collection
+  */
+final case class SetCollectionWeightOf(collection: ActorbaseCollection, weight: Long) extends AuthActorMessages
