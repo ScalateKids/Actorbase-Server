@@ -109,6 +109,7 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
         *
         */
       case GetItem(key)  =>
+        // println(data.contains(key))
         data get key map (v => sender ! Right(Response(CryptoUtils.bytesToAny(v)))) getOrElse sender ! Left("UndefinedKey")
 
       /**
@@ -170,10 +171,10 @@ class Storekeeper(private val collectionName: String, private val collectionOwne
           // log.info("SK: Got work!")
           val w = ins.value.length.toLong + ins.key.getBytes("UTF-8").length.toLong
           ins.parentRef ! UpdateCollectionSize(w, true)
-          if (data.size > indicativeSize && !checked) {
-            checked = true
-            manager map (_ ! OneMore) getOrElse (checked = false)
-          }
+          // if (data.size > indicativeSize && !checked) {
+          //   checked = true
+          //   manager map (_ ! OneMore) getOrElse (checked = false)
+          // }
         }
 
         if (insertOrUpdate(ins.update, ins.key) == true) {

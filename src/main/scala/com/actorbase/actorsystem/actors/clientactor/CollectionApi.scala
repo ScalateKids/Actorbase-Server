@@ -35,7 +35,9 @@ import spray.http.{ HttpResponse, StatusCodes }
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.marshalling.ToResponseMarshallable
 import spray.httpx.marshalling._
+import spray.httpx.encoding._
 import spray.routing._
+import spray.routing.HttpService
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -63,6 +65,7 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
   def base64ToString(in: String): String = {
     new String(Base64.getUrlDecoder.decode(in), "UTF-8")
   }
+  // val simpleCache = routeCache(maxCapacity = 1000, timeToIdle = Duration("30 min"))
 
   /**
     * HTTP routes mapped to handle CRUD operations, these should be nouns
@@ -82,7 +85,6 @@ trait CollectionApi extends HttpServiceBase with Authenticator {
   def collectionsDirectives(main: ActorRef, authProxy: ActorRef): Route = {
 
     implicit val timeout = Timeout(90 seconds)
-
     /**
       * Collections route, manage all collection related operations, based
       * on the request received in the form of:

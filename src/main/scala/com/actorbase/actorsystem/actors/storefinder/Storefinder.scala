@@ -36,7 +36,6 @@ import akka.cluster.ClusterEvent.MemberUp
 import akka.cluster.routing.ClusterRouterPool
 import akka.cluster.routing.ClusterRouterPoolSettings
 import akka.routing.ConsistentHashingPool
-import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.Broadcast
 import akka.actor.SupervisorStrategy._
 import com.actorbase.actorsystem.messages.StorefinderMessages._
@@ -111,7 +110,8 @@ class Storefinder(private var collection: ActorbaseCollection, authProxy: ActorR
         *
         */
       case ins: Insert =>
-        storekeepers forward (ConsistentHashableEnvelope(message = InsertItem(self, ins.key, ins.value, ins.update), hashKey = ins.key))
+        // storekeepers forward (ConsistentHashableEnvelope(message = InsertItem(self, ins.key, ins.value, ins.update), hashKey = ins.key))
+        storekeepers forward InsertItem(self, ins.key, ins.value, ins.update)
 
       /**
         * Message that forward to Storekeeper in order to retrieve a given key
@@ -119,7 +119,9 @@ class Storefinder(private var collection: ActorbaseCollection, authProxy: ActorR
         * @param key a String representing the key of the item to be retrieved
         */
       case Get(key) =>
-        storekeepers forward (ConsistentHashableEnvelope(message = GetItem(key), hashKey = key))
+        // println("[SF]: request")
+        // storekeepers forward (ConsistentHashableEnvelope(message = GetItem(key), hashKey = key))
+        storekeepers forward GetItem(key)
 
       /**
         * Message that returns the entire collection mapped by this Storefinder
